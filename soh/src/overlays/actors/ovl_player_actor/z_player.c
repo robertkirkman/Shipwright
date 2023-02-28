@@ -10939,6 +10939,18 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
 static Vec3f D_80854838 = { 0.0f, 0.0f, -30.0f };
 
+// magi multiplayer: get player index from ACTORCAT_PLAYER
+u16 Player_GetIndex(Player* this, PlayState* play) {
+    u16 i = 0;
+    Actor* player = (Actor*)GET_PLAYER(play);
+    while (player != NULL) {
+        if ((Actor*)this == player) break;
+        i++;
+        player = player->next;
+    }
+    return i;
+}
+
 void Player_Update(Actor* thisx, PlayState* play) {
     static Vec3f sDogSpawnPos;
     Player* this = (Player*)thisx;
@@ -10946,6 +10958,7 @@ void Player_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     Input sp44;
     Actor* dog;
+    u16 playerIndex;
 
     if (func_8084FCAC(this, play)) {
         if (gSaveContext.dogParams < 0) {
@@ -10977,7 +10990,11 @@ void Player_Update(Actor* thisx, PlayState* play) {
         if (this->stateFlags1 & (PLAYER_STATE1_5 | PLAYER_STATE1_29)) {
             memset(&sp44, 0, sizeof(sp44));
         } else {
-            sp44 = play->state.input[0];
+            // magi multiplayer: populate unnamed Input variable with
+            // appropriate gamepad number; SoH has already set up 4 fully working
+            // configurable gamepads through SDL2
+            playerIndex = Player_GetIndex(this, play) < 4 ? Player_GetIndex(this, play) : 0;
+            sp44 = play->state.input[playerIndex];
             if (this->unk_88E != 0) {
                 sp44.cur.button &= ~(BTN_A | BTN_B | BTN_CUP);
                 sp44.press.button &= ~(BTN_A | BTN_B | BTN_CUP);
