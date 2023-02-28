@@ -295,18 +295,18 @@ void EnExItem_BowlPrize(EnExItem* this, PlayState* play) {
             if (this->type == EXITEM_BOMBCHUS_BOWLING) {
                 sp3C = 220.0f;
             }
-            tmpf1 = play->view.lookAt.x - play->view.eye.x;
-            tmpf2 = play->view.lookAt.y - play->view.eye.y;
-            tmpf3 = play->view.lookAt.z + sp3C - play->view.eye.z;
+            tmpf1 = play->views[0].lookAt.x - play->views[0].eye.x;
+            tmpf2 = play->views[0].lookAt.y - play->views[0].eye.y;
+            tmpf3 = play->views[0].lookAt.z + sp3C - play->views[0].eye.z;
             tmpf4 = sqrtf(SQ(tmpf1) + SQ(tmpf2) + SQ(tmpf3));
 
             tmpf5 = (tmpf1 / tmpf4) * 5.0f;
             tmpf6 = (tmpf2 / tmpf4) * 5.0f;
             tmpf7 = (tmpf3 / tmpf4) * 5.0f;
 
-            tmpf1 = play->view.eye.x + tmpf5 - this->actor.world.pos.x;
-            tmpf2 = play->view.eye.y + tmpf6 - this->actor.world.pos.y;
-            tmpf3 = play->view.eye.z + tmpf7 - this->actor.world.pos.z;
+            tmpf1 = play->views[0].eye.x + tmpf5 - this->actor.world.pos.x;
+            tmpf2 = play->views[0].eye.y + tmpf6 - this->actor.world.pos.y;
+            tmpf3 = play->views[0].eye.z + tmpf7 - this->actor.world.pos.z;
 
             this->actor.world.pos.x += (tmpf1 / tmpf4) * 5.0f;
             this->actor.world.pos.y += (tmpf2 / tmpf4) * 5.0f;
@@ -378,18 +378,18 @@ void EnExItem_TargetPrizeApproach(EnExItem* this, PlayState* play) {
 
     if (!gSaveContext.n64ddFlag && this->timer != 0) {
         if (this->prizeRotateTimer != 0) {
-            tmpf1 = play->view.lookAt.x - play->view.eye.x;
-            tmpf2 = play->view.lookAt.y - 10.0f - play->view.eye.y;
-            tmpf3 = play->view.lookAt.z + 10.0f - play->view.eye.z;
+            tmpf1 = play->views[0].lookAt.x - play->views[0].eye.x;
+            tmpf2 = play->views[0].lookAt.y - 10.0f - play->views[0].eye.y;
+            tmpf3 = play->views[0].lookAt.z + 10.0f - play->views[0].eye.z;
             tmpf4 = sqrtf(SQ(tmpf1) + SQ(tmpf2) + SQ(tmpf3));
 
             tmpf5 = (tmpf1 / tmpf4) * 5.0f;
             tmpf6 = (tmpf2 / tmpf4) * 5.0f;
             tmpf7 = (tmpf3 / tmpf4) * 5.0f;
 
-            tmpf1 = play->view.eye.x + tmpf5 - this->actor.world.pos.x;
-            tmpf2 = play->view.eye.y - 10.0f + tmpf6 - this->actor.world.pos.y;
-            tmpf3 = play->view.eye.z + 10.0f + tmpf7 - this->actor.world.pos.z;
+            tmpf1 = play->views[0].eye.x + tmpf5 - this->actor.world.pos.x;
+            tmpf2 = play->views[0].eye.y - 10.0f + tmpf6 - this->actor.world.pos.y;
+            tmpf3 = play->views[0].eye.z + 10.0f + tmpf7 - this->actor.world.pos.z;
 
             this->actor.world.pos.x += (tmpf1 / tmpf4) * 5.0f;
             this->actor.world.pos.y += (tmpf2 / tmpf4) * 5.0f;

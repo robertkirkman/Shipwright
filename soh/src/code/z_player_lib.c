@@ -463,14 +463,16 @@ void func_8008EE08(Player* this) {
 }
 
 void func_8008EEAC(PlayState* play, Actor* actor) {
-    Player* this = GET_PLAYER(play);
-
-    func_8008EE08(this);
-    this->unk_664 = actor;
-    this->unk_684 = actor;
-    this->stateFlags1 |= 0x10000;
-    Camera_SetParam(Play_GetCamera(play, 0), 8, actor);
-    Camera_ChangeMode(Play_GetCamera(play, 0), 2);
+    Player* player = NULL;
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        func_8008EE08(player);
+        player->unk_664 = actor;
+        player->unk_684 = actor;
+        player->stateFlags1 |= 0x10000;
+        Camera_SetParam(Play_GetCamera(play, player), 8, actor);
+        Camera_ChangeMode(Play_GetCamera(play, 0), 2);
+    }
 }
 
 s32 func_8008EF30(PlayState* play) {
@@ -1741,7 +1743,7 @@ void func_80091A24(PlayState* play, void* seg04, void* seg06, SkelAnime* skelAni
 
     POLY_OPA_DISP = Gfx_SetFog2(POLY_OPA_DISP++, 0, 0, 0, 0, 997, 1000);
 
-    func_8002EABC(pos, &play->view.eye, &lightDir, play->state.gfxCtx);
+    func_8002EABC(pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
 
     gSPSegment(POLY_OPA_DISP++, 0x0C, gCullBackDList);
 

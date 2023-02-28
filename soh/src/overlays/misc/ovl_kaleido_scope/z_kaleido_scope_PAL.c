@@ -3031,7 +3031,7 @@ void KaleidoScope_Draw(PlayState* play) {
         KaleidoScope_DrawDebugEditor(play);
     }
 
-    func_800AAA50(&play->view, 15);
+    func_800AAA50(&play->views[0], 15);
 
     CLOSE_DISPS(play->state.gfxCtx);
 }

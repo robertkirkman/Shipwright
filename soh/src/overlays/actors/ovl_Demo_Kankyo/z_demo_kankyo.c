@@ -534,15 +534,15 @@ void DemoKankyo_DrawRain(Actor* thisx, PlayState* play) {
     for (i = 0; i < 30; i++) {
         s32 pad[2];
 
-        dx = play->view.lookAt.x - play->view.eye.x;
-        dy = play->view.lookAt.y - play->view.eye.y;
-        dz = play->view.lookAt.z - play->view.eye.z;
+        dx = play->views[0].lookAt.x - play->views[0].eye.x;
+        dy = play->views[0].lookAt.y - play->views[0].eye.y;
+        dz = play->views[0].lookAt.z - play->views[0].eye.z;
         norm = sqrtf(SQ(dx) + SQ(dy) + SQ(dz));
 
         if (play->sceneNum != SCENE_TOKINOMA) {
-            this->unk_150[i].unk_C.x = play->view.eye.x + (dx / norm) * 350.0f;
-            this->unk_150[i].unk_C.y = play->view.eye.y + (dy / norm) * 80.0f;
-            this->unk_150[i].unk_C.z = play->view.eye.z + (dz / norm) * 350.0f;
+            this->unk_150[i].unk_C.x = play->views[0].eye.x + (dx / norm) * 350.0f;
+            this->unk_150[i].unk_C.y = play->views[0].eye.y + (dy / norm) * 80.0f;
+            this->unk_150[i].unk_C.z = play->views[0].eye.z + (dz / norm) * 350.0f;
         }
 
         switch (this->unk_150[i].unk_22) {
@@ -556,7 +556,7 @@ void DemoKankyo_DrawRain(Actor* thisx, PlayState* play) {
                 this->unk_150[i].unk_22++;
                 break;
             case 1:
-                temp_f12_2 = play->view.eye.y + (dy / norm) * 150.0f;
+                temp_f12_2 = play->views[0].eye.y + (dy / norm) * 150.0f;
                 if (gSaveContext.entranceIndex == 0x00A0) { // Cutscene Map
                     this->unk_150[i].unk_0.y -= this->unk_150[i].unk_18;
                 } else {
@@ -677,8 +677,8 @@ void DemoKankyo_DrawClouds(Actor* thisx, PlayState* play) {
         dy = Math_CosS(this->unk_150[i].unk_20 - 0x8000) * 5.0f + 1200.0f;
         dz = (Math_CosS(this->unk_150[i].unk_20 - 0x8000) * 120.0f) * (30.0f + (i / 30.0f) * 10.0f);
 
-        Matrix_Translate(play->view.eye.x + dx, play->view.eye.y + dy + ((i - 12.0f) * 300.0f),
-                         play->view.eye.z + dz, MTXMODE_NEW);
+        Matrix_Translate(play->views[0].eye.x + dx, play->views[0].eye.y + dy + ((i - 12.0f) * 300.0f),
+                         play->views[0].eye.z + dz, MTXMODE_NEW);
         Matrix_Scale(125.0f, 60.0f, 125.0f, MTXMODE_APPLY);
 
         gDPPipeSync(POLY_XLU_DISP++);

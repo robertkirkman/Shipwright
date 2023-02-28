@@ -465,7 +465,7 @@ void EnDaiku_InitSubCamera(EnDaiku* this, PlayState* play) {
     Play_ChangeCameraStatus(play, this->subCamId, CAM_STAT_ACTIVE);
 
     Play_CameraSetAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
-    Play_CameraSetFov(play, this->subCamId, play->mainCamera.fov);
+    Play_CameraSetFov(play, this->subCamId, play->mainCameras[0].fov);
     func_8002DF54(play, &this->actor, 1);
 }
 

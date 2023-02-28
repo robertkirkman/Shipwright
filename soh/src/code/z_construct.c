@@ -13,7 +13,7 @@ void func_801109B0(PlayState* play) {
     gSaveContext.sunsSongState = SUNSSONG_INACTIVE;
     gSaveContext.unk_13E8 = gSaveContext.unk_13EA = 0;
 
-    View_Init(&interfaceCtx->view, play->state.gfxCtx);
+    View_Init(&interfaceCtx->view, play->state.gfxCtx, 0);
 
     interfaceCtx->unk_1FA = interfaceCtx->unk_261 = interfaceCtx->unk_1FC = 0;
     interfaceCtx->unk_1EC = interfaceCtx->unk_1EE = interfaceCtx->unk_1F0 = 0;
@@ -149,7 +149,7 @@ void Message_Init(PlayState* play) {
     msgCtx->textId = msgCtx->textboxEndType = msgCtx->choiceIndex = msgCtx->ocarinaAction = msgCtx->textUnskippable = 0;
     msgCtx->textColorAlpha = 255;
 
-    View_Init(&msgCtx->view, play->state.gfxCtx);
+    View_Init(&msgCtx->view, play->state.gfxCtx, 0);
 
     msgCtx->textboxSegment = GAMESTATE_ALLOC_MC(&play->state, 0x2200);
 

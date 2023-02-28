@@ -166,9 +166,9 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
     }
     if (spawnerState != ENCOUNT2_INACTIVE) {
         // Direction vector for the direction the camera is facing
-        tempVec1X = play->view.lookAt.x - play->view.eye.x;
-        tempVec1Y = play->view.lookAt.y - play->view.eye.y;
-        tempVec1Z = play->view.lookAt.z - play->view.eye.z;
+        tempVec1X = play->views[0].lookAt.x - play->views[0].eye.x;
+        tempVec1Y = play->views[0].lookAt.y - play->views[0].eye.y;
+        tempVec1Z = play->views[0].lookAt.z - play->views[0].eye.z;
 
         // Normalised direction vector for the direction the camera is facing
         magnitude = sqrtf(SQ(tempVec1X) + SQ(tempVec1Y) + SQ(tempVec1Z));
@@ -177,15 +177,15 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
         tempVec2Z = tempVec1Z / magnitude;
 
         // Position between 160 and 300 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
-        tempVec1X = play->view.eye.x + (tempVec2X * 300.0f);
-        tempVec1Y = play->view.eye.y + (tempVec2Y * 160.0f) + 400.0f;
-        tempVec1Z = play->view.eye.z + (tempVec2Z * 300.0f);
+        tempVec1X = play->views[0].eye.x + (tempVec2X * 300.0f);
+        tempVec1Y = play->views[0].eye.y + (tempVec2Y * 160.0f) + 400.0f;
+        tempVec1Z = play->views[0].eye.z + (tempVec2Z * 300.0f);
 
         // Position between 160 and 200 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
         // (plus some random variation)
-        particlePos.x = Rand_CenteredFloat(200.0f) + (play->view.eye.x + (tempVec2X * 200.0f));
+        particlePos.x = Rand_CenteredFloat(200.0f) + (play->views[0].eye.x + (tempVec2X * 200.0f));
         particlePos.y = Rand_CenteredFloat(50.0f) + tempVec1Y;
-        particlePos.z = Rand_CenteredFloat(200.0f) + (play->view.eye.z + (tempVec2Z * 200.0f));
+        particlePos.z = Rand_CenteredFloat(200.0f) + (play->views[0].eye.z + (tempVec2Z * 200.0f));
         particleScale = Rand_CenteredFloat(0.005f) + 0.007f;
 
         if (spawnerState == ENCOUNT2_ACTIVE_DEATH_MOUNTAIN) {
@@ -207,8 +207,8 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
                     if (player->linearVelocity != 0.0f) {
                         // rock spawn pos is between 300 and 600 units from the camera depending on the camera yaw.
                         // Rocks will generally spawn closer to the camera in the X axis than in the Z axis.
-                        tempVec2X = Rand_CenteredFloat(200.0f) + (play->view.eye.x + (tempVec2X * 300.0f));
-                        tempVec2Z = Rand_CenteredFloat(50.0f) + (play->view.eye.z + (tempVec2Z * 600.0f));
+                        tempVec2X = Rand_CenteredFloat(200.0f) + (play->views[0].eye.x + (tempVec2X * 300.0f));
+                        tempVec2Z = Rand_CenteredFloat(50.0f) + (play->views[0].eye.z + (tempVec2Z * 600.0f));
                     } else {
                         // rock spawn pos X, Z near player
                         tempVec2X = Rand_CenteredFloat(10.0f) + player->actor.world.pos.x;

@@ -1318,9 +1318,9 @@ typedef struct PlayState {
     /* 0x000A6 */ u8 sceneConfig;
     /* 0x000A7 */ char unk_A7[0x9];
     /* 0x000B0 */ void* sceneSegment;
-    /* 0x000B8 */ View view;
-    /* 0x001E0 */ Camera mainCamera;
-    /* 0x0034C */ Camera subCameras[NUM_CAMS - SUBCAM_FIRST];
+    /* 0x000B8 */ View views[PLAYER_COUNT];
+    /* 0x001E0 */ Camera mainCameras[PLAYER_COUNT];
+    /* 0x0034C */ Camera subCameras[NUM_SUBCAMS];
     /* 0x00790 */ Camera* cameraPtrs[NUM_CAMS];
     /* 0x007A0 */ s16 activeCamera;
     /* 0x007A2 */ s16 nextCamera;

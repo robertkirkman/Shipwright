@@ -506,7 +506,7 @@ void EnXc_SetColossusWindSFX(PlayState* play) {
 
             if ((frameCount >= 120) && (frameCount < 164)) {
                 s32 pad;
-                Vec3f* eye = &play->view.eye;
+                Vec3f* eye = &play->views[0].eye;
 
                 if (D_80B41D90 != 0) {
                     f32 speed = Math3D_Vec3f_DistXYZ(&D_80B42DB0, eye) / 7.058922f;

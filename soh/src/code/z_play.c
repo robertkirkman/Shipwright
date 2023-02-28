@@ -443,7 +443,9 @@ void Play_Init(GameState* thisx) {
     // This is potionally unavoidable due to struct size differences, but is x2 the right amount?
     GameState_Realloc(&play->state, 0x1D4790 * 2);
     KaleidoManager_Init(play);
-    View_Init(&play->view, gfxCtx);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        View_Init(&play->views[i], gfxCtx, i);
+    }
     Audio_SetExtraFilter(0);
     Quake_Init();
 
@@ -451,18 +453,22 @@ void Play_Init(GameState* thisx) {
         play->cameraPtrs[i] = NULL;
     }
 
-    Camera_Init(&play->mainCamera, &play->view, &play->colCtx, play);
-    Camera_ChangeStatus(&play->mainCamera, CAM_STAT_ACTIVE);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        Camera_Init(&play->mainCameras[i], &play->views[i], &play->colCtx, play);
+        Camera_ChangeStatus(&play->mainCameras[i], CAM_STAT_ACTIVE);
+    }
 
-    for (i = 0; i < 3; i++) {
-        Camera_Init(&play->subCameras[i], &play->view, &play->colCtx, play);
+    for (i = 0; i < NUM_SUBCAMS; i++) {
+        Camera_Init(&play->subCameras[i], &play->views[0], &play->colCtx, play);
         Camera_ChangeStatus(&play->subCameras[i], CAM_STAT_UNK100);
     }
 
-    play->cameraPtrs[MAIN_CAM] = &play->mainCamera;
-    play->cameraPtrs[MAIN_CAM]->uid = 0;
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        play->cameraPtrs[i] = &play->mainCameras[i];
+        play->cameraPtrs[i]->uid = 0;
+        func_8005AC48(&play->mainCameras[i], 0xFF);
+    }
     play->activeCamera = MAIN_CAM;
-    func_8005AC48(&play->mainCamera, 0xFF);
     func_80112098(play);
     Message_Init(play);
     GameOver_Init(play);
@@ -609,28 +615,29 @@ void Play_Init(GameState* thisx) {
     while (!func_800973FC(play, &play->roomCtx)) {
         ; // Empty Loop
     }
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        Camera_InitPlayerSettings(&play->mainCameras[i], player);
+        Camera_ChangeMode(&play->mainCameras[i], CAM_MODE_NORMAL);
 
-    player = GET_PLAYER(play);
-    Camera_InitPlayerSettings(&play->mainCamera, player);
-    Camera_ChangeMode(&play->mainCamera, CAM_MODE_NORMAL);
+        // OTRTODO: Bounds check cameraDataList to guard against scenes spawning the player with
+        // an out of bounds background camera index. This requires adding an extra field to the
+        // CollisionHeader struct to save the length of cameraDataList.
+        // Fixes Dodongo's Cavern blue warp crash.
+        {
+            CollisionHeader* colHeader = BgCheck_GetCollisionHeader(&play->colCtx, BGCHECK_SCENE);
 
-    // OTRTODO: Bounds check cameraDataList to guard against scenes spawning the player with
-    // an out of bounds background camera index. This requires adding an extra field to the
-    // CollisionHeader struct to save the length of cameraDataList.
-    // Fixes Dodongo's Cavern blue warp crash.
-    {
-        CollisionHeader* colHeader = BgCheck_GetCollisionHeader(&play->colCtx, BGCHECK_SCENE);
-
-        // If the player's start cam is out of bounds, set it to 0xFF so it isn't used.
-        if (colHeader != NULL && ((player->actor.params & 0xFF) >= colHeader->cameraDataListLen)) {
-            player->actor.params |= 0xFF;
+            // If the player's start cam is out of bounds, set it to 0xFF so it isn't used.
+            if (colHeader != NULL && ((player->actor.params & 0xFF) >= colHeader->cameraDataListLen)) {
+                player->actor.params |= 0xFF;
+            }
         }
-    }
 
-    playerStartCamId = player->actor.params & 0xFF;
-    if (playerStartCamId != 0xFF) {
-        osSyncPrintf("player has start camera ID (" VT_FGCOL(BLUE) "%d" VT_RST ")\n", playerStartCamId);
-        Camera_ChangeDataIdx(&play->mainCamera, playerStartCamId);
+        playerStartCamId = player->actor.params & 0xFF;
+        if (playerStartCamId != 0xFF) {
+            osSyncPrintf("player has start camera ID (" VT_FGCOL(BLUE) "%d" VT_RST ")\n", playerStartCamId);
+            Camera_ChangeDataIdx(&play->mainCameras[i], playerStartCamId);
+        }
     }
 
     if (YREG(15) == 32) {
@@ -645,7 +652,10 @@ void Play_Init(GameState* thisx) {
     Environment_PlaySceneSequence(play);
     gSaveContext.seqId = play->sequenceCtx.seqId;
     gSaveContext.natureAmbienceId = play->sequenceCtx.natureAmbienceId;
-    func_8002DF18(play, GET_PLAYER(play));
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        func_8002DF18(play, player);
+    }
     AnimationContext_Update(play, &play->animationCtx);
     gSaveContext.respawnFlag = 0;
     #if 0
@@ -1380,256 +1390,263 @@ void Play_Draw(PlayState* play) {
 
     Gfx_SetupFrame(gfxCtx, 0, 0, 0);
 
-    if ((HREG(80) != 10) || (HREG(82) != 0)) {
-        POLY_OPA_DISP = Play_SetFog(play, POLY_OPA_DISP);
-        POLY_XLU_DISP = Play_SetFog(play, POLY_XLU_DISP);
-        POLY_KAL_DISP = Play_SetFog(play, POLY_KAL_DISP);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        if ((HREG(80) != 10) || (HREG(82) != 0)) {
+            POLY_OPA_DISP = Play_SetFog(play, POLY_OPA_DISP);
+            POLY_XLU_DISP = Play_SetFog(play, POLY_XLU_DISP);
+            POLY_KAL_DISP = Play_SetFog(play, POLY_KAL_DISP);
+            func_800AA460(&play->views[i], play->views[i].fovy, play->views[i].zNear, play->lightCtx.fogFar);
+            func_800AAA50(&play->views[i], 15);
 
-        func_800AA460(&play->view, play->view.fovy, play->view.zNear, play->lightCtx.fogFar);
-        func_800AAA50(&play->view, 15);
+            // The billboard matrix temporarily stores the viewing matrix
+            Matrix_MtxToMtxF(&play->views[i].viewing, &play->billboardMtxF);
+            Matrix_MtxToMtxF(&play->views[i].projection, &play->viewProjectionMtxF);
+            Matrix_Mult(&play->viewProjectionMtxF, MTXMODE_NEW);
+            // The billboard is still a viewing matrix at this stage
+            Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
+            Matrix_Get(&play->viewProjectionMtxF);
+            play->billboardMtxF.mf[0][3] = play->billboardMtxF.mf[1][3] = play->billboardMtxF.mf[2][3] =
+                play->billboardMtxF.mf[3][0] = play->billboardMtxF.mf[3][1] = play->billboardMtxF.mf[3][2] =
+                    0.0f;
+            // This transpose is where the viewing matrix is properly converted into a billboard matrix
+            Matrix_Transpose(&play->billboardMtxF);
+            play->billboardMtx = Matrix_MtxFToMtx(MATRIX_CHECKFLOATS(&play->billboardMtxF),
+                                                        Graph_Alloc(gfxCtx, sizeof(Mtx)));
 
-        // The billboard matrix temporarily stores the viewing matrix
-        Matrix_MtxToMtxF(&play->view.viewing, &play->billboardMtxF);
-        Matrix_MtxToMtxF(&play->view.projection, &play->viewProjectionMtxF);
-        Matrix_Mult(&play->viewProjectionMtxF, MTXMODE_NEW);
-        // The billboard is still a viewing matrix at this stage
-        Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
-        Matrix_Get(&play->viewProjectionMtxF);
-        play->billboardMtxF.mf[0][3] = play->billboardMtxF.mf[1][3] = play->billboardMtxF.mf[2][3] =
-            play->billboardMtxF.mf[3][0] = play->billboardMtxF.mf[3][1] = play->billboardMtxF.mf[3][2] =
-                0.0f;
-        // This transpose is where the viewing matrix is properly converted into a billboard matrix
-        Matrix_Transpose(&play->billboardMtxF);
-        play->billboardMtx = Matrix_MtxFToMtx(MATRIX_CHECKFLOATS(&play->billboardMtxF),
-                                                   Graph_Alloc(gfxCtx, sizeof(Mtx)));
+            gSPSegment(POLY_OPA_DISP++, 0x01, play->billboardMtx);
 
-        gSPSegment(POLY_OPA_DISP++, 0x01, play->billboardMtx);
+            if ((HREG(80) != 10) || (HREG(92) != 0)) {
+                Gfx* gfxP;
+                Gfx* sp1CC = POLY_OPA_DISP;
 
-        if ((HREG(80) != 10) || (HREG(92) != 0)) {
-            Gfx* gfxP;
-            Gfx* sp1CC = POLY_OPA_DISP;
+                gfxP = Graph_GfxPlusOne(sp1CC);
+                gSPDisplayList(OVERLAY_DISP++, gfxP);
+                gSPGrayscale(gfxP++, false);
 
-            gfxP = Graph_GfxPlusOne(sp1CC);
-            gSPDisplayList(OVERLAY_DISP++, gfxP);
-            gSPGrayscale(gfxP++, false);
+                if ((play->transitionMode == 3) || (play->transitionMode == 11) ||
+                    (play->transitionCtx.transitionType >= 56)) {
+                    View view;
 
-            if ((play->transitionMode == 3) || (play->transitionMode == 11) ||
-                (play->transitionCtx.transitionType >= 56)) {
-                View view;
+                    View_Init(&view, gfxCtx, 0);
+                    view.flags = 2 | 8;
 
-                View_Init(&view, gfxCtx);
-                view.flags = 2 | 8;
+                    SET_FULLSCREEN_VIEWPORT(&view);
 
-                SET_FULLSCREEN_VIEWPORT(&view);
+                    func_800AB9EC(&view, 15, &gfxP);
+                    play->transitionCtx.draw(&play->transitionCtx.data, &gfxP);
+                }
 
-                func_800AB9EC(&view, 15, &gfxP);
-                play->transitionCtx.draw(&play->transitionCtx.data, &gfxP);
+                TransitionFade_Draw(&play->transitionFade, &gfxP);
+
+                if (D_801614B0.a > 0) {
+                    gDPSetGrayscaleColor(gfxP++, D_801614B0.r, D_801614B0.g, D_801614B0.b, D_801614B0.a);
+                    gSPGrayscale(gfxP++, true);
+                }
+
+                gSPEndDisplayList(gfxP++);
+                Graph_BranchDlist(sp1CC, gfxP);
+                POLY_OPA_DISP = gfxP;
             }
 
-            TransitionFade_Draw(&play->transitionFade, &gfxP);
+            if (gTrnsnUnkState == 3) {
+                Gfx* sp88 = POLY_OPA_DISP;
 
-            if (D_801614B0.a > 0) {
-                gDPSetGrayscaleColor(gfxP++, D_801614B0.r, D_801614B0.g, D_801614B0.b, D_801614B0.a);
-                gSPGrayscale(gfxP++, true);
-            }
+                TransitionUnk_Draw(&sTrnsnUnk, &sp88);
+                POLY_OPA_DISP = sp88;
+                goto Play_Draw_DrawOverlayElements;
+            } else {
+                PreRender_SetValues(&play->pauseBgPreRender, SCREEN_WIDTH, SCREEN_HEIGHT, gfxCtx->curFrameBuffer,
+                                    gZBuffer);
 
-            gSPEndDisplayList(gfxP++);
-            Graph_BranchDlist(sp1CC, gfxP);
-            POLY_OPA_DISP = gfxP;
-        }
+                if (R_PAUSE_MENU_MODE == 2) {
+                    MsgEvent_SendNullTask();
+                    PreRender_Calc(&play->pauseBgPreRender);
+                    R_PAUSE_MENU_MODE = 3;
+                } else if (R_PAUSE_MENU_MODE >= 4) {
+                    R_PAUSE_MENU_MODE = 0;
+                }
 
-        if (gTrnsnUnkState == 3) {
-            Gfx* sp88 = POLY_OPA_DISP;
+                if (R_PAUSE_MENU_MODE == 3) {
+                    Gfx* sp84 = POLY_OPA_DISP;
 
-            TransitionUnk_Draw(&sTrnsnUnk, &sp88);
-            POLY_OPA_DISP = sp88;
-            goto Play_Draw_DrawOverlayElements;
-        } else {
-            PreRender_SetValues(&play->pauseBgPreRender, SCREEN_WIDTH, SCREEN_HEIGHT, gfxCtx->curFrameBuffer,
-                                gZBuffer);
+                    //func_800C24BC(&play->pauseBgPreRender, &sp84);
+                    POLY_OPA_DISP = sp84;
 
-            if (R_PAUSE_MENU_MODE == 2) {
-                MsgEvent_SendNullTask();
-                PreRender_Calc(&play->pauseBgPreRender);
-                R_PAUSE_MENU_MODE = 3;
-            } else if (R_PAUSE_MENU_MODE >= 4) {
-                R_PAUSE_MENU_MODE = 0;
-            }
+                    //goto Play_Draw_DrawOverlayElements;
+                }
+                //else
+                {
+                    s32 sp80;
 
-            if (R_PAUSE_MENU_MODE == 3) {
-                Gfx* sp84 = POLY_OPA_DISP;
+                    if ((HREG(80) != 10) || (HREG(83) != 0)) {
+                        if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) &&
+                            !play->envCtx.skyboxDisabled) {         
+                            for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                                if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
+                                    (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
+                                    Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
 
-                //func_800C24BC(&play->pauseBgPreRender, &sp84);
-                POLY_OPA_DISP = sp84;
-
-                //goto Play_Draw_DrawOverlayElements;
-            }
-            //else
-            {
-                s32 sp80;
-
-                if ((HREG(80) != 10) || (HREG(83) != 0)) {
-                    if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) &&
-                        !play->envCtx.skyboxDisabled) {
-                        if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
-                            (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
-                            Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
-
-                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
-                                            play->envCtx.skyboxBlend, play->view.eye.x, play->view.eye.y,
-                                            play->view.eye.z);
-                        } else if (play->skyboxCtx.unk_140 == 0) {
-                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                            play->view.eye.x, play->view.eye.y, play->view.eye.z);
+                                    SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
+                                                    play->envCtx.skyboxBlend, play->views[i].eye.x, play->views[i].eye.y,
+                                                    play->views[i].eye.z);
+                                } else if (play->skyboxCtx.unk_140 == 0) {
+                                    SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                                    play->views[i].eye.x, play->views[i].eye.y, play->views[i].eye.z);
+                                }
+                            }
                         }
                     }
-                }
 
-                if ((HREG(80) != 10) || (HREG(90) & 2)) {
-                    if (!play->envCtx.sunMoonDisabled) {
-                        Environment_DrawSunAndMoon(play);
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 1)) {
-                    Environment_DrawSkyboxFilters(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 4)) {
-                    Environment_UpdateLightningStrike(play);
-                    Environment_DrawLightning(play, 0);
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 8)) {
-                    sp228 = LightContext_NewLights(&play->lightCtx, gfxCtx);
-                    Lights_BindAll(sp228, play->lightCtx.listHead, NULL);
-                    Lights_Draw(sp228, gfxCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(84) != 0)) {
-                    if (VREG(94) == 0) {
-                        if (HREG(80) != 10) {
-                            sp80 = 3;
-                        } else {
-                            sp80 = HREG(84);
+                    if ((HREG(80) != 10) || (HREG(90) & 2)) {
+                        if (!play->envCtx.sunMoonDisabled) {
+                            Environment_DrawSunAndMoon(play);
                         }
-                        Scene_Draw(play);
-                        Room_Draw(play, &play->roomCtx.curRoom, sp80 & 3);
-                        Room_Draw(play, &play->roomCtx.prevRoom, sp80 & 3);
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(83) != 0)) {
-                    if ((play->skyboxCtx.unk_140 != 0) &&
-                        (GET_ACTIVE_CAM(play)->setting != CAM_SET_PREREND_FIXED)) {
-                        Vec3f sp74;
-
-                        Camera_GetSkyboxOffset(&sp74, GET_ACTIVE_CAM(play));
-                        SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                        play->view.eye.x + sp74.x, play->view.eye.y + sp74.y,
-                                        play->view.eye.z + sp74.z);
-                    }
-                }
-
-                if (play->envCtx.unk_EE[1] != 0) {
-                    Environment_DrawRain(play, &play->view, gfxCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(84) != 0)) {
-                    Environment_FillScreen(gfxCtx, 0, 0, 0, play->unk_11E18, FILL_SCREEN_OPA);
-                }
-
-                if ((play->pauseCtx.state != 0) && (HREG(80) != 10) || (HREG(89) != 0)) {
-                    Play_DrawOverlayElements(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(85) != 0)) {
-                    func_800315AC(play, &play->actorCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(86) != 0)) {
-                    if (!play->envCtx.sunMoonDisabled) {
-                        sp21C.x = play->view.eye.x + play->envCtx.sunPos.x;
-                        sp21C.y = play->view.eye.y + play->envCtx.sunPos.y;
-                        sp21C.z = play->view.eye.z + play->envCtx.sunPos.z;
-                        Environment_DrawSunLensFlare(play, &play->envCtx, &play->view, gfxCtx, sp21C, 0);
-                    }
-                    Environment_DrawCustomLensFlare(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(87) != 0)) {
-                    if (MREG(64) != 0) {
-                        Environment_FillScreen(gfxCtx, MREG(65), MREG(66), MREG(67), MREG(68),
-                                               FILL_SCREEN_OPA | FILL_SCREEN_XLU);
                     }
 
-                    switch (play->envCtx.fillScreen) {
-                        case 1:
-                            Environment_FillScreen(
-                                gfxCtx, play->envCtx.screenFillColor[0], play->envCtx.screenFillColor[1],
-                                play->envCtx.screenFillColor[2], play->envCtx.screenFillColor[3],
-                                FILL_SCREEN_OPA | FILL_SCREEN_XLU);
-                            break;
-                        default:
-                            break;
+                    if ((HREG(80) != 10) || (HREG(90) & 1)) {
+                        Environment_DrawSkyboxFilters(play);
                     }
-                }
 
-                if ((HREG(80) != 10) || (HREG(88) != 0)) {
-                    if (play->envCtx.sandstormState != 0) {
-                        Environment_DrawSandstorm(play, play->envCtx.sandstormState);
+                    if ((HREG(80) != 10) || (HREG(90) & 4)) {
+                        Environment_UpdateLightningStrike(play);
+                        Environment_DrawLightning(play, 0);
                     }
-                }
 
-                if ((HREG(80) != 10) || (HREG(93) != 0)) {
-                    DebugDisplay_DrawObjects(play);
-                }
-
-                if ((R_PAUSE_MENU_MODE == 1) || (gTrnsnUnkState == 1)) {
-                    Gfx* sp70 = OVERLAY_DISP;
-
-                    play->pauseBgPreRender.fbuf = gfxCtx->curFrameBuffer;
-                    play->pauseBgPreRender.fbufSave = (u16*)gZBuffer;
-                    func_800C1F20(&play->pauseBgPreRender, &sp70);
-                    if (R_PAUSE_MENU_MODE == 1) {
-                        play->pauseBgPreRender.cvgSave = (u8*)gfxCtx->curFrameBuffer;
-                        func_800C20B4(&play->pauseBgPreRender, &sp70);
-                        R_PAUSE_MENU_MODE = 2;
-                    } else {
-                        gTrnsnUnkState = 2;
+                    if ((HREG(80) != 10) || (HREG(90) & 8)) {
+                        sp228 = LightContext_NewLights(&play->lightCtx, gfxCtx);
+                        Lights_BindAll(sp228, play->lightCtx.listHead, NULL);
+                        Lights_Draw(sp228, gfxCtx);
                     }
-                    OVERLAY_DISP = sp70;
-                    play->unk_121C7 = 2;
-                    SREG(33) |= 1;
-                } else if (R_PAUSE_MENU_MODE != 3) {
-                Play_Draw_DrawOverlayElements:
-                    if ((HREG(80) != 10) || (HREG(89) != 0)) {
+
+                    if ((HREG(80) != 10) || (HREG(84) != 0)) {
+                        if (VREG(94) == 0) {
+                            if (HREG(80) != 10) {
+                                sp80 = 3;
+                            } else {
+                                sp80 = HREG(84);
+                            }
+                            Scene_Draw(play);
+                            Room_Draw(play, &play->roomCtx.curRoom, sp80 & 3);
+                            Room_Draw(play, &play->roomCtx.prevRoom, sp80 & 3);
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(83) != 0)) {
+                        for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                            if ((play->skyboxCtx.unk_140 != 0) &&
+                                (play->cameraPtrs[i]->setting != CAM_SET_PREREND_FIXED)) {
+                                Vec3f sp74;
+
+                                Camera_GetSkyboxOffset(&sp74, play->cameraPtrs[i]);
+                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                                play->views[i].eye.x + sp74.x, play->views[i].eye.y + sp74.y,
+                                                play->views[i].eye.z + sp74.z);
+                            }
+                        }
+                    }
+
+                    if (play->envCtx.unk_EE[1] != 0) {
+                        Environment_DrawRain(play, &play->views[0], gfxCtx);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(84) != 0)) {
+                        Environment_FillScreen(gfxCtx, 0, 0, 0, play->unk_11E18, FILL_SCREEN_OPA);
+                    }
+
+                    if ((play->pauseCtx.state != 0) && (HREG(80) != 10) || (HREG(89) != 0)) {
                         Play_DrawOverlayElements(play);
                     }
+
+                    if ((HREG(80) != 10) || (HREG(85) != 0)) {
+                        func_800315AC(play, &play->actorCtx);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(86) != 0)) {
+                        if (!play->envCtx.sunMoonDisabled) {
+                            for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                                sp21C.x = play->views[i].eye.x + play->envCtx.sunPos.x;
+                                sp21C.y = play->views[i].eye.y + play->envCtx.sunPos.y;
+                                sp21C.z = play->views[i].eye.z + play->envCtx.sunPos.z;
+                                Environment_DrawSunLensFlare(play, &play->envCtx, &play->views[i], gfxCtx, sp21C, 0);
+                            }
+                        }
+                        Environment_DrawCustomLensFlare(play);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(87) != 0)) {
+                        if (MREG(64) != 0) {
+                            Environment_FillScreen(gfxCtx, MREG(65), MREG(66), MREG(67), MREG(68),
+                                                FILL_SCREEN_OPA | FILL_SCREEN_XLU);
+                        }
+
+                        switch (play->envCtx.fillScreen) {
+                            case 1:
+                                Environment_FillScreen(
+                                    gfxCtx, play->envCtx.screenFillColor[0], play->envCtx.screenFillColor[1],
+                                    play->envCtx.screenFillColor[2], play->envCtx.screenFillColor[3],
+                                    FILL_SCREEN_OPA | FILL_SCREEN_XLU);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(88) != 0)) {
+                        if (play->envCtx.sandstormState != 0) {
+                            Environment_DrawSandstorm(play, play->envCtx.sandstormState);
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(93) != 0)) {
+                        DebugDisplay_DrawObjects(play);
+                    }
+
+                    if ((R_PAUSE_MENU_MODE == 1) || (gTrnsnUnkState == 1)) {
+                        Gfx* sp70 = OVERLAY_DISP;
+
+                        play->pauseBgPreRender.fbuf = gfxCtx->curFrameBuffer;
+                        play->pauseBgPreRender.fbufSave = (u16*)gZBuffer;
+                        func_800C1F20(&play->pauseBgPreRender, &sp70);
+                        if (R_PAUSE_MENU_MODE == 1) {
+                            play->pauseBgPreRender.cvgSave = (u8*)gfxCtx->curFrameBuffer;
+                            func_800C20B4(&play->pauseBgPreRender, &sp70);
+                            R_PAUSE_MENU_MODE = 2;
+                        } else {
+                            gTrnsnUnkState = 2;
+                        }
+                        OVERLAY_DISP = sp70;
+                        play->unk_121C7 = 2;
+                        SREG(33) |= 1;
+                    } else if (R_PAUSE_MENU_MODE != 3) {
+                    Play_Draw_DrawOverlayElements:
+                        if ((HREG(80) != 10) || (HREG(89) != 0)) {
+                            Play_DrawOverlayElements(play);
+                        }
+                    }
                 }
             }
         }
-    }
 
-    if (play->view.unk_124 != 0) {
-        Camera_Update(GET_ACTIVE_CAM(play));
-        func_800AB944(&play->view);
-        play->view.unk_124 = 0;
-        if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) && !play->envCtx.skyboxDisabled) {
-            SkyboxDraw_UpdateMatrix(&play->skyboxCtx, play->view.eye.x, play->view.eye.y,
-                                    play->view.eye.z);
+        if (play->views[i].unk_124 != 0) {
+            Camera_Update(play->cameraPtrs[i]);
+            func_800AB944(&play->views[i]);
+            play->views[i].unk_124 = 0;
+            if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) && !play->envCtx.skyboxDisabled) {
+                SkyboxDraw_UpdateMatrix(&play->skyboxCtx, play->views[i].eye.x, play->views[i].eye.y,
+                                        play->views[i].eye.z);
+            }
         }
-    }
 
-    Camera_Finish(GET_ACTIVE_CAM(play));
+        Camera_Finish(play->cameraPtrs[i]);
 
-    {
-        Gfx* prevDisplayList = POLY_OPA_DISP;
-        Gfx* gfxP = Graph_GfxPlusOne(POLY_OPA_DISP);
-        gSPDisplayList(OVERLAY_DISP++, gfxP);
-        gSPEndDisplayList(gfxP++);
-        Graph_BranchDlist(prevDisplayList, gfxP);
-        POLY_OPA_DISP = gfxP;
+        {
+            Gfx* prevDisplayList = POLY_OPA_DISP;
+            Gfx* gfxP = Graph_GfxPlusOne(POLY_OPA_DISP);
+            gSPDisplayList(OVERLAY_DISP++, gfxP);
+            gSPEndDisplayList(gfxP++);
+            Graph_BranchDlist(prevDisplayList, gfxP);
+            POLY_OPA_DISP = gfxP;
+        }
     }
 
     CLOSE_DISPS(gfxCtx);
@@ -1874,7 +1891,7 @@ s16 Play_CreateSubCamera(PlayState* play) {
                  i);
 
     play->cameraPtrs[i] = &play->subCameras[i - SUBCAM_FIRST];
-    Camera_Init(play->cameraPtrs[i], &play->view, &play->colCtx, play);
+    Camera_Init(play->cameraPtrs[i], &play->views[0], &play->colCtx, play);
     play->cameraPtrs[i]->thisIdx = i;
 
     return i;
@@ -1928,6 +1945,12 @@ Camera* Play_GetCamera(PlayState* play, s16 camId) {
     s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
 
     return play->cameraPtrs[camIdx];
+}
+
+Camera* Play_GetCameraFromPlayer(PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
+
+    return play->cameraPtrs[playerIndex];
 }
 
 s32 Play_CameraSetAtEye(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye) {

@@ -435,7 +435,9 @@ void func_80A74EBC(EnIk* this, PlayState* play) {
         sp2C.z = this->actor.world.pos.z + Math_CosS(this->actor.shape.rot.y + 0x6A4) * 70.0f;
         sp2C.y = this->actor.world.pos.y;
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_IRONNACK_HIT_GND);
-        Camera_AddQuake(&play->mainCamera, 2, 0x19, 5);
+        for (u32 i = 0; i < PLAYER_COUNT; i++) {
+            Camera_AddQuake(&play->mainCameras[0], 2, 0x19, 5);
+        }
         func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
         CollisionCheck_SpawnShieldParticles(play, &sp2C);
     }

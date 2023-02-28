@@ -78,13 +78,13 @@ void EnBomBowlPit_DetectHit(EnBomBowlPit* this, PlayState* play) {
                 this->unk_1C8.x = this->unk_1C8.y = this->unk_1C8.z = 0.1f;
                 this->unk_1A4.x = this->unk_1A4.y = this->unk_1A4.z = 0.1f;
 
-                this->unk_180.x = this->unk_168.x = play->view.lookAt.x;
-                this->unk_180.y = this->unk_168.y = play->view.lookAt.y;
-                this->unk_180.z = this->unk_168.z = play->view.lookAt.z;
+                this->unk_180.x = this->unk_168.x = play->views[0].lookAt.x;
+                this->unk_180.y = this->unk_168.y = play->views[0].lookAt.y;
+                this->unk_180.z = this->unk_168.z = play->views[0].lookAt.z;
 
-                this->unk_18C.x = this->unk_174.x = play->view.eye.x;
-                this->unk_18C.y = this->unk_174.y = play->view.eye.y;
-                this->unk_18C.z = this->unk_174.z = play->view.eye.z;
+                this->unk_18C.x = this->unk_174.x = play->views[0].eye.x;
+                this->unk_18C.y = this->unk_174.y = play->views[0].eye.y;
+                this->unk_18C.z = this->unk_174.z = play->views[0].eye.z;
 
                 this->unk_1BC.x = 20.0f;
                 this->unk_1BC.y = 100.0f;

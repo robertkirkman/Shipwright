@@ -750,10 +750,10 @@ void func_80ACB748(EnOwl* this, PlayState* play) {
     f32 weight;
     s32 owlType = (this->actor.params & 0xFC0) >> 6;
 
-    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->view.eye) / 45.0f;
-    this->eye.x = play->view.eye.x;
-    this->eye.y = play->view.eye.y;
-    this->eye.z = play->view.eye.z;
+    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->views[0].eye) / 45.0f;
+    this->eye.x = play->views[0].eye.x;
+    this->eye.y = play->views[0].eye.y;
+    this->eye.z = play->views[0].eye.z;
 
     weight = dist;
     if (weight > 1.0f) {

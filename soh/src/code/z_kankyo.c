@@ -1318,9 +1318,9 @@ void Environment_DrawSunAndMoon(PlayState* play) {
     }
 
     if (gSaveContext.entranceIndex != 0xCD || ((void)0, gSaveContext.sceneSetupIndex) != 5) {
-        Matrix_Translate(play->view.eye.x + play->envCtx.sunPos.x,
-                         play->view.eye.y + play->envCtx.sunPos.y,
-                         play->view.eye.z + play->envCtx.sunPos.z, MTXMODE_NEW);
+        Matrix_Translate(play->views[0].eye.x + play->envCtx.sunPos.x,
+                         play->views[0].eye.y + play->envCtx.sunPos.y,
+                         play->views[0].eye.z + play->envCtx.sunPos.z, MTXMODE_NEW);
 
         y = play->envCtx.sunPos.y / 25.0f;
         temp = y / 80.0f;
@@ -1371,9 +1371,9 @@ void Environment_DrawSunAndMoon(PlayState* play) {
         gSPVertex(POLY_OPA_DISP++, vertices, 4, 0);
         gSP2Triangles(POLY_OPA_DISP++, 0, 1, 2, 0, 2, 1, 3, 0);
 
-        Matrix_Translate(play->view.eye.x - play->envCtx.sunPos.x,
-                         play->view.eye.y - play->envCtx.sunPos.y,
-                         play->view.eye.z - play->envCtx.sunPos.z, MTXMODE_NEW);
+        Matrix_Translate(play->views[0].eye.x - play->envCtx.sunPos.x,
+                         play->views[0].eye.y - play->envCtx.sunPos.y,
+                         play->views[0].eye.z - play->envCtx.sunPos.z, MTXMODE_NEW);
 
         color = -y / 120.0f;
         color = CLAMP_MIN(color, 0.0f);
@@ -1409,7 +1409,7 @@ void Environment_DrawSunAndMoon(PlayState* play) {
 void Environment_DrawSunLensFlare(PlayState* play, EnvironmentContext* envCtx, View* view,
                                   GraphicsContext* gfxCtx, Vec3f pos, s32 unused) {
     if ((play->envCtx.unk_EE[1] == 0) && (play->envCtx.unk_17 == 0)) {
-        Environment_DrawLensFlare(play, &play->envCtx, &play->view, play->state.gfxCtx, pos, 2000,
+        Environment_DrawLensFlare(play, &play->envCtx, &play->views[0], play->state.gfxCtx, pos, 2000,
                                   370, Math_CosS(((void)0, gSaveContext.dayTime) - 0x8000) * 120.0f, 400, 1);
     }
 }
@@ -1527,7 +1527,7 @@ void Environment_DrawLensFlare(PlayState* play, EnvironmentContext* envCtx, View
             Matrix_Translate(pos.x, pos.y, pos.z, MTXMODE_NEW);
 
             if (arg9) {
-                temp = Environment_LerpWeight(60, 15, play->view.fovy);
+                temp = Environment_LerpWeight(60, 15, play->views[0].fovy);
             }
 
             Matrix_Translate(-posDirX * i * dist, -posDirY * i * dist, -posDirZ * i * dist, MTXMODE_APPLY);
@@ -1936,15 +1936,15 @@ void Environment_DrawLightning(PlayState* play, s32 unused) {
 
         switch (sLightningBolts[i].state) {
             case LIGHTNING_BOLT_START:
-                dx = play->view.lookAt.x - play->view.eye.x;
-                dz = play->view.lookAt.z - play->view.eye.z;
+                dx = play->views[0].lookAt.x - play->views[0].eye.x;
+                dz = play->views[0].lookAt.z - play->views[0].eye.z;
 
                 x = dx / sqrtf(SQ(dx) + SQ(dz));
                 z = dz / sqrtf(SQ(dx) + SQ(dz));
 
-                sLightningBolts[i].pos.x = play->view.eye.x + x * 9500.0f;
+                sLightningBolts[i].pos.x = play->views[0].eye.x + x * 9500.0f;
                 sLightningBolts[i].pos.y = Rand_ZeroOne() * 1000.0f + 4000.0f;
-                sLightningBolts[i].pos.z = play->view.eye.z + z * 9500.0f;
+                sLightningBolts[i].pos.z = play->views[0].eye.z + z * 9500.0f;
 
                 sLightningBolts[i].offset.x = (Rand_ZeroOne() - 0.5f) * 5000.0f;
                 sLightningBolts[i].offset.y = 0.0f;
@@ -2137,7 +2137,7 @@ void Environment_DrawCustomLensFlare(PlayState* play) {
         pos.y = gCustomLensFlarePos.y;
         pos.z = gCustomLensFlarePos.z;
 
-        Environment_DrawLensFlare(play, &play->envCtx, &play->view, play->state.gfxCtx, pos,
+        Environment_DrawLensFlare(play, &play->envCtx, &play->views[0], play->state.gfxCtx, pos,
                                   gLensFlareUnused, gLensFlareScale, gLensFlareColorIntensity,
                                   gLensFlareScreenFillAlpha, 0);
     }

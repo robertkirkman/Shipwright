@@ -315,7 +315,7 @@ void Title_Init(GameState* thisx) {
     D_801614B0.a = 0;
     R_UPDATE_RATE = 1;
     Matrix_Init(&this->state);
-    View_Init(&this->view, this->state.gfxCtx);
+    View_Init(&this->view, this->state.gfxCtx, 0);
     this->state.main = Title_Main;
     this->state.destroy = Title_Destroy;
     this->exit = false;

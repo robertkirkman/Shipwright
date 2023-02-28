@@ -564,7 +564,7 @@ void func_80AAB158(EnMd* this, PlayState* play) {
     }
 
     if ((play->csCtx.state != CS_STATE_IDLE) || gDbgCamEnabled) {
-        this->interactInfo.trackPos = play->view.eye;
+        this->interactInfo.trackPos = play->views[0].eye;
         this->interactInfo.yOffset = 40.0f;
         trackingMode = NPC_TRACKING_HEAD_AND_TORSO;
     } else {

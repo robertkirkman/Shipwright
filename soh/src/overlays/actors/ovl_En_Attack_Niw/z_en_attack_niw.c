@@ -188,13 +188,13 @@ void func_809B5670(EnAttackNiw* this, PlayState* play) {
 
     this->actor.speedXZ = 10.0f;
 
-    tmpf1 = (this->unk_298.x + play->view.lookAt.x) - play->view.eye.x;
-    tmpf2 = (this->unk_298.y + play->view.lookAt.y) - play->view.eye.y;
-    tmpf3 = (this->unk_298.z + play->view.lookAt.z) - play->view.eye.z;
+    tmpf1 = (this->unk_298.x + play->views[0].lookAt.x) - play->views[0].eye.x;
+    tmpf2 = (this->unk_298.y + play->views[0].lookAt.y) - play->views[0].eye.y;
+    tmpf3 = (this->unk_298.z + play->views[0].lookAt.z) - play->views[0].eye.z;
 
-    sp34.x = play->view.lookAt.x + tmpf1;
-    sp34.y = play->view.lookAt.y + tmpf2;
-    sp34.z = play->view.lookAt.z + tmpf3;
+    sp34.x = play->views[0].lookAt.x + tmpf1;
+    sp34.y = play->views[0].lookAt.y + tmpf2;
+    sp34.z = play->views[0].lookAt.z + tmpf3;
 
     this->unk_2D4 = Math_Vec3f_Yaw(&this->actor.world.pos, &sp34);
     this->unk_2D0 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp34) * -1.0f;

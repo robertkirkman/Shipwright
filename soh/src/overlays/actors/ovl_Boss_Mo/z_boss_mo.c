@@ -2508,7 +2508,7 @@ void BossMo_DrawTentacle(BossMo* this, PlayState* play) {
         gSPMatrix(POLY_XLU_DISP++, matrix, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
         if (i == 0) {
-            func_8002EB44(&this->tentPos[i], &play->view.eye, &sp110, play->state.gfxCtx);
+            func_8002EB44(&this->tentPos[i], &play->views[0].eye, &sp110, play->state.gfxCtx);
         }
 
         if (i == 0) {

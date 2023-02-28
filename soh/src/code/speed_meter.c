@@ -69,7 +69,7 @@ void SpeedMeter_DrawTimeEntries(SpeedMeter* this, GraphicsContext* gfxCtx) {
         sSpeedMeterTimeEntryPtr++;
     }
 
-    View_Init(&view, gfxCtx);
+    View_Init(&view, gfxCtx, 0);
     view.flags = 0xA;
 
     SET_FULLSCREEN_VIEWPORT(&view);
@@ -125,7 +125,7 @@ void SpeedMeter_DrawAllocEntry(SpeedMeterAllocEntry* this, GraphicsContext* gfxC
     } else {
         OPEN_DISPS(gfxCtx);
 
-        View_Init(&view, gfxCtx);
+        View_Init(&view, gfxCtx, 0);
         view.flags = 0xA;
 
         SET_FULLSCREEN_VIEWPORT(&view);

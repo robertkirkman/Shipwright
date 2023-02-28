@@ -889,7 +889,9 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
             // This camera shake gets very annoying as these Moblins can spawn in many rooms,
             // and also often (initially) out of reach for the player.
             if (!CVarGetInteger("gRandomizedEnemies", 0)) {
-                Camera_AddQuake(&play->mainCamera, 2, 0x19, 5);
+                for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                    Camera_AddQuake(&play->mainCameras[0], 2, 0x19, 5);
+                }
             }
             func_800358DC(&this->actor, &effSpawnPos, &this->actor.world.rot, flamesParams, 20, flamesUnused, play,
                           -1, 0);
@@ -1072,7 +1074,9 @@ void EnMb_ClubDamaged(EnMb* this, PlayState* play) {
             Animation_PlayOnce(&this->skelAnime, &gEnMbClubStandUpAnim);
             this->timer3 = 0;
             func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
-            Camera_AddQuake(&play->mainCamera, 2, 25, 5);
+            for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                Camera_AddQuake(&play->mainCameras[0], 2, 25, 5);
+            }
         } else {
             EnMb_SetupClubWaitPlayerNear(this);
         }
@@ -1133,7 +1137,9 @@ void EnMb_ClubDead(EnMb* this, PlayState* play) {
         func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
         Actor_SpawnFloorDustRing(play, &this->actor, &effPos, 50.0f, 10, 3.0f, 400, 60, false);
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_RIZA_DOWN);
-        Camera_AddQuake(&play->mainCamera, 2, 25, 5);
+        for (u32 i = 0; i < PLAYER_COUNT; i++) {
+            Camera_AddQuake(&play->mainCameras[0], 2, 25, 5);
+        }
     }
 }
 

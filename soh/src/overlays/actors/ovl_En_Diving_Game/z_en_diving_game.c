@@ -315,12 +315,12 @@ void EnDivingGame_SetupRupeeThrow(EnDivingGame* this, PlayState* play) {
         this->rupeesLeftToThrow = 10;
     }
     this->unk_2DC.x = this->unk_2DC.y = this->unk_2DC.z = this->unk_300.x = this->unk_300.y = this->unk_300.z = 0.1f;
-    this->camLookAt.x = play->view.lookAt.x;
-    this->camLookAt.y = play->view.lookAt.y;
-    this->camLookAt.z = play->view.lookAt.z;
-    this->camEye.x = play->view.eye.x;
-    this->camEye.y = play->view.eye.y + 80.0f;
-    this->camEye.z = play->view.eye.z + 250.0f;
+    this->camLookAt.x = play->views[0].lookAt.x;
+    this->camLookAt.y = play->views[0].lookAt.y;
+    this->camLookAt.z = play->views[0].lookAt.z;
+    this->camEye.x = play->views[0].eye.x;
+    this->camEye.y = play->views[0].eye.y + 80.0f;
+    this->camEye.z = play->views[0].eye.z + 250.0f;
     this->unk_2E8.x = fabsf(this->camEye.x - this->unk_2D0.x) * 0.04f;
     this->unk_2E8.y = fabsf(this->camEye.y - this->unk_2D0.y) * 0.04f;
     this->unk_2E8.z = fabsf(this->camEye.z - this->unk_2D0.z) * 0.04f;
@@ -328,7 +328,7 @@ void EnDivingGame_SetupRupeeThrow(EnDivingGame* this, PlayState* play) {
     this->unk_30C.y = fabsf(this->camLookAt.y - this->unk_2F4.y) * 0.04f;
     this->unk_30C.z = fabsf(this->camLookAt.z - this->unk_2F4.z) * 0.04f;
     Play_CameraSetAtEye(play, this->subCamId, &this->camLookAt, &this->camEye);
-    Play_CameraSetFov(play, this->subCamId, play->mainCamera.fov);
+    Play_CameraSetFov(play, this->subCamId, play->mainCameras[0].fov);
     this->csCameraTimer = 60;
     this->actionFunc = EnDivingGame_RupeeThrow;
     this->unk_318 = 0.0f;

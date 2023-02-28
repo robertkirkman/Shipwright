@@ -162,7 +162,7 @@ void func_80A59014(EnHoll* this, PlayState* play) {
     f32 planeHalfWidth;
     f32 absZ;
 
-    func_8002DBD0(&this->actor, &vec, (useViewEye) ? &play->view.eye : &player->actor.world.pos);
+    func_8002DBD0(&this->actor, &vec, (useViewEye) ? &play->views[0].eye : &player->actor.world.pos);
     planeHalfWidth = (((this->actor.params >> 6) & 7) == 6) ? PLANE_HALFWIDTH : PLANE_HALFWIDTH_2;
 
     temp = EnHoll_IsKokiriSetup8();

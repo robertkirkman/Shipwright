@@ -648,7 +648,7 @@ s32 func_80A5BBBC(PlayState* play, EnHorse* this, Vec3f* pos) {
     if (fabsf(sp20) < 0.008f) {
         return false;
     }
-    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->view.eye);
+    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->views[0].eye);
     return func_800314D4(play, &this->actor, &sp24, sp20) || eyeDist < 100.0f;
 }
 

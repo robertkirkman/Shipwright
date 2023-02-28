@@ -5754,9 +5754,9 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
         rot.z = (Camera_GetInputDirYaw(camera) * -(M_PI / 32768)) + rot.y;
 
         for (i = 0; i < (u8)D_80B7A650; i++) {
-            pos.x = Rand_CenteredFloat(700.0f) + play->view.eye.x;
+            pos.x = Rand_CenteredFloat(700.0f) + play->views[0].eye.x;
             pos.y = (Rand_ZeroFloat(100.0f) + 150.0f) - 170.0f;
-            pos.z = Rand_CenteredFloat(700.0f) + play->view.eye.z;
+            pos.z = Rand_CenteredFloat(700.0f) + play->views[0].eye.z;
 
             if (pos.z < 1160.0f) {
                 SkinMatrix_Vec3fMtxFMultXYZW(&play->viewProjectionMtxF, &pos, &projectedPos, &sProjectedW);

@@ -330,7 +330,7 @@ void func_8002BE98(TargetContext* targetCtx, s32 actorCategory, PlayState* play)
     NaviColor* naviColor;
     s32 i;
 
-    Math_Vec3f_Copy(&targetCtx->targetCenterPos, &play->view.eye);
+    Math_Vec3f_Copy(&targetCtx->targetCenterPos, &play->views[0].eye);
     targetCtx->unk_44 = 500.0f;
     targetCtx->unk_48 = 0x100;
 
@@ -1416,7 +1416,7 @@ void func_8002DE04(PlayState* play, Actor* actorA, Actor* actorB) {
 
 void func_8002DE74(PlayState* play, Player* player) {
     if ((play->roomCtx.curRoom.behaviorType1 != ROOM_BEHAVIOR_TYPE1_4) && func_800C0CB8(play)) {
-        Camera_ChangeSetting(Play_GetCamera(play, MAIN_CAM), CAM_SET_HORSE);
+        Camera_ChangeSetting(Play_GetCameraFromPlayer(play, player), CAM_SET_HORSE);
     }
 }
 
@@ -1773,11 +1773,11 @@ void func_8002EBCC(Actor* actor, PlayState* play, s32 flag) {
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
     if (HREG(80) == 6) {
-        osSyncPrintf("z_actor.c 3637 game_play->view.eye=[%f(%f) %f %f]\n", play->view.eye.x,
-                     play->view.eye.y, play->view.eye.z);
+        osSyncPrintf("z_actor.c 3637 game_play->views[0].eye=[%f(%f) %f %f]\n", play->views[0].eye.x,
+                     play->views[0].eye.y, play->views[0].eye.z);
     }
 
-    hilite = func_8002EABC(&actor->world.pos, &play->view.eye, &lightDir, play->state.gfxCtx);
+    hilite = func_8002EABC(&actor->world.pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
 
     if (flag != 0) {
         displayList = Graph_Alloc(play->state.gfxCtx, 2 * sizeof(Gfx));
@@ -1803,7 +1803,7 @@ void func_8002ED80(Actor* actor, PlayState* play, s32 flag) {
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    hilite = func_8002EB44(&actor->world.pos, &play->view.eye, &lightDir, play->state.gfxCtx);
+    hilite = func_8002EB44(&actor->world.pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
 
     if (flag != 0) {
         displayList = Graph_Alloc(play->state.gfxCtx, 2 * sizeof(Gfx));
@@ -2369,9 +2369,9 @@ void Actor_DrawFaroresWindPointer(PlayState* play) {
             f32 diff;
 
             if (nextRatio > 0.0f) {
-                eye.x = play->view.eye.x;
-                eye.y = play->view.eye.y - yOffset;
-                eye.z = play->view.eye.z;
+                eye.x = play->views[0].eye.x;
+                eye.y = play->views[0].eye.y - yOffset;
+                eye.z = play->views[0].eye.z;
                 diff = Math_Vec3f_DistXYZAndStoreDiff(&eye, curPos, &dist);
                 diff = (diff * (nextRatio / curRatio)) / diff;
                 curPos->x = eye.x + (dist.x * diff);
@@ -2476,8 +2476,9 @@ void func_800304DC(PlayState* play, ActorContext* actorCtx, ActorEntry* actorEnt
 
     actorCtx->absoluteSpace = NULL;
 
-    Actor_SpawnEntry(actorCtx, actorEntry, play);
-    Actor_SpawnEntry(actorCtx, actorEntry, play);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        Actor_SpawnEntry(actorCtx, actorEntry, play);
+    }
     func_8002C0C0(&actorCtx->targetCtx, actorCtx->actorLists[ACTORCAT_PLAYER].head, play);
     func_8002FA60(play);
 }
@@ -2669,9 +2670,9 @@ void Actor_Draw(PlayState* play, Actor* actor) {
     FrameInterpolation_RecordActorPosRotMatrix();
     if (actor->flags & ACTOR_FLAG_12) {
         Matrix_SetTranslateRotateYXZ(
-            actor->world.pos.x + play->mainCamera.skyboxOffset.x,
-            actor->world.pos.y + (f32)((actor->shape.yOffset * actor->scale.y) + play->mainCamera.skyboxOffset.y),
-            actor->world.pos.z + play->mainCamera.skyboxOffset.z, &actor->shape.rot);
+            actor->world.pos.x + play->mainCameras[0].skyboxOffset.x,
+            actor->world.pos.y + (f32)((actor->shape.yOffset * actor->scale.y) + play->mainCameras[0].skyboxOffset.y),
+            actor->world.pos.z + play->mainCameras[0].skyboxOffset.z, &actor->shape.rot);
     } else {
         Matrix_SetTranslateRotateYXZ(actor->world.pos.x, actor->world.pos.y + (actor->shape.yOffset * actor->scale.y),
                                      actor->world.pos.z, &actor->shape.rot);
@@ -3389,8 +3390,6 @@ Actor* Actor_Delete(ActorContext* actorCtx, Actor* actor, PlayState* play) {
     Actor* newHead;
     ActorOverlay* overlayEntry;
 
-    player = GET_PLAYER(play);
-
     overlayEntry = actor->overlayEntry;
     name = overlayEntry->name != NULL ? overlayEntry->name : "";
 
@@ -3398,9 +3397,13 @@ Actor* Actor_Delete(ActorContext* actorCtx, Actor* actor, PlayState* play) {
         osSyncPrintf("アクタークラス削除 [%s]\n", name); // "Actor class deleted [%s]"
     }
 
-    if ((player != NULL) && (actor == player->unk_664)) {
-        func_8008EDF0(player);
-        Camera_ChangeMode(Play_GetCamera(play, Play_GetActiveCamId(play)), 0);
+
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        if ((player != NULL) && (actor == player->unk_664)) {
+            func_8008EDF0(player);
+            Camera_ChangeMode(Play_GetCameraFromPlayer(play, player), 0);
+        }
     }
 
     if (actor == actorCtx->targetCtx.arrowPointedActor) {
@@ -4033,19 +4036,21 @@ void func_80033C30(Vec3f* arg0, Vec3f* arg1, u8 alpha, PlayState* play) {
 }
 
 void func_80033DB8(PlayState* play, s16 arg1, s16 arg2) {
-    s16 var = Quake_Add(&play->mainCamera, 3);
-
-    Quake_SetSpeed(var, 20000);
-    Quake_SetQuakeValues(var, arg1, 0, 0, 0);
-    Quake_SetCountdown(var, arg2);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        s16 var = Quake_Add(&play->mainCameras[i], 3);
+        Quake_SetSpeed(var, 20000);
+        Quake_SetQuakeValues(var, arg1, 0, 0, 0);
+        Quake_SetCountdown(var, arg2);
+    }
 }
 
 void func_80033E1C(PlayState* play, s16 arg1, s16 arg2, s16 arg3) {
-    s16 var = Quake_Add(&play->mainCamera, 3);
-
-    Quake_SetSpeed(var, arg3);
-    Quake_SetQuakeValues(var, arg1, 0, 0, 0);
-    Quake_SetCountdown(var, arg2);
+    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+        s16 var = Quake_Add(&play->mainCameras[i], 3);
+        Quake_SetSpeed(var, arg3);
+        Quake_SetQuakeValues(var, arg1, 0, 0, 0);
+        Quake_SetCountdown(var, arg2);
+    }
 }
 
 void func_80033E88(Actor* actor, PlayState* play, s16 arg2, s16 arg3) {
@@ -4160,7 +4165,7 @@ Hilite* func_800342EC(Vec3f* object, PlayState* play) {
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    return func_8002EABC(object, &play->view.eye, &lightDir, play->state.gfxCtx);
+    return func_8002EABC(object, &play->views[0].eye, &lightDir, play->state.gfxCtx);
 }
 
 Hilite* func_8003435C(Vec3f* object, PlayState* play) {
@@ -4170,7 +4175,7 @@ Hilite* func_8003435C(Vec3f* object, PlayState* play) {
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    return func_8002EB44(object, &play->view.eye, &lightDir, play->state.gfxCtx);
+    return func_8002EB44(object, &play->views[0].eye, &lightDir, play->state.gfxCtx);
 }
 
 /**
@@ -4510,7 +4515,7 @@ s16 func_80034DD4(Actor* actor, PlayState* play, s16 arg2, f32 arg3) {
     f32 var;
 
     if ((play->csCtx.state != CS_STATE_IDLE) || (gDbgCamEnabled)) {
-        var = Math_Vec3f_DistXYZ(&actor->world.pos, &play->view.eye) * 0.25f;
+        var = Math_Vec3f_DistXYZ(&actor->world.pos, &play->views[0].eye) * 0.25f;
     } else {
         var = Math_Vec3f_DistXYZ(&actor->world.pos, &player->actor.world.pos);
     }
@@ -6175,7 +6180,7 @@ s32 func_80038154(PlayState* play, Actor* actor, Vec3s* arg2, Vec3s* arg3, f32 a
     }
 
     if (((play->csCtx.state != CS_STATE_IDLE) || (gDbgCamEnabled)) && (gSaveContext.entranceIndex == 0x00EE)) {
-        sp2C = play->view.eye;
+        sp2C = play->views[0].eye;
     } else {
         sp2C = player->actor.focus.pos;
     }
@@ -6204,7 +6209,7 @@ s32 func_80038290(PlayState* play, Actor* actor, Vec3s* arg2, Vec3s* arg3, Vec3f
     }
 
     if (((play->csCtx.state != CS_STATE_IDLE) || (gDbgCamEnabled)) && (gSaveContext.entranceIndex == 0x00EE)) {
-        sp24 = play->view.eye;
+        sp24 = play->views[0].eye;
     } else {
         sp24 = player->actor.focus.pos;
     }

@@ -350,12 +350,12 @@ void EnNiw_SpawnAttackCucco(EnNiw* this, PlayState* play) {
     Actor* attackCucco;
 
     if ((this->timer5 == 0) && (this->unk_296 < 7)) {
-        viewX = play->view.lookAt.x - play->view.eye.x;
-        viewY = play->view.lookAt.y - play->view.eye.y;
-        viewZ = play->view.lookAt.z - play->view.eye.z;
-        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->view.eye.x;
-        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->view.eye.y + 50.0f) + (viewY * 0.5f));
-        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->view.eye.z;
+        viewX = play->views[0].lookAt.x - play->views[0].eye.x;
+        viewY = play->views[0].lookAt.y - play->views[0].eye.y;
+        viewZ = play->views[0].lookAt.z - play->views[0].eye.z;
+        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->views[0].eye.x;
+        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->views[0].eye.y + 50.0f) + (viewY * 0.5f));
+        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->views[0].eye.z;
         attackCucco = Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_ATTACK_NIW,
                                          attackCuccoPos.x, attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0);
 
@@ -981,9 +981,9 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
     }
     if (thisx->floorHeight <= BGCHECK_Y_MIN || thisx->floorHeight >= 32000.0f) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 上下？ ☆☆☆☆☆ %f\n" VT_RST, thisx->floorHeight);
-        cam.x = play->view.lookAt.x - play->view.eye.x;
-        cam.y = play->view.lookAt.y - play->view.eye.y;
-        cam.z = play->view.lookAt.z - play->view.eye.z;
+        cam.x = play->views[0].lookAt.x - play->views[0].eye.x;
+        cam.y = play->views[0].lookAt.y - play->views[0].eye.y;
+        cam.z = play->views[0].lookAt.z - play->views[0].eye.z;
         camResult = cam.y / sqrtf(SQ(cam.x) + SQ(cam.y) + SQ(cam.z));
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｘ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.x);
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｙ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.y);
@@ -993,7 +993,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ セットＺ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->home.pos.z);
         thisx->world.pos.x = thisx->home.pos.x;
         thisx->world.pos.z = thisx->home.pos.z;
-        thisx->world.pos.y = ((thisx->home.pos.y + play->view.eye.y) + (camResult * 160.0f));
+        thisx->world.pos.y = ((thisx->home.pos.y + play->views[0].eye.y) + (camResult * 160.0f));
 
         if (thisx->world.pos.y < thisx->home.pos.y) {
             thisx->world.pos.y = thisx->home.pos.y + 300.0f;

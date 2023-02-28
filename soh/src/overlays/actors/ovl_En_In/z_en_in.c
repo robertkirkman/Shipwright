@@ -330,7 +330,7 @@ void func_80A795C8(EnIn* this, PlayState* play) {
         npcTrackingMode = NPC_TRACKING_FULL_BODY;
     }
     if (this->actionFunc == func_80A7B024) {
-        this->interactInfo.trackPos = play->view.eye;
+        this->interactInfo.trackPos = play->views[0].eye;
         this->interactInfo.yOffset = 60.0f;
     } else {
         this->interactInfo.trackPos = player->actor.world.pos;

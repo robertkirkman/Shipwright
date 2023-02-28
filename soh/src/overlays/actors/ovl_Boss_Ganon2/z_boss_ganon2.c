@@ -2965,7 +2965,7 @@ void func_809060E8(PlayState* play) {
             spA0.x = play->envCtx.dirLight1.params.dir.x;
             spA0.y = play->envCtx.dirLight1.params.dir.y;
             spA0.z = play->envCtx.dirLight1.params.dir.z;
-            func_8002EABC(&effect->position, &play->view.eye, &spA0, play->state.gfxCtx);
+            func_8002EABC(&effect->position, &play->views[0].eye, &spA0, play->state.gfxCtx);
             Matrix_Translate(effect->position.x, effect->position.y, effect->position.z, MTXMODE_NEW);
             Matrix_Scale(0.03f, 0.03f, 0.03f, MTXMODE_APPLY);
             Matrix_RotateY(effect->unk_38.z, MTXMODE_APPLY);
