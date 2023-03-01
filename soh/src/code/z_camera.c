@@ -3633,15 +3633,15 @@ s32 Camera_KeepOn4(Camera* camera) {
     KeepOn4_Unk20* unk20 = &keep4->unk_20;
     s32 pad;
     f32 playerHeight;
-    Player* player = GET_PLAYER(camera->play);
+    Player* player = camera->player;
     s16 angleCnt;
     s32 i;
 
     if (camera->animState == 0 || camera->animState == 0xA || camera->animState == 0x14) {
-        if (camera->play->views[Player_GetIndex(camera->player, camera->play)].unk_124 == 0) {
+        if (camera->play->views[Player_GetIndex(player, camera->play)].unk_124 == 0) {
             camera->unk_14C |= 0x20;
             camera->unk_14C &= ~(0x4 | 0x2);
-            camera->play->views[Player_GetIndex(camera->player, camera->play)].unk_124 = camera->thisIdx | 0x50;
+            camera->play->views[Player_GetIndex(player, camera->play)].unk_124 = camera->thisIdx | 0x50;
             return 1;
         }
         unk20->unk_14 = *temp_s0;
@@ -3654,11 +3654,11 @@ s32 Camera_KeepOn4(Camera* camera) {
         camera->animState = 0x14;
         camera->unk_14C |= 0x20;
         camera->unk_14C &= ~(0x4 | 0x2);
-        camera->play->views[Player_GetIndex(camera->player, camera->play)].unk_124 = camera->thisIdx | 0x50;
+        camera->play->views[Player_GetIndex(player, camera->play)].unk_124 = camera->thisIdx | 0x50;
         return 1;
     }
 
-    playerHeight = Player_GetHeight(camera->player);
+    playerHeight = Player_GetHeight(player);
     camera->unk_14C &= ~0x10;
     if (RELOAD_PARAMS) {
         CameraModeValue* values = sCameraSettings[camera->setting].cameraModes[camera->mode].values;
@@ -3783,7 +3783,7 @@ s32 Camera_KeepOn4(Camera* camera) {
     switch (camera->animState) {
         case 0:
         case 0x14:
-            spCC[sp9C] = &camera->player->actor;
+            spCC[sp9C] = &player->actor;
             sp9C++;
             func_80043ABC(camera);
             camera->unk_14C &= ~(0x4 | 0x2);
@@ -7732,7 +7732,7 @@ Vec3s Camera_Update(Camera* camera) {
  */
 void Camera_Finish(Camera* camera) {
     Camera* mainCam = camera->play->cameraPtrs[MAIN_CAM];
-    Player* player = GET_PLAYER(camera->play);
+    Player* player = camera->player;
 
     if (camera->timer == 0) {
         Play_ChangeCameraStatus(camera->play, camera->parentCamIdx, CAM_STAT_ACTIVE);

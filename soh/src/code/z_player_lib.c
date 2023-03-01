@@ -476,7 +476,7 @@ void func_8008EEAC(PlayState* play, Actor* actor) {
 }
 
 s32 func_8008EF30(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); //unused
 
     return (this->stateFlags1 & 0x800000);
 }

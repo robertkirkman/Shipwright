@@ -317,10 +317,12 @@ void func_80064824(PlayState* play, CutsceneContext* csCtx, CsCmdBase* cmd) {
             break;
         case 16:
             if (sp3F != 0) {
-                sQuakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 6);
-                Quake_SetSpeed(sQuakeIndex, 0x7FFF);
-                Quake_SetQuakeValues(sQuakeIndex, 4, 0, 1000, 0);
-                Quake_SetCountdown(sQuakeIndex, 800);
+                for (u32 i = 0; i < PLAYER_COUNT; i++) {
+                    sQuakeIndex = Quake_Add(play->cameraPtrs[i], 6);
+                    Quake_SetSpeed(sQuakeIndex, 0x7FFF);
+                    Quake_SetQuakeValues(sQuakeIndex, 4, 0, 1000, 0);
+                    Quake_SetCountdown(sQuakeIndex, 800);
+                }
             }
             break;
         case 17:

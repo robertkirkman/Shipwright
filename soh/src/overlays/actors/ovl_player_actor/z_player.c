@@ -3384,7 +3384,7 @@ s32 func_80837268(Player* this, f32* arg1, s16* arg2, f32 arg3, PlayState* play)
 
         return 0;
     } else {
-        *arg2 += Camera_GetInputDirYaw(GET_ACTIVE_CAM(play));
+        *arg2 += Camera_GetInputDirYaw(play->cameraPtrs[Player_GetIndex(this, play)]);
         return 1;
     }
 }
@@ -8143,7 +8143,7 @@ void func_80843188(Player* this, PlayState* play) {
     if (this->unk_850 != 0) {
         sp54 = sControlInput->rel.stick_y * 100;
         sp50 = sControlInput->rel.stick_x * -120;
-        sp4E = this->actor.shape.rot.y - Camera_GetInputDirYaw(GET_ACTIVE_CAM(play));
+        sp4E = this->actor.shape.rot.y - Camera_GetInputDirYaw(play->cameraPtrs[Player_GetIndex(this, play)]);
 
         sp40 = Math_CosS(sp4E);
         sp4C = (Math_SinS(sp4E) * sp50) + (sp54 * sp40);
