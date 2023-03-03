@@ -103,16 +103,17 @@ s32 EnFw_DoBounce(EnFw* this, s32 totalBounces, f32 yVelocity) {
 }
 
 s32 EnFw_PlayerInRange(EnFw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     CollisionPoly* poly;
     s32 bgId;
     Vec3f collisionPos;
 
-    if (this->actor.xzDistToPlayer > 300.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 300.0f) {
         return false;
     }
 
-    if (ABS((s16)((f32)this->actor.yawTowardsPlayer - (f32)this->actor.shape.rot.y)) > 0x1C70) {
+    if (ABS((s16)((f32)this->actor.yawTowardsPlayer[playerIndex] - (f32)this->actor.shape.rot.y)) > 0x1C70) {
         return false;
     }
 

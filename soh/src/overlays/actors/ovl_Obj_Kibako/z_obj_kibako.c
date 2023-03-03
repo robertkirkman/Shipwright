@@ -202,19 +202,21 @@ void ObjKibako_Idle(ObjKibako* this, PlayState* play) {
         ObjKibako_SpawnCollectible(this, play);
         Actor_Kill(&this->actor);
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         Actor_MoveForward(&this->actor);
         Actor_UpdateBgCheckInfo(play, &this->actor, 19.0f, 20.0f, 0.0f, 5);
-        if (!(this->collider.base.ocFlags1 & OC1_TYPE_PLAYER) && (this->actor.xzDistToPlayer > 28.0f)) {
+        if (!(this->collider.base.ocFlags1 & OC1_TYPE_PLAYER) && (this->actor.xzDistToPlayer[playerIndex] > 28.0f)) {
             this->collider.base.ocFlags1 |= OC1_TYPE_PLAYER;
         }
-        if (this->actor.xzDistToPlayer < 600.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
             Collider_UpdateCylinder(&this->actor, &this->collider);
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
-            if (this->actor.xzDistToPlayer < 180.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 180.0f) {
                 CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
             }
         }
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F580(&this->actor, play);
         }
     }

@@ -122,6 +122,8 @@ void BgJyaGoroiwa_SetupMove(BgJyaGoroiwa* this) {
 
 void BgJyaGoroiwa_Move(BgJyaGoroiwa* this, PlayState* play) {
     Actor* thisx = &this->actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 relYawTowardsPlayer;
     f32 speedXZsqBase = (-100.0f - thisx->world.pos.y) * 2.5f;
     f32 posYfac;
@@ -148,13 +150,13 @@ void BgJyaGoroiwa_Move(BgJyaGoroiwa* this, PlayState* play) {
     if (this->collider.base.atFlags & AT_HIT) {
         this->collider.base.atFlags &= ~AT_HIT & ~AT_ON;
 
-        relYawTowardsPlayer = thisx->yawTowardsPlayer - thisx->world.rot.y;
+        relYawTowardsPlayer = thisx->yawTowardsPlayer[playerIndex] - thisx->world.rot.y;
         if ((relYawTowardsPlayer > -0x4000) && (relYawTowardsPlayer < 0x4000)) {
             thisx->world.rot.y += 0x8000;
         }
 
-        func_8002F6D4(play, thisx, 2.0f, thisx->yawTowardsPlayer, 0.0f, 0);
-        func_8002F7DC(&GET_PLAYER(play)->actor, NA_SE_PL_BODY_HIT);
+        func_8002F6D4(play, thisx, 2.0f, thisx->yawTowardsPlayer[playerIndex], 0.0f, 0);
+        func_8002F7DC(&player->actor, NA_SE_PL_BODY_HIT);
 
         this->yOffsetSpeed = 10.0f;
         this->speedFactor = 0.5f;
@@ -197,7 +199,7 @@ void BgJyaGoroiwa_Wait(BgJyaGoroiwa* this, PlayState* play) {
 void BgJyaGoroiwa_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     BgJyaGoroiwa* this = (BgJyaGoroiwa*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 bgId;
     Vec3f pos;
 

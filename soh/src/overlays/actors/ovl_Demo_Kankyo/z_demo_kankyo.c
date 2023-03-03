@@ -278,7 +278,7 @@ void DemoKankyo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void DemoKankyo_SetupType(DemoKankyo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 temp;
 
     if (this->actor.objBankIndex == this->objBankIndex) {
@@ -435,6 +435,8 @@ void DemoKankyo_Update(Actor* thisx, PlayState* play) {
 
 void DemoKankyo_Draw(Actor* thisx, PlayState* play) {
     DemoKankyo* this = (DemoKankyo*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->actor.objBankIndex == this->objBankIndex) {
         switch (this->actor.params) {
@@ -443,7 +445,7 @@ void DemoKankyo_Draw(Actor* thisx, PlayState* play) {
                 if (play->sceneNum == SCENE_TOKINOMA) {
                     if (!Flags_GetEnv(play, 1)) {
                         break;
-                    } else if (!Actor_IsFacingAndNearPlayer(&this->actor, 300.0f, 0x7530)) {
+                    } else if (!Actor_IsFacingAndNearPlayer(&this->actor, 300.0f, 0x7530, player, play)) {
                         break;
                     } else {
                         if (!LINK_IS_ADULT) {
@@ -779,7 +781,7 @@ void DemoKankyo_DrawWarpSparkles(Actor* thisx, PlayState* play) {
     f32 temp_f22;
     DemoKankyo* this = (DemoKankyo*)thisx;
     Gfx* disp;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     Vec3f camPos;
     f32 translateX;
     f32 translateY;

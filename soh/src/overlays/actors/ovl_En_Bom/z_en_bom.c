@@ -170,11 +170,12 @@ void EnBom_WaitForRelease(EnBom* this, PlayState* play) {
 }
 
 void EnBom_Explode(EnBom* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->explosionCollider.elements[0].dim.modelSphere.radius == 0) {
         this->actor.flags |= ACTOR_FLAG_5;
-        func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+        func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
     }
 
     if (CVarGetInteger("gStaticExplosionRadius", 0)) {
@@ -214,8 +215,6 @@ void EnBom_Explode(EnBom* this, PlayState* play) {
     }
 
     if (this->timer == 0) {
-        player = GET_PLAYER(play);
-
         if ((player->stateFlags1 & 0x800) && (player->heldActor == &this->actor)) {
             player->actor.child = NULL;
             player->heldActor = NULL;
@@ -237,6 +236,8 @@ void EnBom_Update(Actor* thisx, PlayState* play2) {
     s32 pad;
     PlayState* play = play2;
     EnBom* this = (EnBom*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     thisx->gravity = -1.2f;
 
@@ -249,7 +250,7 @@ void EnBom_Update(Actor* thisx, PlayState* play2) {
         Actor_SetScale(thisx, 0.01f);
     }
 
-    if ((thisx->xzDistToPlayer >= 20.0f) || (ABS(thisx->yDistToPlayer) >= 80.0f)) {
+    if ((thisx->xzDistToPlayer[playerIndex] >= 20.0f) || (ABS(thisx->yDistToPlayer[playerIndex]) >= 80.0f)) {
         this->bumpOn = true;
     }
 
@@ -281,7 +282,7 @@ void EnBom_Update(Actor* thisx, PlayState* play2) {
         } else {
             // if a lit stick touches the bomb, set timer to 100
             // these bombs never have a timer over 70, so this isnt used
-            if ((this->timer > 100) && Player_IsBurningStickInRange(play, &thisx->world.pos, 30.0f, 50.0f)) {
+            if ((this->timer > 100) && Player_IsBurningStickInRange(play, player, &thisx->world.pos, 30.0f, 50.0f)) {
                 this->timer = 100;
             }
         }
@@ -329,9 +330,7 @@ void EnBom_Update(Actor* thisx, PlayState* play2) {
 
             play->envCtx.adjAmbientColor[0] = play->envCtx.adjAmbientColor[1] =
                 play->envCtx.adjAmbientColor[2] = 250;
-            for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                Camera_AddQuake(&play->mainCameras[i], 2, 0xB, 8);
-            }
+            Camera_AddQuake(&play->mainCameras[playerIndex], 2, 0xB, 8);
             thisx->params = BOMB_EXPLOSION;
             this->timer = 10;
             thisx->flags |= ACTOR_FLAG_5;

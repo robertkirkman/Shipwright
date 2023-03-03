@@ -39,8 +39,10 @@ void EnArowTrap_Destroy(Actor* thisx, PlayState* play) {
 
 void EnArowTrap_Update(Actor* thisx, PlayState* play) {
     EnArowTrap* this = (EnArowTrap*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->actor.xzDistToPlayer <= 400) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 400) {
         this->attackTimer--;
 
         if (this->attackTimer == 0) {

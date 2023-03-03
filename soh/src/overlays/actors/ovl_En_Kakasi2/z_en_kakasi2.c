@@ -114,7 +114,8 @@ void EnKakasi2_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_80A90264(EnKakasi2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->unk_194++;
     
@@ -122,7 +123,7 @@ void func_80A90264(EnKakasi2* this, PlayState* play) {
                             ((CVarGetInteger("gSkipScarecrow", 0) && gSaveContext.scarecrowSpawnSongSet) ||
                             (gSaveContext.n64ddFlag && Randomizer_GetSettingValue(RSK_SKIP_SCARECROWS_SONG)));
 
-    if ((BREG(1) != 0) || skipScarecrow && (this->actor.xzDistToPlayer < this->maxSpawnDistance.x) &&
+    if ((BREG(1) != 0) || skipScarecrow && (this->actor.xzDistToPlayer[playerIndex] < this->maxSpawnDistance.x) &&
         (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < this->maxSpawnDistance.y)) {
         this->actor.draw = func_80A90948;
         Collider_InitCylinder(play, &this->collider);
@@ -138,7 +139,7 @@ void func_80A90264(EnKakasi2* this, PlayState* play) {
 
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ SAVE 終了 ☆☆☆☆☆ %d\n" VT_RST, this->switchFlag);
         this->actionFunc = func_80A904D8;
-    } else if ((this->actor.xzDistToPlayer < this->maxSpawnDistance.x) &&
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < this->maxSpawnDistance.x) &&
                (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < this->maxSpawnDistance.y) &&
                (gSaveContext.eventChkInf[9] & 0x1000)) {
 
@@ -222,7 +223,7 @@ void EnKakasi2_Update(Actor* thisx, PlayState* play2) {
     if (BREG(0) != 0) {
         if (BREG(5) != 0) {
             osSyncPrintf(VT_FGCOL(YELLOW) "☆☆☆☆☆ this->actor.player_distance ☆☆☆☆☆ %f\n" VT_RST,
-                         this->actor.xzDistToPlayer);
+                         this->actor.xzDistToPlayer[0]);
             osSyncPrintf(VT_FGCOL(YELLOW) "☆☆☆☆☆ this->hosei.x ☆☆☆☆☆ %f\n" VT_RST, this->maxSpawnDistance.x);
             osSyncPrintf("\n\n");
         }

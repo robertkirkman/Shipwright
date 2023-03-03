@@ -179,41 +179,44 @@ void EnGe2_Destroy(Actor* thisx, PlayState* play) {
 // Detection/check functions
 
 s32 Ge2_DetectPlayerInAction(PlayState* play, EnGe2* this) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 visionScale;
 
     visionScale = (!IS_DAY ? 0.75f : 1.5f);
 
-    if ((250.0f * visionScale) < this->actor.xzDistToPlayer) {
+    if ((250.0f * visionScale) < this->actor.xzDistToPlayer[playerIndex]) {
         return 0;
     }
 
-    if (this->actor.xzDistToPlayer < 50.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
         return 2;
     }
 
-    if (func_8002DDE4(play)) {
+    if (func_8002DDE4(play, player)) {
         return 1;
     }
     return 0;
 }
 
 s32 Ge2_DetectPlayerInUpdate(PlayState* play, EnGe2* this, Vec3f* pos, s16 yRot, f32 yDetectRange) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f posResult;
     CollisionPoly* outPoly;
     f32 visionScale;
 
     visionScale = (!IS_DAY ? 0.75f : 1.5f);
 
-    if ((250.0f * visionScale) < this->actor.xzDistToPlayer) {
+    if ((250.0f * visionScale) < this->actor.xzDistToPlayer[playerIndex]) {
         return 0;
     }
 
-    if (yDetectRange < ABS(this->actor.yDistToPlayer)) {
+    if (yDetectRange < ABS(this->actor.yDistToPlayer[playerIndex])) {
         return 0;
     }
 
-    if (ABS((s16)(this->actor.yawTowardsPlayer - yRot)) > 0x2000) {
+    if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - yRot)) > 0x2000) {
         return 0;
     }
 
@@ -264,9 +267,11 @@ void EnGe2_CaptureClose(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_CaptureCharge(EnGe2* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 2, 0x400, 0x100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0x400, 0x100);
     this->actor.shape.rot.y = this->actor.world.rot.y;
-    if (this->actor.xzDistToPlayer < 50.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
         EnGe2_ChangeAction(this, GE2_ACTION_CAPTURECLOSE);
         this->actor.speedXZ = 0.0f;
     }
@@ -294,10 +299,12 @@ void EnGe2_CaptureCharge(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_CaptureTurn(EnGe2* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 2, 0x400, 0x100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0x400, 0x100);
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
-    if (this->actor.world.rot.y == this->actor.yawTowardsPlayer) {
+    if (this->actor.world.rot.y == this->actor.yawTowardsPlayer[playerIndex]) {
         EnGe2_ChangeAction(this, GE2_ACTION_CAPTURECHARGE);
         this->timer = 50;
         this->actor.speedXZ = 4.0f;
@@ -324,6 +331,8 @@ void EnGe2_KnockedOut(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_TurnPlayerSpotted(EnGe2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 playerSpotted;
 
     this->actor.speedXZ = 0.0f;
@@ -335,7 +344,7 @@ void EnGe2_TurnPlayerSpotted(EnGe2* this, PlayState* play) {
 
         if (playerSpotted != 0) {
             this->timer = 100;
-            this->yawTowardsPlayer = this->actor.yawTowardsPlayer;
+            this->yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
 
             if (this->playerSpottedParam < playerSpotted) {
                 this->playerSpottedParam = playerSpotted;
@@ -360,6 +369,8 @@ void EnGe2_TurnPlayerSpotted(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_AboutTurn(EnGe2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 playerSpotted;
 
     this->actor.speedXZ = 0.0f;
@@ -369,7 +380,7 @@ void EnGe2_AboutTurn(EnGe2* this, PlayState* play) {
         EnGe2_ChangeAction(this, GE2_ACTION_TURNPLAYERSPOTTED);
         this->timer = 100;
         this->playerSpottedParam = playerSpotted;
-        this->yawTowardsPlayer = this->actor.yawTowardsPlayer;
+        this->yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
     } else if (this->stateFlags & GE2_STATE_ANIMCOMPLETE) {
         Math_SmoothStepToS(&this->actor.world.rot.y, this->walkDirection, 2, 0x400, 0x200);
         this->actor.shape.rot.y = this->actor.world.rot.y;
@@ -381,6 +392,8 @@ void EnGe2_AboutTurn(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_Walk(EnGe2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u8 playerSpotted;
 
     playerSpotted = Ge2_DetectPlayerInAction(play, this);
@@ -389,7 +402,7 @@ void EnGe2_Walk(EnGe2* this, PlayState* play) {
         EnGe2_ChangeAction(this, GE2_ACTION_TURNPLAYERSPOTTED);
         this->timer = 100;
         this->playerSpottedParam = playerSpotted;
-        this->yawTowardsPlayer = this->actor.yawTowardsPlayer;
+        this->yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
     } else if (this->walkTimer >= this->walkDuration) {
         this->walkTimer = 0;
         this->walkDirection += 0x8000;
@@ -406,11 +419,13 @@ void EnGe2_Stand(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_TurnToFacePlayer(EnGe2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(angleDiff) <= 0x4000) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 6, 4000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 6, 4000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2EE, this->actor.focus.pos);
     } else {
@@ -420,14 +435,16 @@ void EnGe2_TurnToFacePlayer(EnGe2* this, PlayState* play) {
             Math_SmoothStepToS(&this->headRot.y, 0x2000, 6, 6200, 0x100);
         }
 
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 12, 1000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 12, 1000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
     }
 }
 
 void EnGe2_LookAtPlayer(EnGe2* this, PlayState* play) {
-    if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) &&
-        (this->actor.xzDistToPlayer < 200.0f)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 200.0f)) {
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2EE, this->actor.focus.pos);
     } else {
         Math_SmoothStepToS(&this->headRot.x, 0, 6, 6200, 100);
@@ -540,6 +557,8 @@ void EnGe2_MoveAndBlink(EnGe2* this, PlayState* play) {
 
 void EnGe2_UpdateFriendly(Actor* thisx, PlayState* play) {
     EnGe2* this = (EnGe2*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     EnGe2_MaintainColliderAndSetAnimState(this, play);
     this->actionFunc(this, play);
@@ -554,7 +573,7 @@ void EnGe2_UpdateFriendly(Actor* thisx, PlayState* play) {
     } else {
         this->actor.textId = 0x6005;
 
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F2CC(&this->actor, play, 100.0f);
         }
     }
@@ -572,6 +591,8 @@ void EnGe2_UpdateAfterTalk(Actor* thisx, PlayState* play) {
 
 void EnGe2_Update(Actor* thisx, PlayState* play) {
     EnGe2* this = (EnGe2*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 paramsType;
 
     EnGe2_MaintainColliderAndSetAnimState(this, play);
@@ -600,7 +621,7 @@ void EnGe2_Update(Actor* thisx, PlayState* play) {
             EnGe2_SetupCapturePlayer(this, play);
         }
 
-        if (((this->actor.params & 0xFF) == GE2_TYPE_STATIONARY) && (this->actor.xzDistToPlayer < 100.0f)) {
+        if (((this->actor.params & 0xFF) == GE2_TYPE_STATIONARY) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
             // "Discovered!"
             osSyncPrintf(VT_FGCOL(GREEN) "発見!!!!!!!!!!!!\n" VT_RST);
             EnGe2_SetupCapturePlayer(this, play);

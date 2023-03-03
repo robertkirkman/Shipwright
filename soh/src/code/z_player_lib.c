@@ -337,7 +337,7 @@ s32 Player_InBlockingCsMode(PlayState* play, Player* this) {
 }
 
 s32 Player_InCsMode(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return Player_InBlockingCsMode(play, this) || (this->unk_6AD == 4);
 }
@@ -470,13 +470,13 @@ void func_8008EEAC(PlayState* play, Actor* actor) {
         player->unk_664 = actor;
         player->unk_684 = actor;
         player->stateFlags1 |= 0x10000;
-        Camera_SetParam(Play_GetCamera(play, player), 8, actor);
-        Camera_ChangeMode(Play_GetCamera(play, 0), 2);
+        Camera_SetParam(Play_GetCamera(play, i), 8, actor);
+        Camera_ChangeMode(Play_GetCamera(play, i), 2);
     }
 }
 
 s32 func_8008EF30(PlayState* play) {
-    Player* this = GET_PLAYER(play); //unused
+    Player* this = GET_PLAYER(play); // unused
 
     return (this->stateFlags1 & 0x800000);
 }
@@ -486,8 +486,7 @@ s32 func_8008EF44(PlayState* play, s32 ammo) {
     return 1;
 }
 
-s32 Player_IsBurningStickInRange(PlayState* play, Vec3f* pos, f32 xzRange, f32 yRange) {
-    Player* this = GET_PLAYER(play);
+s32 Player_IsBurningStickInRange(PlayState* play, Player* this, Vec3f* pos, f32 xzRange, f32 yRange) {
     Vec3f diff;
     s32 pad;
 
@@ -512,13 +511,13 @@ s32 Player_GetStrength(void) {
 }
 
 u8 Player_GetMask(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return this->currentMask;
 }
 
 Player* Player_UnsetMask(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     this->currentMask = PLAYER_MASK_NONE;
 
@@ -526,13 +525,13 @@ Player* Player_UnsetMask(PlayState* play) {
 }
 
 s32 Player_HasMirrorShieldEquipped(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return (this->currentShield == PLAYER_SHIELD_MIRROR);
 }
 
 s32 Player_HasMirrorShieldSetToDraw(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return (this->rightHandType == 10) && (this->currentShield == PLAYER_SHIELD_MIRROR);
 }

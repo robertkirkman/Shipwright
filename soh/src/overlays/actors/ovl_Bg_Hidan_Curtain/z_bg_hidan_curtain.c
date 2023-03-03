@@ -205,6 +205,8 @@ void BgHidanCurtain_Update(Actor* thisx, PlayState* play2) {
     BgHidanCurtain* this = (BgHidanCurtain*)thisx;
     BgHidanCurtainParams* hcParams = &sHCParams[this->size];
     f32 riseProgress;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_SLOW_CHEST_CS) ||
         (play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_TURN_AROUND)) {
@@ -212,7 +214,7 @@ void BgHidanCurtain_Update(Actor* thisx, PlayState* play2) {
     } else {
         if (this->collider.base.atFlags & AT_HIT) {
             this->collider.base.atFlags &= ~AT_HIT;
-            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer, 1.0f);
+            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer[playerIndex], 1.0f);
         }
         if ((this->type == 4) || (this->type == 5)) {
             this->actor.world.pos.y = (2.0f * this->actor.home.pos.y) - hcParams->riseDist - this->actor.world.pos.y;

@@ -336,10 +336,12 @@ void EnAm_SetupRotateToHome(EnAm* this) {
 }
 
 void EnAm_SetupRecoilFromDamage(EnAm* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_Change(&this->skelAnime, &gArmosDamagedAnim, 1.0f, 4.0f,
                      Animation_GetLastFrame(&gArmosDamagedAnim) - 6.0f, ANIMMODE_ONCE, 0.0f);
     this->behavior = AM_BEHAVIOR_DAMAGED;
-    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer;
+    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer[playerIndex];
     Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EN_AMOS_DAMAGE);
 
     if (EnAm_CanMove(this, play, -6.0f, this->dyna.actor.world.rot.y)) {
@@ -352,8 +354,10 @@ void EnAm_SetupRecoilFromDamage(EnAm* this, PlayState* play) {
 }
 
 void EnAm_SetupRicochet(EnAm* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_Change(&this->skelAnime, &gArmosRicochetAnim, 1.0f, 0.0f, 8.0f, ANIMMODE_ONCE, 0.0f);
-    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer;
+    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer[playerIndex];
 
     if (EnAm_CanMove(this, play, -6.0f, this->dyna.actor.world.rot.y)) {
         this->dyna.actor.speedXZ = -6.0f;
@@ -371,7 +375,7 @@ void EnAm_Sleep(EnAm* this, PlayState* play) {
     s32 pad;
     f32 rand;
     f32 sin;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if ((this->unk_258 != 0) ||
         ((this->hurtCollider.base.ocFlags1 & OC1_HIT) && (this->hurtCollider.base.oc == &player->actor)) ||
@@ -563,7 +567,9 @@ void EnAm_RecoilFromDamage(EnAm* this, PlayState* play) {
  * Turn toward the player before lunging again.
  */
 void EnAm_Cooldown(EnAm* this, PlayState* play) {
-    s16 yawDiff = this->dyna.actor.yawTowardsPlayer - this->dyna.actor.world.rot.y;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 yawDiff = this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.world.rot.y;
 
     yawDiff = ABS(yawDiff);
 
@@ -571,7 +577,7 @@ void EnAm_Cooldown(EnAm* this, PlayState* play) {
         this->cooldownTimer--;
     } else {
         if (this->skelAnime.curFrame == 8.0f) {
-            Math_SmoothStepToS(&this->dyna.actor.world.rot.y, this->dyna.actor.yawTowardsPlayer, 1, 0x1F40, 0);
+            Math_SmoothStepToS(&this->dyna.actor.world.rot.y, this->dyna.actor.yawTowardsPlayer[playerIndex], 1, 0x1F40, 0);
             this->dyna.actor.velocity.y = 12.0f;
         } else if (this->skelAnime.curFrame > 11.0f) {
             if (!(this->dyna.actor.bgCheckFlags & 1)) {
@@ -618,7 +624,9 @@ void EnAm_Lunge(EnAm* this, PlayState* play) {
             if (!(this->dyna.actor.bgCheckFlags & 1)) {
                 this->skelAnime.curFrame = 11;
             } else {
-                Math_SmoothStepToS(&this->dyna.actor.world.rot.y, this->dyna.actor.yawTowardsPlayer, 1, 0x1770, 0);
+                Player* player = Player_NearestToActor(&this->dyna.actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                Math_SmoothStepToS(&this->dyna.actor.world.rot.y, this->dyna.actor.yawTowardsPlayer[playerIndex], 1, 0x1770, 0);
 
                 if (this->dyna.actor.bgCheckFlags & 2) {
                     this->unk_258--;
@@ -664,7 +672,6 @@ void EnAm_Lunge(EnAm* this, PlayState* play) {
 }
 
 void EnAm_Statue(EnAm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
     f32 temp158f = this->dyna.unk_158;
     s16 moveDir = 0;
     s32 blockSpeed = CVarGetInteger("gFasterBlockPush", 0);
@@ -689,7 +696,7 @@ void EnAm_Statue(EnAm* this, PlayState* play) {
             !func_800435D8(play, &this->dyna, 0x14,
                            (Math_SinS(this->unk_258) * (this->dyna.unk_150 * 0.5f)) + 40.0f, 0xA) ||
             ((this->hurtCollider.base.ocFlags1 & OC1_HIT) && (ABS(moveDir) <= 0x2000))) {
-
+            Player* player = Player_NearestToActor(&this->dyna.actor, play);
             this->unk_258 = 0;
             player->stateFlags2 &= ~0x151;
             player->actor.speedXZ = 0.0f;
@@ -713,12 +720,14 @@ void EnAm_Statue(EnAm* this, PlayState* play) {
 }
 
 void EnAm_SetupStunned(EnAm* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     // animation is set but SkelAnime_Update is not called in the action
     // likely copy pasted from EnAm_SetupRecoilFromDamage
     Animation_Change(&this->skelAnime, &gArmosDamagedAnim, 1.0f, 0.0f, Animation_GetLastFrame(&gArmosDamagedAnim),
                      ANIMMODE_ONCE, 0.0f);
 
-    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer;
+    this->dyna.actor.world.rot.y = this->dyna.actor.yawTowardsPlayer[playerIndex];
 
     if (EnAm_CanMove(this, play, -6.0f, this->dyna.actor.world.rot.y)) {
         this->dyna.actor.speedXZ = -6.0f;
@@ -914,7 +923,7 @@ void EnAm_Update(Actor* thisx, PlayState* play) {
         if ((this->behavior >= 4) && (this->unk_264 > 0)) {
             if (!(this->hitCollider.base.atFlags & AT_BOUNCED)) {
                 if (this->hitCollider.base.atFlags & AT_HIT) {
-                    Player* player = GET_PLAYER(play);
+                    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
                     if (this->hitCollider.base.at == &player->actor) {
                         Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);

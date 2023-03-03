@@ -50,9 +50,11 @@ void EnAnubiceTag_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnAnubiceTag_SpawnAnubis(EnAnubiceTag* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->anubis = (EnAnubice*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_ANUBICE,
                                                   this->actor.world.pos.x, this->actor.world.pos.y,
-                                                  this->actor.world.pos.z, 0, this->actor.yawTowardsPlayer, 0, 0);
+                                                  this->actor.world.pos.z, 0, this->actor.yawTowardsPlayer[playerIndex], 0, 0);
 
     if (this->anubis != NULL) {
         this->actionFunc = EnAnubiceTag_ManageAnubis;
@@ -60,6 +62,8 @@ void EnAnubiceTag_SpawnAnubis(EnAnubiceTag* this, PlayState* play) {
 }
 
 void EnAnubiceTag_ManageAnubis(EnAnubiceTag* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnAnubice* anubis;
     Vec3f offset;
 
@@ -78,12 +82,12 @@ void EnAnubiceTag_ManageAnubis(EnAnubiceTag* this, PlayState* play) {
         return;
     }
 
-    if (this->actor.xzDistToPlayer < (200.0f + this->triggerRange)) {
+    if (this->actor.xzDistToPlayer[playerIndex] < (200.0f + this->triggerRange)) {
         if (!anubis->isLinkOutOfRange) {
             if (!anubis->isKnockedback) {
                 anubis->isMirroringLink = true;
-                offset.x = -Math_SinS(this->actor.yawTowardsPlayer) * this->actor.xzDistToPlayer;
-                offset.z = -Math_CosS(this->actor.yawTowardsPlayer) * this->actor.xzDistToPlayer;
+                offset.x = -Math_SinS(this->actor.yawTowardsPlayer[playerIndex]) * this->actor.xzDistToPlayer[playerIndex];
+                offset.z = -Math_CosS(this->actor.yawTowardsPlayer[playerIndex]) * this->actor.xzDistToPlayer[playerIndex];
                 Math_ApproachF(&anubis->actor.world.pos.x, (this->actor.world.pos.x + offset.x), 0.3f, 10.0f);
                 Math_ApproachF(&anubis->actor.world.pos.z, (this->actor.world.pos.z + offset.z), 0.3f, 10.0f);
                 return;

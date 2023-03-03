@@ -522,9 +522,10 @@ void func_80967DBC(Demo6K* this, PlayState* play) {
         }
 
         if (this->timer2 > 104) {
-            func_80967BF8(GET_PLAYER(play), play);
+            Player* player = Player_NearestToActor(&this->actor, play);
+            func_80967BF8(player, play);
             Actor_Kill(&this->actor);
-            Audio_PlayActorSound2(&GET_PLAYER(play)->actor, NA_SE_EN_FANTOM_HIT_THUNDER);
+            Audio_PlayActorSound2(&player->actor, NA_SE_EN_FANTOM_HIT_THUNDER);
         } else if (this->timer2 > 94) {
             Actor_SetScale(&this->actor, this->actor.scale.x + 0.03f);
 

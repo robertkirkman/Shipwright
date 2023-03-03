@@ -114,7 +114,9 @@ void BgSpot17Bakudankabe_Destroy(Actor* thisx, PlayState* play) {
 
 void BgSpot17Bakudankabe_Update(Actor* thisx, PlayState* play) {
     BgSpot17Bakudankabe* this = (BgSpot17Bakudankabe*)thisx;
-    if (this->dyna.actor.xzDistToPlayer < 650.0f && func_80033684(play, &this->dyna.actor) != NULL) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] < 650.0f && func_80033684(play, &this->dyna.actor) != NULL) {
         func_808B6BC0(this, play);
         Flags_SetSwitch(play, (this->dyna.actor.params & 0x3F));
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 40, NA_SE_EV_WALL_BROKEN);

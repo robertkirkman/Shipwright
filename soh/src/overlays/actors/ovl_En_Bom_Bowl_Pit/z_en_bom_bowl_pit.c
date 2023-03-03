@@ -173,7 +173,7 @@ void EnBomBowlPit_SetupGivePrize(EnBomBowlPit* this, PlayState* play) {
 }
 
 void EnBomBowlPit_GivePrize(EnBomBowlPit* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     func_8002DF54(play, NULL, 7);
     this->getItemId = sGetItemIds[this->prizeIndex];

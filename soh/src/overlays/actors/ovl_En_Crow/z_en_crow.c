@@ -1,5 +1,6 @@
 #include "z_en_crow.h"
 #include "objects/object_crow/object_crow.h"
+#include "global.h"
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_12 | ACTOR_FLAG_14)
 
@@ -192,11 +193,13 @@ void EnCrow_SetupDie(EnCrow* this) {
     gSaveContext.sohStats.count[COUNT_ENEMIES_DEFEATED_GUAY]++;
 }
 
-void EnCrow_SetupTurnAway(EnCrow* this) {
+void EnCrow_SetupTurnAway(EnCrow* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->timer = 100;
     this->actor.speedXZ = 3.5f;
     this->aimRotX = -0x1000;
-    this->aimRotY = this->actor.yawTowardsPlayer + 0x8000;
+    this->aimRotY = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     this->skelAnime.playSpeed = 2.0f;
     Actor_SetColorFilter(&this->actor, 0, 255, 0, 5);
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_GOMA_JR_FREEZE);
@@ -228,7 +231,8 @@ void EnCrow_SetupRespawn(EnCrow* this) {
 // Action functions
 
 void EnCrow_FlyIdle(EnCrow* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 skelanimeUpdated;
     s16 var;
 
@@ -278,14 +282,15 @@ void EnCrow_FlyIdle(EnCrow* this, PlayState* play) {
     if (this->timer != 0) {
         this->timer--;
     }
-    if ((this->timer == 0) && (this->actor.xzDistToPlayer < 300.0f) && !(player->stateFlags1 & 0x00800000) &&
+    if ((this->timer == 0) && (this->actor.xzDistToPlayer[playerIndex] < 300.0f) && !(player->stateFlags1 & 0x00800000) &&
         (this->actor.yDistToWater < -40.0f) && (Player_GetMask(play) != PLAYER_MASK_SKULL)) {
         EnCrow_SetupDiveAttack(this);
     }
 }
 
 void EnCrow_DiveAttack(EnCrow* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 facingPlayer;
     Vec3f pos;
     s16 target;
@@ -295,7 +300,7 @@ void EnCrow_DiveAttack(EnCrow* this, PlayState* play) {
         this->timer--;
     }
 
-    facingPlayer = Actor_IsFacingPlayer(&this->actor, 0x2800);
+    facingPlayer = Actor_IsFacingPlayer(&this->actor, 0x2800, player, play);
 
     if (facingPlayer) {
         pos.x = player->actor.world.pos.x;
@@ -310,8 +315,8 @@ void EnCrow_DiveAttack(EnCrow* this, PlayState* play) {
         Math_ApproachS(&this->actor.shape.rot.x, -0x1000, 2, 0x100);
     }
 
-    if (facingPlayer || (this->actor.xzDistToPlayer > 80.0f)) {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 4, 0xC00);
+    if (facingPlayer || (this->actor.xzDistToPlayer[playerIndex] > 80.0f)) {
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 4, 0xC00);
     }
 
     if ((this->timer == 0) || (Player_GetMask(play) == PLAYER_MASK_SKULL) ||
@@ -370,12 +375,14 @@ void EnCrow_Die(EnCrow* this, PlayState* play) {
 }
 
 void EnCrow_TurnAway(EnCrow* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->actor.bgCheckFlags & 8) {
         this->aimRotY = this->actor.wallYaw;
     } else {
-        this->aimRotY = this->actor.yawTowardsPlayer + 0x8000;
+        this->aimRotY = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     }
 
     Math_ApproachS(&this->actor.shape.rot.y, this->aimRotY, 3, 0xC00);
@@ -420,7 +427,7 @@ void EnCrow_UpdateDamage(EnCrow* this, PlayState* play) {
         Actor_SetDropFlag(&this->actor, &this->collider.elements[0].info, 1);
         if ((this->actor.colChkInfo.damageEffect != 0) || (this->actor.colChkInfo.damage != 0)) {
             if (this->actor.colChkInfo.damageEffect == 1) { // Deku Nuts
-                EnCrow_SetupTurnAway(this);
+                EnCrow_SetupTurnAway(this, play);
             } else {
                 Actor_ApplyDamage(&this->actor);
                 this->actor.flags &= ~ACTOR_FLAG_0;

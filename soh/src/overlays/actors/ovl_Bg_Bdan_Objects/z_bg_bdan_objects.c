@@ -173,10 +173,11 @@ void BgBdanObjects_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_8086C054(BgBdanObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (BgBdanObjects_GetContactRu1(this, 0)) {
-        if (this->dyna.actor.xzDistToPlayer < 250.0f) {
+        if (this->dyna.actor.xzDistToPlayer[playerIndex] < 250.0f) {
             BgBdanObjects_SetContactRu1(this, 1);
             this->timer = 20;
             OnePointCutscene_Init(play, 3070, -99, &this->dyna.actor, MAIN_CAM);
@@ -246,7 +247,7 @@ void func_8086C29C(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086C3D8(BgBdanObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->dyna.actor.velocity.y += 0.5f;
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y + -70.0f,
@@ -326,8 +327,10 @@ void func_8086C6EC(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086C76C(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (func_8004356C(&this->dyna)) {
-        if (this->dyna.actor.xzDistToPlayer < 120.0f) {
+        if (this->dyna.actor.xzDistToPlayer[playerIndex] < 120.0f) {
             this->actionFunc = func_8086C7D0;
             OnePointCutscene_Init(play, 3090, -99, &this->dyna.actor, MAIN_CAM);
         }

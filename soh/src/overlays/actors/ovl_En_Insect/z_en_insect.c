@@ -95,13 +95,14 @@ f32 EnInsect_XZDistanceSquared(Vec3f* v1, Vec3f* v2) {
 
 s32 EnInsect_InBottleRange(EnInsect* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f pos;
 
-    if (this->actor.xzDistToPlayer < 32.0f) {
-        pos.x = Math_SinS(this->actor.yawTowardsPlayer + 0x8000) * 16.0f + player->actor.world.pos.x;
+    if (this->actor.xzDistToPlayer[playerIndex] < 32.0f) {
+        pos.x = Math_SinS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 16.0f + player->actor.world.pos.x;
         pos.y = player->actor.world.pos.y;
-        pos.z = Math_CosS(this->actor.yawTowardsPlayer + 0x8000) * 16.0f + player->actor.world.pos.z;
+        pos.z = Math_CosS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 16.0f + player->actor.world.pos.z;
 
         //! @bug: this check is superfluous: it is automatically satisfied if the coarse check is satisfied. It may have
         //! been intended to check the actor is in front of Player, but yawTowardsPlayer does not depend on Player's
@@ -244,6 +245,8 @@ void func_80A7C3A0(EnInsect* this) {
 }
 
 void func_80A7C3F4(EnInsect* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad[2];
     s16 sp2E;
     f32 playSpeed;
@@ -266,7 +269,7 @@ void func_80A7C3F4(EnInsect* this, PlayState* play) {
         func_80A7CBC8(this);
     } else if ((this->unk_314 & 1) && (this->actor.bgCheckFlags & 0x40)) {
         func_80A7CE60(this);
-    } else if (this->actor.xzDistToPlayer < 40.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 40.0f) {
         func_80A7C818(this);
     }
 }
@@ -279,6 +282,8 @@ void func_80A7C598(EnInsect* this) {
 }
 
 void func_80A7C5EC(EnInsect* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad1;
     s32 pad2;
     s16 yaw;
@@ -308,7 +313,7 @@ void func_80A7C5EC(EnInsect* this, PlayState* play) {
         func_80A7CBC8(this);
     } else if ((this->unk_314 & 1) && (this->actor.bgCheckFlags & 0x40)) {
         func_80A7CE60(this);
-    } else if (this->actor.xzDistToPlayer < 40.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 40.0f) {
         func_80A7C818(this);
     }
 }
@@ -321,12 +326,14 @@ void func_80A7C818(EnInsect* this) {
 }
 
 void func_80A7C86C(EnInsect* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad1;
     s32 pad2;
     s16 pad3;
     s16 frames;
     s16 yaw;
-    s16 sp38 = this->actor.xzDistToPlayer < 40.0f;
+    s16 sp38 = this->actor.xzDistToPlayer[playerIndex] < 40.0f;
 
     Math_SmoothStepToF(&this->actor.speedXZ, 1.8f, 0.1f, 0.5f, 0.0f);
 
@@ -335,7 +342,7 @@ void func_80A7C86C(EnInsect* this, PlayState* play) {
         Math_ScaledStepToS(&this->actor.world.rot.y, yaw, 2000);
     } else if (sp38 != 0) {
         frames = play->state.frames;
-        yaw = this->actor.yawTowardsPlayer + 0x8000;
+        yaw = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
 
         if (frames & 0x10) {
             if (frames & 0x20) {
@@ -760,6 +767,8 @@ void EnInsect_Update(Actor* thisx, PlayState* play) {
             phi_v0 |= 0x40;
             Actor_UpdateBgCheckInfo(play, &this->actor, 8.0f, 5.0f, 0.0f, phi_v0);
         }
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
 
         if (Actor_HasParent(&this->actor, play)) {
             this->actor.parent = NULL;
@@ -770,7 +779,7 @@ void EnInsect_Update(Actor* thisx, PlayState* play) {
             } else {
                 func_80A7CA64(this);
             }
-        } else if (this->actor.xzDistToPlayer < 50.0f && this->actionFunc != func_80A7CAD0) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 50.0f && this->actionFunc != func_80A7CAD0) {
             if (!(this->unk_314 & 0x20) && this->unk_31C < 180) {
                 CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
             }

@@ -313,14 +313,18 @@ void EnSsh_Turn(EnSsh* this, PlayState* play) {
     if (DECR(this->spinTimer) != 0) {
         this->actor.world.rot.y += 10000.0f * (this->spinTimer / 30.0f);
     } else if ((this->swayTimer == 0) && (this->stunTimer == 0)) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 4, 0x2710, 1);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 4, 0x2710, 1);
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
 }
 
 void EnSsh_Stunned(EnSsh* this, PlayState* play) {
     if ((this->swayTimer == 0) && (this->stunTimer == 0)) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer ^ 0x8000, 4, this->maxTurnRate, 1);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] ^ 0x8000, 4, this->maxTurnRate, 1);
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
     if (this->stunTimer < 30) {
@@ -350,7 +354,8 @@ void EnSsh_Bob(EnSsh* this, PlayState* play) {
 }
 
 s32 EnSsh_IsCloseToLink(EnSsh* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 yDist;
 
     if (this->stateFlags & SSH_STATE_GROUND_START) {
@@ -366,7 +371,7 @@ s32 EnSsh_IsCloseToLink(EnSsh* this, PlayState* play) {
         return true;
     }
 
-    if (this->actor.xzDistToPlayer > 160.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 160.0f) {
         return false;
     }
 
@@ -432,7 +437,7 @@ void EnSsh_Sway(EnSsh* this) {
 
 void EnSsh_CheckBodyStickHit(EnSsh* this, PlayState* play) {
     ColliderInfo* info = &this->colCylinder[0].info;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->unk_860 != 0) {
         info->bumper.dmgFlags |= 2;
@@ -446,6 +451,8 @@ void EnSsh_CheckBodyStickHit(EnSsh* this, PlayState* play) {
 }
 
 s32 EnSsh_CheckHitPlayer(EnSsh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 hit = false;
 
@@ -468,7 +475,7 @@ s32 EnSsh_CheckHitPlayer(EnSsh* this, PlayState* play) {
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_STALTU_ROLL);
     Audio_PlayActorSound2(&this->actor, NA_SE_VO_ST_ATTACK);
     play->damagePlayer(play, -8);
-    func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer, 6.0f);
+    func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
     this->hitCount--;
     return true;
 }
@@ -547,7 +554,9 @@ void EnSsh_SetBodyCylinderAC(EnSsh* this, PlayState* play) {
 }
 
 void EnSsh_SetLegsCylinderAC(EnSsh* this, PlayState* play) {
-    s16 angleTowardsLink = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y));
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 angleTowardsLink = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y));
 
     if (angleTowardsLink < 90 * (0x10000 / 360)) {
         Collider_UpdateCylinder(&this->actor, &this->colCylinder[2]);

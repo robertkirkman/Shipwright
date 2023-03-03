@@ -255,7 +255,7 @@ void EnEiyer_SetupStartAttack(EnEiyer* this) {
 }
 
 void EnEiyer_SetupDiveAttack(EnEiyer* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->actor.velocity.y = 0.0f;
     this->basePos.y = player->actor.world.pos.y + 15.0f;
@@ -410,6 +410,8 @@ void EnEiyer_Ambush(EnEiyer* this, PlayState* play) {
 }
 
 void EnEiyer_Glide(EnEiyer* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 curFrame;
     s32 pad;
     s16 yawChange;
@@ -443,7 +445,7 @@ void EnEiyer_Glide(EnEiyer* this, PlayState* play) {
         }
     }
 
-    if (this->timer == 0 && this->actor.yDistToPlayer < 0.0f && this->actor.xzDistToPlayer < 120.0f) {
+    if (this->timer == 0 && this->actor.yDistToPlayer[playerIndex] < 0.0f && this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
         EnEiyer_SetupStartAttack(this);
     }
 
@@ -451,7 +453,8 @@ void EnEiyer_Glide(EnEiyer* this, PlayState* play) {
 }
 
 void EnEiyer_StartAttack(EnEiyer* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f focus;
 
     SkelAnime_Update(&this->skelanime);
@@ -470,7 +473,7 @@ void EnEiyer_StartAttack(EnEiyer* this, PlayState* play) {
 
     this->actor.world.rot.x = -this->actor.shape.rot.x;
     Math_StepToF(&this->actor.speedXZ, 5.0f, 0.3f);
-    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 2, 0x71C);
+    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0x71C);
     func_8002F974(&this->actor, NA_SE_EN_EIER_FLY - SFX_FLAG);
 }
 
@@ -529,7 +532,9 @@ void EnEiyer_Hurt(EnEiyer* this, PlayState* play) {
     if (this->actor.bgCheckFlags & 8) {
         this->targetYaw = this->actor.wallYaw;
     } else {
-        this->targetYaw = this->actor.yawTowardsPlayer + 0x8000;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        this->targetYaw = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     }
 
     Math_ScaledStepToS(&this->actor.world.rot.y, this->targetYaw, 0x38E);

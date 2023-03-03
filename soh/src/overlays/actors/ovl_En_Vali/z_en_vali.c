@@ -314,7 +314,9 @@ void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
 }
 
 void EnVali_Lurk(EnVali* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < 150.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < 150.0f) {
         EnVali_SetupDropAppear(this);
     }
 }
@@ -331,6 +333,8 @@ void EnVali_DropAppear(EnVali* this, PlayState* play) {
 }
 
 void EnVali_FloatIdle(EnVali* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 curFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -357,7 +361,7 @@ void EnVali_FloatIdle(EnVali* this, PlayState* play) {
     curFrame = ((curFrame > 40) ? (80 - curFrame) : curFrame);
 
     this->actor.shape.rot.y += (s16)((curFrame + 4) * 0.4f * (0x10000 / 360.0f));
-    if (this->actor.xzDistToPlayer > 250.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 250.0f) {
         EnVali_SetupReturnToLurk(this);
     }
 }

@@ -132,8 +132,10 @@ void EnPoDesert_UpdateSpeedModifier(EnPoDesert* this) {
 }
 
 void EnPoDesert_WaitForPlayer(EnPoDesert* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     func_8002F974(&this->actor, NA_SE_EN_PO_FLY - SFX_FLAG);
-    if (this->actor.xzDistToPlayer < 200.0f && (this->currentPathPoint != 2 || play->actorCtx.lensActive)) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f && (this->currentPathPoint != 2 || play->actorCtx.lensActive)) {
         if (this->currentPathPoint == 2) {
             if (Play_InCsMode(play)) {
                 this->actor.shape.rot.y += 0x800;

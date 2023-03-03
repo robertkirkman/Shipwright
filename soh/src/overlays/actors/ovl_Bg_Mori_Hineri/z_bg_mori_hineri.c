@@ -176,7 +176,7 @@ void BgMoriHineri_SpawnBossKeyChest(BgMoriHineri* this, PlayState* play) {
 
 void func_808A3C8C(BgMoriHineri* this, PlayState* play) {
     f32 f0;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     f0 = 1100.0f - (player->actor.world.pos.z - this->dyna.actor.world.pos.z);
     this->dyna.actor.shape.rot.z = CLAMP(f0, 0.0f, 1000.0f) * 16.384f;

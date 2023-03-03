@@ -153,9 +153,11 @@ void func_80B32508(EnWeiyer* this) {
     this->actionFunc = func_80B32E34;
 }
 
-void func_80B32538(EnWeiyer* this) {
+void func_80B32538(EnWeiyer* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unk_194 = 200;
-    this->unk_196 = this->actor.yawTowardsPlayer + 0x8000;
+    this->unk_196 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     this->unk_27C = this->actor.world.pos.y;
     this->actor.speedXZ = CLAMP_MAX(this->actor.speedXZ, 4.0f);
     this->collider.base.atFlags &= ~AT_ON;
@@ -233,6 +235,8 @@ void func_80B32804(EnWeiyer* this, PlayState* play) {
 }
 
 void func_80B328E8(EnWeiyer* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 sp34;
     f32 curFrame;
 
@@ -279,8 +283,6 @@ void func_80B328E8(EnWeiyer* this, PlayState* play) {
                 Rand_ZeroOne() * ((this->actor.home.pos.y - this->actor.floorHeight) / 2.0f) + this->actor.floorHeight;
         }
     } else {
-        Player* player = GET_PLAYER(play);
-
         if (this->actor.bgCheckFlags & 1) {
             this->unk_280 =
                 this->actor.home.pos.y - Rand_ZeroOne() * ((this->actor.home.pos.y - this->actor.floorHeight) / 2.0f);
@@ -289,7 +291,7 @@ void func_80B328E8(EnWeiyer* this, PlayState* play) {
                 Rand_ZeroOne() * (this->actor.home.pos.y - this->actor.floorHeight) + this->actor.floorHeight;
         }
 
-        if ((this->actor.xzDistToPlayer < 400.0f) && (fabsf(this->actor.yDistToPlayer) < 250.0f) &&
+        if ((this->actor.xzDistToPlayer[playerIndex] < 400.0f) && (fabsf(this->actor.yDistToPlayer[playerIndex]) < 250.0f) &&
             (player->actor.world.pos.y < (this->actor.home.pos.y + 20.0f))) {
             func_80B32508(this);
         }
@@ -316,7 +318,7 @@ void func_80B32C2C(EnWeiyer* this, PlayState* play) {
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_OCTAROCK_SINK);
             }
 
-            func_80B32538(this);
+            func_80B32538(this, play);
         } else if (this->actor.bgCheckFlags & 1) {
             func_80B32494(this);
         }
@@ -345,7 +347,7 @@ void func_80B32D30(EnWeiyer* this, PlayState* play) {
 }
 
 s16 func_80B32DEC(EnWeiyer* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f vec;
 
     vec.x = player->actor.world.pos.x;
@@ -356,7 +358,8 @@ s16 func_80B32DEC(EnWeiyer* this, PlayState* play) {
 }
 
 void func_80B32E34(EnWeiyer* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
 
@@ -366,9 +369,9 @@ void func_80B32E34(EnWeiyer* this, PlayState* play) {
 
     if ((this->unk_194 == 0) || ((this->actor.home.pos.y + 20.0f) <= player->actor.world.pos.y) ||
         (this->collider.base.atFlags & AT_HIT)) {
-        func_80B32538(this);
+        func_80B32538(this, play);
     } else {
-        if (Actor_IsFacingPlayer(&this->actor, 0x2800)) {
+        if (Actor_IsFacingPlayer(&this->actor, 0x2800, player, play)) {
             Math_StepToF(&this->actor.speedXZ, 4.0f, 0.2f);
         } else {
             Math_StepToF(&this->actor.speedXZ, 1.3f, 0.2f);
@@ -387,16 +390,18 @@ void func_80B32E34(EnWeiyer* this, PlayState* play) {
             Math_SmoothStepToS(&this->actor.shape.rot.x, func_80B32DEC(this, play), 2, 0x100, 0x40);
         }
 
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0x200, 0x80);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0x200, 0x80);
 
         if ((player->actor.yDistToWater < 50.0f) && (this->actor.yDistToWater < 20.0f) &&
-            Actor_IsFacingPlayer(&this->actor, 0x2000)) {
+            Actor_IsFacingPlayer(&this->actor, 0x2000, player, play)) {
             func_80B327D8(this);
         }
     }
 }
 
 void func_80B33018(EnWeiyer* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 curFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -421,7 +426,7 @@ void func_80B33018(EnWeiyer* this, PlayState* play) {
     }
 
     if (Math_SmoothStepToS(&this->actor.shape.rot.y, this->unk_196, 2, 0x200, 0x80) == 0) {
-        this->unk_196 = this->actor.yawTowardsPlayer + 0x8000;
+        this->unk_196 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     }
 
     if (this->actor.home.pos.y < this->actor.world.pos.y) {
@@ -438,6 +443,8 @@ void func_80B33018(EnWeiyer* this, PlayState* play) {
 }
 
 void func_80B331CC(EnWeiyer* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->unk_194 != 0) {
@@ -447,7 +454,7 @@ void func_80B331CC(EnWeiyer* this, PlayState* play) {
     if (this->actor.bgCheckFlags & 8) {
         this->unk_196 = this->actor.wallYaw;
     } else {
-        this->unk_196 = this->actor.yawTowardsPlayer + 0x8000;
+        this->unk_196 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     }
 
     Math_ScaledStepToS(&this->actor.world.rot.y, this->unk_196, 0x38E);
@@ -513,7 +520,8 @@ void func_80B333B8(EnWeiyer* this, PlayState* play) {
 }
 
 void func_80B3349C(EnWeiyer* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 phi_a1;
     s32 phi_a0;
 
@@ -523,7 +531,7 @@ void func_80B3349C(EnWeiyer* this, PlayState* play) {
 
     if (this->unk_194 == -1) {
         if (phi_a0 || (this->collider.base.atFlags & AT_HIT)) {
-            func_80B32538(this);
+            func_80B32538(this, play);
         } else if (this->actor.yDistToWater < 0.0f) {
             this->unk_194 = 10;
             EffectSsGSplash_Spawn(play, &this->actor.world.pos, NULL, NULL, 1, 400);
@@ -552,9 +560,9 @@ void func_80B3349C(EnWeiyer* this, PlayState* play) {
         } else if ((this->actor.bgCheckFlags & 0x20) && (this->actor.shape.rot.x > 0)) {
             EffectSsGSplash_Spawn(play, &this->actor.world.pos, NULL, NULL, 1, 400);
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_OCTAROCK_SINK);
-            func_80B32538(this);
+            func_80B32538(this, play);
         } else {
-            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 8, 0x100, 0x80);
+            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 8, 0x100, 0x80);
         }
     }
 }

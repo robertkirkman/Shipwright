@@ -198,7 +198,7 @@ void EnArrow_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnArrow_Shoot(EnArrow* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->actor.parent == NULL) {
         if ((this->actor.params != ARROW_NUT) && (player->unk_A73 == 0)) {
@@ -432,7 +432,8 @@ void func_809B4640(EnArrow* this, PlayState* play) {
 void EnArrow_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnArrow* this = (EnArrow*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->isCsNut || ((this->actor.params >= ARROW_NORMAL_LIT) && (player->unk_A73 != 0)) ||
         !Player_InBlockingCsMode(play, player)) {

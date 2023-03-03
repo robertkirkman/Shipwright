@@ -150,7 +150,7 @@ void EnNb_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_80AB0FBC(EnNb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) + 9.0f;
@@ -158,7 +158,7 @@ void func_80AB0FBC(EnNb* this, PlayState* play) {
 }
 
 void func_80AB1040(EnNb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) + 9.0f;
@@ -317,7 +317,7 @@ void EnNb_SpawnBlueWarp(EnNb* this, PlayState* play) {
 }
 
 void EnNb_GiveMedallion(EnNb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 posX = player->actor.world.pos.x;
     f32 posY = player->actor.world.pos.y + 50.0f;
     f32 posZ = player->actor.world.pos.z;
@@ -336,7 +336,7 @@ void EnNb_SetupChamberCsImpl(EnNb* this, PlayState* play) {
     Player* player;
 
     if ((gSaveContext.chamberCutsceneNum == 3) && (gSaveContext.sceneSetupIndex < 4)) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         this->action = NB_CHAMBER_UNDERGROUND;
         play->csCtx.segment = &D_80AB431C;
         gSaveContext.cutsceneTrigger = 2;
@@ -1147,7 +1147,7 @@ void EnNb_SetNoticeSFX(EnNb* this) {
 }
 
 s32 EnNb_GetNoticedStatus(EnNb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 playerX = player->actor.world.pos.x;
     f32 playerZ = player->actor.world.pos.z;
     f32 thisX = this->actor.world.pos.x;

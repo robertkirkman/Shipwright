@@ -184,13 +184,14 @@ void BgHidanSekizou_Destroy(Actor* thisx, PlayState* play2) {
 }
 
 void func_8088D434(BgHidanSekizou* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 isAligned[2];
     s32 isClose;
     s32 phi_s4;
 
-    isClose = this->dyna.actor.xzDistToPlayer < 300.0f;
+    isClose = this->dyna.actor.xzDistToPlayer[playerIndex] < 300.0f;
     isAligned[0] = fabsf(this->dyna.actor.world.pos.x - player->actor.world.pos.x) < 80.0f;
     isAligned[1] = fabsf(this->dyna.actor.world.pos.z - player->actor.world.pos.z) < 80.0f;
     phi_s4 = 0;
@@ -199,7 +200,7 @@ void func_8088D434(BgHidanSekizou* this, PlayState* play) {
         s16* temp = &this->unk_168[i];
 
         DECR(*temp);
-        diff = this->dyna.actor.yawTowardsPlayer - i * 0x4000;
+        diff = this->dyna.actor.yawTowardsPlayer[playerIndex] - i * 0x4000;
         if (isAligned[i % 2] && isClose) {
             if (ABS(diff) <= 0x4000) {
                 if (*temp < 4) {
@@ -224,12 +225,14 @@ void func_8088D720(BgHidanSekizou* this, PlayState* play) {
 }
 
 void func_8088D750(BgHidanSekizou* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 phi_a3;
 
-    if (this->dyna.actor.xzDistToPlayer > 200.0f) {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer;
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] > 200.0f) {
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex];
     } else if (this->dyna.actor.params == 0) {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer - this->dyna.actor.shape.rot.y;
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.shape.rot.y;
         if (phi_a3 > 0x2000) {
             phi_a3 = this->dyna.actor.shape.rot.y + 0x6000;
         } else if (phi_a3 < -0x2000) {
@@ -240,7 +243,7 @@ void func_8088D750(BgHidanSekizou* this, PlayState* play) {
             phi_a3 = this->dyna.actor.shape.rot.y + 0x2000;
         }
     } else {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer;
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex];
         if (phi_a3 > 0x6000) {
             phi_a3 = 0x4000;
         } else if (phi_a3 > 0x4000) {

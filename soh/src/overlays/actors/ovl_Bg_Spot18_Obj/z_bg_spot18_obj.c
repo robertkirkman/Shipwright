@@ -209,7 +209,7 @@ void func_808B8DDC(BgSpot18Obj* this, PlayState* play) {
 }
 
 void func_808B8E20(BgSpot18Obj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (fabsf(this->dyna.unk_150) > 0.001f) {
         this->dyna.unk_150 = 0.0f;
@@ -244,7 +244,7 @@ void func_808B8EE0(BgSpot18Obj* this) {
 
 void func_808B8F08(BgSpot18Obj* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     Math_StepToF(&this->dyna.actor.speedXZ, 1.2f, 0.1f);
     Actor_MoveForward(&this->dyna.actor);

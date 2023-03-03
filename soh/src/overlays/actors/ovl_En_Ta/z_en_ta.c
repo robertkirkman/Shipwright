@@ -246,14 +246,16 @@ void EnTa_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80B142F4(EnTa* this, PlayState* play, u16 textId) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         return true;
     }
 
     this->actor.textId = textId;
 
-    if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) &&
-        (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         this->unk_2E0 |= 1;
         func_8002F2CC(&this->actor, play, 100.0f);
     }
@@ -325,10 +327,10 @@ void func_80B145F8(EnTa* this, PlayState* play) {
 }
 
 void func_80B14634(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        s32 exchangeItemId = func_8002F368(play);
+        s32 exchangeItemId = func_8002F368(play, player);
 
         switch (exchangeItemId) {
             case EXCH_ITEM_CHICKEN:
@@ -358,10 +360,10 @@ void func_80B146F8(EnTa* this, PlayState* play) {
 }
 
 void func_80B14754(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        s32 exchangeItemId = func_8002F368(play);
+        s32 exchangeItemId = func_8002F368(play, player);
 
         switch (exchangeItemId) {
             case EXCH_ITEM_POCKET_CUCCO:
@@ -574,7 +576,7 @@ void func_80B15034(EnTa* this, PlayState* play) {
 }
 
 s32 func_80B150AC(EnTa* this, PlayState* play, s32 idx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* interactRangeActor;
 
     if (player->stateFlags1 & 0x800) {
@@ -588,7 +590,7 @@ s32 func_80B150AC(EnTa* this, PlayState* play, s32 idx) {
 }
 
 void func_80B15100(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         s32 unk_2CA;

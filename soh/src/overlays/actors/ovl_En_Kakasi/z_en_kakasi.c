@@ -195,7 +195,8 @@ void func_80A8F660(EnKakasi* this, PlayState* play) {
 }
 
 void func_80A8F75C(EnKakasi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     func_80A8F28C(this);
     SkelAnime_Update(&this->skelanime);
@@ -207,9 +208,9 @@ void func_80A8F75C(EnKakasi* this, PlayState* play) {
             this->actionFunc = func_80A8F660;
         }
     } else {
-        s16 yawTowardsPlayer = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        s16 yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-        if (!(this->actor.xzDistToPlayer > 120.0f)) {
+        if (!(this->actor.xzDistToPlayer[playerIndex] > 120.0f)) {
             s16 absyawTowardsPlayer = ABS(yawTowardsPlayer);
 
             if (absyawTowardsPlayer < 0x4300) {
@@ -224,7 +225,7 @@ void func_80A8F75C(EnKakasi* this, PlayState* play) {
                         this->actionFunc = func_80A8F8D0;
                         return;
                     }
-                    if (this->actor.xzDistToPlayer < 80.0f) {
+                    if (this->actor.xzDistToPlayer[playerIndex] < 80.0f) {
                         player->stateFlags2 |= 0x800000;
                     }
                 }
@@ -235,7 +236,7 @@ void func_80A8F75C(EnKakasi* this, PlayState* play) {
 }
 
 void func_80A8F8D0(EnKakasi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_04 && play->msgCtx.msgMode == MSGMODE_NONE) {
         // "end?"

@@ -162,11 +162,13 @@ void EnPoRelay_CorrectY(EnPoRelay* this) {
 }
 
 void EnPoRelay_Idle(EnPoRelay* this, PlayState* play) {
-    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0x100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x100);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actor.flags &= ~ACTOR_FLAG_16;
         this->actionFunc = EnPoRelay_Talk;
-    } else if (this->actor.xzDistToPlayer < 250.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 250.0f) {
         this->actor.flags |= ACTOR_FLAG_16;
         this->actor.textId = this->textId;
         func_8002F2CC(&this->actor, play, 250.0f);
@@ -175,7 +177,9 @@ void EnPoRelay_Idle(EnPoRelay* this, PlayState* play) {
 }
 
 void EnPoRelay_Talk(EnPoRelay* this, PlayState* play) {
-    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0x100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x100);
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Actor_SetTextWithPrefix(play, &this->actor, 0x2F);
         this->textId = this->actor.textId;
@@ -185,7 +189,8 @@ void EnPoRelay_Talk(EnPoRelay* this, PlayState* play) {
 }
 
 void EnPoRelay_Race(EnPoRelay* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f vec;
     f32 speed;
     f32 multiplier;
@@ -223,16 +228,16 @@ void EnPoRelay_Race(EnPoRelay* this, PlayState* play) {
             (Math3D_PointInSquare2D(1580.0f, 2090.0f, -3030.0f, -2500.0f, player->actor.world.pos.x,
                                     player->actor.world.pos.z) != 0)) {
             speed = (this->hookshotSlotFull) ? player->actor.speedXZ * 1.4f : player->actor.speedXZ * 1.2f;
-        } else if (this->actor.xzDistToPlayer < 150.0f) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 150.0f) {
             speed = (this->hookshotSlotFull) ? player->actor.speedXZ * 1.2f : player->actor.speedXZ;
-        } else if (this->actor.xzDistToPlayer < 300.0f) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 300.0f) {
             speed = (this->hookshotSlotFull) ? player->actor.speedXZ : player->actor.speedXZ * 0.8f;
         } else if (this->hookshotSlotFull) {
             speed = 4.5f;
         } else {
             speed = 3.5f;
         }
-        multiplier = 250.0f - this->actor.xzDistToPlayer;
+        multiplier = 250.0f - this->actor.xzDistToPlayer[playerIndex];
         multiplier = CLAMP_MIN(multiplier, 0.0f);
         speed += multiplier * 0.02f + 1.0f;
         Math_ApproachF(&this->actor.speedXZ, speed, 0.5f, 1.5f);
@@ -258,13 +263,14 @@ void EnPoRelay_Race(EnPoRelay* this, PlayState* play) {
 }
 
 void EnPoRelay_EndRace(EnPoRelay* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Math_ScaledStepToS(&this->actor.shape.rot.y, -0x4000, 0x800);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = EnPoRelay_Talk2;
     } else if (play->roomCtx.curRoom.num == 5) {
         Actor_Kill(&this->actor);
         gSaveContext.timer1State = 0;
-    } else if (Actor_IsFacingAndNearPlayer(&this->actor, 150.0f, 0x3000)) {
+    } else if (Actor_IsFacingAndNearPlayer(&this->actor, 150.0f, 0x3000, player, play)) {
         this->actor.textId = this->textId;
         func_8002F2CC(&this->actor, play, 250.0f);
     }
@@ -272,7 +278,9 @@ void EnPoRelay_EndRace(EnPoRelay* this, PlayState* play) {
 }
 
 void EnPoRelay_Talk2(EnPoRelay* this, PlayState* play) {
-    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0x100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x100);
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) {
         if (Message_ShouldAdvance(play)) {
             if (this->hookshotSlotFull != 0) {

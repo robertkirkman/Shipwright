@@ -362,6 +362,8 @@ void EnDog_ChooseMovement(EnDog* this, PlayState* play) {
 }
 
 void EnDog_FollowPlayer(EnDog* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 speed;
 
     if (gSaveContext.dogParams == 0) {
@@ -373,8 +375,7 @@ void EnDog_FollowPlayer(EnDog* this, PlayState* play) {
 
     if (CVarGetInteger("gDogFollowsEverywhere", 0)) {
         // If the dog is too far away it's usually because they are stuck in a hole or on a different floor, this gives them a push
-        if (this->actor.xyzDistToPlayerSq > 250000.0f) {
-            Player* player = GET_PLAYER(play);
+        if (this->actor.xyzDistToPlayerSq[playerIndex] > 250000.0f) {
             if (PlayerGrounded(player)) this->actor.world.pos.y = player->actor.world.pos.y;
         }
 
@@ -391,10 +392,10 @@ void EnDog_FollowPlayer(EnDog* this, PlayState* play) {
         }
     }
 
-    if (this->actor.xzDistToPlayer > 400.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 400.0f) {
         if (CVarGetInteger("gDogFollowsEverywhere", 0)) {
             // Instead of stopping following when the dog gets too far, just speed them up.
-            speed = this->actor.xzDistToPlayer / 25.0f;
+            speed = this->actor.xzDistToPlayer[playerIndex] / 25.0f;
         } else {
             if (this->nextBehavior != DOG_SIT && this->nextBehavior != DOG_SIT_2) {
                 this->nextBehavior = DOG_BOW;
@@ -402,10 +403,10 @@ void EnDog_FollowPlayer(EnDog* this, PlayState* play) {
             gSaveContext.dogParams = 0;
             speed = 0.0f;
         }
-    } else if (this->actor.xzDistToPlayer > 100.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] > 100.0f) {
         this->nextBehavior = DOG_RUN;
         speed = 4.0f;
-    } else if (this->actor.xzDistToPlayer < 40.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 40.0f) {
         if (this->nextBehavior != DOG_BOW && this->nextBehavior != DOG_BOW_2) {
             this->nextBehavior = DOG_BOW;
         }
@@ -417,16 +418,18 @@ void EnDog_FollowPlayer(EnDog* this, PlayState* play) {
 
     Math_ApproachF(&this->actor.speedXZ, speed, 0.6f, 1.0f);
 
-    if (!(this->actor.xzDistToPlayer > 400.0f) || CVarGetInteger("gDogFollowsEverywhere", 0)) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 10, 1000, 1);
+    if (!(this->actor.xzDistToPlayer[playerIndex] > 400.0f) || CVarGetInteger("gDogFollowsEverywhere", 0)) {
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 10, 1000, 1);
         this->actor.shape.rot = this->actor.world.rot;
     }
 }
 
 void EnDog_RunAway(EnDog* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         Math_ApproachF(&this->actor.speedXZ, 4.0f, 0.6f, 1.0f);
-        Math_SmoothStepToS(&this->actor.world.rot.y, (this->actor.yawTowardsPlayer ^ 0x8000), 10, 1000, 1);
+        Math_SmoothStepToS(&this->actor.world.rot.y, (this->actor.yawTowardsPlayer[playerIndex] ^ 0x8000), 10, 1000, 1);
     } else {
         this->actionFunc = EnDog_FaceLink;
     }
@@ -434,17 +437,19 @@ void EnDog_RunAway(EnDog* this, PlayState* play) {
 }
 
 void EnDog_FaceLink(EnDog* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 rotTowardLink;
     s16 prevRotY;
     f32 absAngleDiff;
 
     // if the dog is more than 200 units away from Link, turn to face him then wait
-    if (200.0f <= this->actor.xzDistToPlayer) {
+    if (200.0f <= this->actor.xzDistToPlayer[playerIndex]) {
         this->nextBehavior = DOG_WALK;
 
         Math_ApproachF(&this->actor.speedXZ, 1.0f, 0.6f, 1.0f);
 
-        rotTowardLink = this->actor.yawTowardsPlayer;
+        rotTowardLink = this->actor.yawTowardsPlayer[playerIndex];
         prevRotY = this->actor.world.rot.y;
         Math_SmoothStepToS(&this->actor.world.rot.y, rotTowardLink, 10, 1000, 1);
 
@@ -464,10 +469,12 @@ void EnDog_FaceLink(EnDog* this, PlayState* play) {
 }
 
 void EnDog_Wait(EnDog* this, PlayState* play) {
-    this->unusedAngle = (this->actor.yawTowardsPlayer - this->actor.shape.rot.y);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    this->unusedAngle = (this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y);
 
     // If another dog is following Link and he gets within 200 units of waiting dog, run away
-    if ((gSaveContext.dogParams != 0) && (this->actor.xzDistToPlayer < 200.0f)) {
+    if ((gSaveContext.dogParams != 0) && (this->actor.xzDistToPlayer[playerIndex] < 200.0f)) {
         this->nextBehavior = DOG_RUN;
         this->actionFunc = EnDog_RunAway;
     }

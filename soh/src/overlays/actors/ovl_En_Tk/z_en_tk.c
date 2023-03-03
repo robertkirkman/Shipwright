@@ -213,11 +213,11 @@ void EnTk_UpdateEyes(EnTk* this) {
     }
 }
 
-s32 EnTk_CheckFacingPlayer(EnTk* this) {
+s32 EnTk_CheckFacingPlayer(EnTk* this, u16 playerIndex) {
     s16 v0;
     s16 v1;
 
-    if (this->actor.xyzDistToPlayerSq > 10000.0f) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] > 10000.0f) {
         return 0;
     }
 
@@ -225,7 +225,7 @@ s32 EnTk_CheckFacingPlayer(EnTk* this) {
     v0 -= this->h_21E;
     v0 -= this->headRot;
 
-    v1 = this->actor.yawTowardsPlayer - v0;
+    v1 = this->actor.yawTowardsPlayer[playerIndex] - v0;
     if (ABS(v1) < 0x1554) {
         return 1;
     } else {
@@ -525,13 +525,15 @@ void EnTk_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnTk_Rest(EnTk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 v1;
     s16 a1_;
 
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         v1 = this->actor.shape.rot.y;
         v1 -= this->h_21E;
-        v1 = this->actor.yawTowardsPlayer - v1;
+        v1 = this->actor.yawTowardsPlayer[playerIndex] - v1;
 
         if (this->interactInfo.talkState == NPC_TALK_STATE_ACTION) {
             EnTk_DigAnim(this, play);
@@ -542,10 +544,10 @@ void EnTk_Rest(EnTk* this, PlayState* play) {
 
         Npc_UpdateTalking(play, &this->actor, &this->interactInfo.talkState, this->collider.dim.radius + 30.0f,
                           func_80B1C54C, func_80B1C5A0);
-    } else if (EnTk_CheckFacingPlayer(this)) {
+    } else if (EnTk_CheckFacingPlayer(this, playerIndex)) {
         v1 = this->actor.shape.rot.y;
         v1 -= this->h_21E;
-        v1 = this->actor.yawTowardsPlayer - v1;
+        v1 = this->actor.yawTowardsPlayer[playerIndex] - v1;
 
         this->actionCountdown = 0;
         Npc_UpdateTalking(play, &this->actor, &this->interactInfo.talkState, this->collider.dim.radius + 30.0f,
@@ -553,7 +555,7 @@ void EnTk_Rest(EnTk* this, PlayState* play) {
     } else if (Actor_ProcessTalkRequest(&this->actor, play)) {
         v1 = this->actor.shape.rot.y;
         v1 -= this->h_21E;
-        v1 = this->actor.yawTowardsPlayer - v1;
+        v1 = this->actor.yawTowardsPlayer[playerIndex] - v1;
 
         this->actionCountdown = 0;
         this->interactInfo.talkState = NPC_TALK_STATE_TALKING;
@@ -576,13 +578,15 @@ void EnTk_Walk(EnTk* this, PlayState* play) {
         this->interactInfo.talkState = NPC_TALK_STATE_IDLE;
         this->actionFunc = EnTk_Dig;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.speedXZ = EnTk_Step(this, play);
         EnTk_Orient(this, play);
         Math_SmoothStepToS(&this->headRot, 0, 6, 1000, 1);
         EnTk_CheckCurrentSpot(this);
 
         DECR(this->actionCountdown);
-        if (EnTk_CheckFacingPlayer(this) || this->actionCountdown == 0) {
+        if (EnTk_CheckFacingPlayer(this, playerIndex) || this->actionCountdown == 0) {
             EnTk_RestAnim(this, play);
             this->actionFunc = EnTk_Rest;
         }

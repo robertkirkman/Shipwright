@@ -369,12 +369,13 @@ void DoorKiller_FallOver(DoorKiller* this, PlayState* play) {
     }
     if (!(this->hasHitPlayerOrGround & 1)) {
         Vec3f playerPosRelToDoor;
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         func_8002DBD0(&this->actor, &playerPosRelToDoor, &player->actor.world.pos);
         if ((fabsf(playerPosRelToDoor.y) < 20.0f) && (fabsf(playerPosRelToDoor.x) < 20.0f) &&
             (playerPosRelToDoor.z < 100.0f) && (playerPosRelToDoor.z > 0.0f)) {
             this->hasHitPlayerOrGround |= 1;
-            func_8002F6D4(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer, 6.0f, 16);
+            func_8002F6D4(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f, 16);
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_KDOOR_HIT);
             func_8002F7DC(&player->actor, NA_SE_PL_BODY_HIT);
         }
@@ -428,7 +429,8 @@ void DoorKiller_WaitBeforeWobble(DoorKiller* this, PlayState* play) {
 }
 
 void DoorKiller_Wait(DoorKiller* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f playerPosRelToDoor;
     s16 angleToFacingPlayer;
 

@@ -193,7 +193,8 @@ void EnDha_Wait(EnDha* this, PlayState* play) {
     Vec3f zeroVec = { 0.0f, 0.0f, 0.0f }; // unused
     Vec3f armPosMultiplier1 = { 0.0f, 0.0f, 55.0f };
     Vec3f armPosMultiplier2 = { 0.0f, 0.0f, -54.0f };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 pad2;
     Vec3f playerPos = player->actor.world.pos;
@@ -209,7 +210,7 @@ void EnDha_Wait(EnDha* this, PlayState* play) {
         playerPos.y += 56.0f;
     }
 
-    if (this->actor.xzDistToPlayer <= 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 100.0f) {
         this->handAngle.y = this->handAngle.x = this->limbAngleY = 0;
 
         if (Math_Vec3f_DistXYZ(&playerPos, &this->handPos[0]) <= 12.0f) {
@@ -302,7 +303,7 @@ void EnDha_SetupTakeDamage(EnDha* this) {
 }
 
 void EnDha_TakeDamage(EnDha* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((player->stateFlags2 & 0x80) && (&this->actor == player->actor.parent)) {
         player->stateFlags2 &= ~0x80;
@@ -340,7 +341,7 @@ void EnDha_SetupDeath(EnDha* this) {
 void EnDha_Die(EnDha* this, PlayState* play) {
     s16 angle;
     Vec3f vec;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((player->stateFlags2 & 0x80) && (&this->actor == player->actor.parent)) {
         player->stateFlags2 &= ~0x80;

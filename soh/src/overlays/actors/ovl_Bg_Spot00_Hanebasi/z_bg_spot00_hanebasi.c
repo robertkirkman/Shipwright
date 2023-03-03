@@ -215,7 +215,7 @@ void BgSpot00Hanebasi_Update(Actor* thisx, PlayState* play) {
         if (play->sceneNum == SCENE_SPOT00) {
             if (CHECK_QUEST_ITEM(QUEST_KOKIRI_EMERALD) && CHECK_QUEST_ITEM(QUEST_GORON_RUBY) &&
                 CHECK_QUEST_ITEM(QUEST_ZORA_SAPPHIRE) && !(gSaveContext.eventChkInf[8] & 1) && LINK_IS_CHILD) {
-                Player* player = GET_PLAYER(play);
+                Player* player = Player_NearestToActor(thisx, play);
 
                 if ((player->actor.world.pos.x > -450.0f) && (player->actor.world.pos.x < 450.0f) &&
                     (player->actor.world.pos.z > 1080.0f) && (player->actor.world.pos.z < 1700.0f) &&
@@ -228,7 +228,7 @@ void BgSpot00Hanebasi_Update(Actor* thisx, PlayState* play) {
                     gSaveContext.nextCutsceneIndex = 0xFFF1;
                     play->sceneLoadFlag = 0x14;
                     play->fadeTransition = 4;
-                } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 3000.0f, 0x7530)) {
+                } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 3000.0f, 0x7530, player, play)) {
                     play->envCtx.gloomySkyMode = 1;
                 }
             }

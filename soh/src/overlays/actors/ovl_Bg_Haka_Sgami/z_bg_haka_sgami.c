@@ -288,7 +288,7 @@ void BgHakaSgami_Spin(BgHakaSgami* this, PlayState* play) {
 
 void BgHakaSgami_Update(Actor* thisx, PlayState* play) {
     BgHakaSgami* this = (BgHakaSgami*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (!(player->stateFlags1 & 0x300000C0) || (this->actionFunc == BgHakaSgami_SetupSpin)) {
         this->actionFunc(this, play);

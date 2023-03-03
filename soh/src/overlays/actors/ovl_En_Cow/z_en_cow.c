@@ -165,6 +165,8 @@ void EnCow_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_809DF494(EnCow* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->unk_278 > 0) {
         this->unk_278 -= 1;
     } else {
@@ -173,7 +175,7 @@ void func_809DF494(EnCow* this, PlayState* play) {
                          Animation_GetLastFrame(&gCowBodyChewAnim), ANIMMODE_ONCE, 1.0f);
     }
 
-    if ((this->actor.xzDistToPlayer < 150.0f) && (!(this->unk_276 & 2))) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 150.0f) && (!(this->unk_276 & 2))) {
         this->unk_276 |= 2;
         if (this->skelAnime.animation == &gCowBodyChewAnim) {
             this->unk_278 = 0;
@@ -233,7 +235,7 @@ void EnCow_MoveForRandomizer(EnCow* this, PlayState* play) {
 
 void EnCow_SetCowMilked(EnCow* this, PlayState* play) {
     CowIdentity cowIdentity = Randomizer_IdentifyCow(play->sceneNum, this->actor.world.pos.x, this->actor.world.pos.z);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     player->pendingFlag.flagID = cowIdentity.randomizerInf;
     player->pendingFlag.flagType = FLAG_RANDOMIZER_INF;
 }
@@ -303,8 +305,10 @@ void func_809DF96C(EnCow* this, PlayState* play) {
                 this->unk_276 &= ~0x4;
                 DREG(53) = 0;
             } else {
-                if ((this->actor.xzDistToPlayer < 150.0f) &&
-                    (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) < 0x61A8)) {
+                Player* player = Player_NearestToActor(&this->actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                if ((this->actor.xzDistToPlayer[playerIndex] < 150.0f) &&
+                    (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) < 0x61A8)) {
                     DREG(53) = 0;
                     // when randomized with cowsanity, if we haven't gotten the
                     // reward from this cow yet, give that, otherwise use the
@@ -335,6 +339,8 @@ void func_809DF96C(EnCow* this, PlayState* play) {
 }
 
 void func_809DFA84(EnCow* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->unk_278 > 0) {
         this->unk_278--;
     } else {
@@ -343,8 +349,8 @@ void func_809DFA84(EnCow* this, PlayState* play) {
                          Animation_GetLastFrame(&gCowTailIdleAnim), ANIMMODE_ONCE, 1.0f);
     }
 
-    if ((this->actor.xzDistToPlayer < 150.0f) &&
-        (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) >= 0x61A9) && (!(this->unk_276 & 2))) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 150.0f) &&
+        (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) >= 0x61A9) && (!(this->unk_276 & 2))) {
         this->unk_276 |= 2;
         if (this->skelAnime.animation == &gCowTailIdleAnim) {
             this->unk_278 = 0;
@@ -357,7 +363,8 @@ void EnCow_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     s16 targetX;
     s16 targetY;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     CollisionCheck_SetOC(play, &play->colChkCtx, &this->colliders[0].base);
     CollisionCheck_SetOC(play, &play->colChkCtx, &this->colliders[1].base);
@@ -374,7 +381,7 @@ void EnCow_Update(Actor* thisx, PlayState* play2) {
         }
     }
     this->actionFunc(this, play);
-    if ((thisx->xzDistToPlayer < 150.0f) &&
+    if ((thisx->xzDistToPlayer[playerIndex] < 150.0f) &&
         (ABS(Math_Vec3f_Yaw(&thisx->world.pos, &player->actor.world.pos)) < 0xC000)) {
         targetX = Math_Vec3f_Pitch(&thisx->focus.pos, &player->actor.focus.pos);
         targetY = Math_Vec3f_Yaw(&thisx->focus.pos, &player->actor.focus.pos) - thisx->shape.rot.y;

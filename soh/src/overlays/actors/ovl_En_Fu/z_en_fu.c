@@ -102,6 +102,8 @@ void EnFu_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80A1D94C(EnFu* this, PlayState* play, u16 textID, EnFuActionFunc actionFunc) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
@@ -109,9 +111,9 @@ s32 func_80A1D94C(EnFu* this, PlayState* play, u16 textID, EnFuActionFunc action
         return true;
     }
     this->actor.textId = textID;
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((ABS(yawDiff) < 0x2301) && (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS(yawDiff) < 0x2301) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         func_8002F2CC(&this->actor, play, 100.0f);
     } else {
         this->behaviorFlags |= FU_RESET_LOOK_ANGLE;
@@ -182,7 +184,7 @@ void func_80A1DBA0(EnFu* this, PlayState* play) {
 }
 
 void func_80A1DBD4(EnFu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (gSaveContext.n64ddFlag && (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING)) {
         play->msgCtx.ocarinaMode = OCARINA_MODE_03;
@@ -214,7 +216,7 @@ void func_80A1DBD4(EnFu* this, PlayState* play) {
 }
 
 void EnFu_WaitForPlayback(EnFu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     player->stateFlags2 |= 0x800000;
     // if dialog state is 7, player has played back the song
@@ -225,7 +227,7 @@ void EnFu_WaitForPlayback(EnFu* this, PlayState* play) {
 }
 
 void EnFu_TeachSong(EnFu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     player->stateFlags2 |= 0x800000;
     // if dialog state is 2, start song demonstration
@@ -239,9 +241,10 @@ void EnFu_TeachSong(EnFu* this, PlayState* play) {
 
 void EnFu_WaitAdult(EnFu* this, PlayState* play) {
     static s16 yawDiff;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     if ((gSaveContext.eventChkInf[5] & 0x800)) {
         func_80A1D94C(this, play, 0x508E, func_80A1DBA0);
     } else if (player->stateFlags2 & 0x1000000) {
@@ -252,7 +255,7 @@ void EnFu_WaitAdult(EnFu* this, PlayState* play) {
     } else if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = func_80A1DBA0;
     } else if (ABS(yawDiff) < 0x2301) {
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             this->actor.textId = 0x5034;
             func_8002F2CC(&this->actor, play, 100.0f);
             player->stateFlags2 |= 0x800000;

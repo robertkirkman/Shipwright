@@ -424,7 +424,9 @@ void EnFr_JumpingOutOfWater(EnFr* this, PlayState* play) {
 }
 
 void EnFr_OrientOnLogSpot(EnFr* this, PlayState* play) {
-    s16 rotYRemaining = Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 10000, 100);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 rotYRemaining = Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 10000, 100);
 
     this->actor.world.rot.y = this->actor.shape.rot.y;
 
@@ -588,7 +590,7 @@ s32 EnFr_SetupJumpingUp(EnFr* this, s32 frogIndex) {
 }
 
 void EnFr_Idle(EnFr* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->stateFlags2 & 0x2000000) {
         if (play->msgCtx.ocarinaMode == OCARINA_MODE_04) {

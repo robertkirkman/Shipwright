@@ -82,7 +82,7 @@ u8 CheckPlayerPosition(Player* player, PlayState* play) {
 }
 
 void BgGjyoBridge_TriggerCutscene(BgGjyoBridge* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (!gSaveContext.n64ddFlag) {
         if (CHECK_QUEST_ITEM(QUEST_MEDALLION_SPIRIT) && CHECK_QUEST_ITEM(QUEST_MEDALLION_SHADOW) &&

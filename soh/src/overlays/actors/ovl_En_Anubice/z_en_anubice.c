@@ -100,7 +100,7 @@ static DamageTable sDamageTable[] = {
 };
 
 void EnAnubice_Hover(EnAnubice* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->hoverVelocityTimer += 1500.0f;
     this->targetHeight = player->actor.world.pos.y + this->playerHeightOffset;
@@ -114,7 +114,7 @@ void EnAnubice_SetFireballRot(EnAnubice* this, PlayState* play) {
     f32 x;
     f32 y;
     f32 z;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     x = player->actor.world.pos.x - this->fireballPos.x;
     y = player->actor.world.pos.y + 10.0f - this->fireballPos.y;
@@ -209,14 +209,15 @@ void EnAnubice_SetupIdle(EnAnubice* this, PlayState* play) {
 }
 
 void EnAnubice_Idle(EnAnubice* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
     Math_ApproachZeroF(&this->actor.shape.yOffset, 0.5f, 300.0f);
     Math_ApproachF(&this->focusHeightOffset, 70.0f, 0.5f, 5.0f);
 
     if (!this->isKnockedback) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 3000, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 3000, 0);
     }
 
     if (this->actor.shape.yOffset > -2.0f) {
@@ -233,6 +234,8 @@ void EnAnubice_Idle(EnAnubice* this, PlayState* play) {
 }
 
 void EnAnubice_GoToHome(EnAnubice* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 xzdist;
     f32 xRatio;
     f32 zRatio;
@@ -244,7 +247,7 @@ void EnAnubice_GoToHome(EnAnubice* this, PlayState* play) {
     Math_ApproachZeroF(&this->focusHeightOffset, 0.5f, 5.0f);
 
     if (!this->isKnockedback) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 3000, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 3000, 0);
     }
 
     if ((fabsf(this->home.x - this->actor.world.pos.x) > 3.0f) &&
@@ -279,7 +282,9 @@ void EnAnubice_ShootFireball(EnAnubice* this, PlayState* play) {
     SkelAnime_Update(&this->skelAnime);
 
     if (!this->isKnockedback) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 3000, 0);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 3000, 0);
     }
 
     EnAnubice_SetFireballRot(this, play);

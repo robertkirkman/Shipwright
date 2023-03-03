@@ -328,13 +328,15 @@ void EnTest_Destroy(Actor* thisx, PlayState* play) {
  * a new action as a last resort
  */
 void EnTest_ChooseRandomAction(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     switch ((u32)(Rand_ZeroOne() * 10.0f)) {
         case 0:
         case 1:
         case 5:
         case 6:
-            if ((this->actor.xzDistToPlayer < 220.0f) && (this->actor.xzDistToPlayer > 170.0f) &&
-                Actor_IsFacingPlayer(&this->actor, 0x71C) && Actor_IsTargeted(play, &this->actor)) {
+            if ((this->actor.xzDistToPlayer[playerIndex] < 220.0f) && (this->actor.xzDistToPlayer[playerIndex] > 170.0f) &&
+                Actor_IsFacingPlayer(&this->actor, 0x71C, player, play) && Actor_IsTargeted(play, &this->actor)) {
                 EnTest_SetupJumpslash(this);
                 break;
             }
@@ -359,7 +361,8 @@ void EnTest_ChooseRandomAction(EnTest* this, PlayState* play) {
 
 void EnTest_ChooseAction(EnTest* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
     yawDiff = ABS(yawDiff);
@@ -383,25 +386,25 @@ void EnTest_ChooseAction(EnTest* this, PlayState* play) {
             case 4:
             case 9:
                 if (this->actor.params != STALFOS_TYPE_CEILING) {
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                     EnTest_SetupJumpBack(this);
                 }
                 break;
         }
     } else if (yawDiff <= 0x3E80) {
-        if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) > 0x3E80) {
+        if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) > 0x3E80) {
             if (((play->gameplayFrames % 2) != 0) && (this->actor.params != STALFOS_TYPE_CEILING)) {
-                this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                 EnTest_SetupJumpBack(this);
-            } else if ((this->actor.xzDistToPlayer < 220.0f) && (this->actor.xzDistToPlayer > 170.0f)) {
-                if (Actor_IsFacingPlayer(&this->actor, 0x71C) && !Actor_IsTargeted(play, &this->actor)) {
+            } else if ((this->actor.xzDistToPlayer[playerIndex] < 220.0f) && (this->actor.xzDistToPlayer[playerIndex] > 170.0f)) {
+                if (Actor_IsFacingPlayer(&this->actor, 0x71C, player, play) && !Actor_IsTargeted(play, &this->actor)) {
                     EnTest_SetupJumpslash(this);
                 }
             } else {
                 EnTest_SetupWalkAndBlock(this);
             }
         } else {
-            if (this->actor.xzDistToPlayer < 110.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 110.0f) {
                 if (Rand_ZeroOne() > 0.2f) {
                     if (player->stateFlags1 & 0x10) {
                         if (this->actor.isTargeted) {
@@ -433,13 +436,15 @@ void EnTest_SetupWaitGround(EnTest* this) {
 }
 
 void EnTest_WaitGround(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
-    if ((this->timer == 0) && (ABS(this->actor.yDistToPlayer) < 150.0f)) {
+    if ((this->timer == 0) && (ABS(this->actor.yDistToPlayer[playerIndex]) < 150.0f)) {
         this->unk_7C8 = 3;
         EnTest_SetupAction(this, EnTest_Rise);
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
-        this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
+        this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
         if (this->actor.params != STALFOS_TYPE_2) {
             func_800F5ACC(NA_BGM_MINI_BOSS);
@@ -463,13 +468,15 @@ void EnTest_SetupWaitAbove(EnTest* this) {
 }
 
 void EnTest_WaitAbove(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     this->actor.world.pos.y = this->actor.home.pos.y + 150.0f;
 
-    if ((this->actor.xzDistToPlayer < 200.0f) && (ABS(this->actor.yDistToPlayer) < 450.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 200.0f) && (ABS(this->actor.yDistToPlayer[playerIndex]) < 450.0f)) {
         EnTest_SetupAction(this, EnTest_Fall);
         this->actor.flags |= ACTOR_FLAG_0;
-        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         Actor_SetScale(&this->actor, 0.015f);
     }
 }
@@ -484,7 +491,8 @@ void EnTest_SetupIdle(EnTest* this) {
 }
 
 void EnTest_Idle(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     SkelAnime_Update(&this->skelAnime);
@@ -492,9 +500,9 @@ void EnTest_Idle(EnTest* this, PlayState* play) {
     if (!EnTest_ReactToProjectile(play, this)) {
         yawDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             if ((player->swordState != 0) && (ABS(yawDiff) >= 0x1F40)) {
-                this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
                 if (Rand_ZeroOne() > 0.7f && player->meleeWeaponAnimation != 0x11) {
                     EnTest_SetupJumpBack(this);
@@ -508,8 +516,8 @@ void EnTest_Idle(EnTest* this, PlayState* play) {
         if (this->timer != 0) {
             this->timer--;
         } else {
-            if (Actor_IsFacingPlayer(&this->actor, 0x1555)) {
-                if ((this->actor.xzDistToPlayer < 220.0f) && (this->actor.xzDistToPlayer > 160.0f) &&
+            if (Actor_IsFacingPlayer(&this->actor, 0x1555, player, play)) {
+                if ((this->actor.xzDistToPlayer[playerIndex] < 220.0f) && (this->actor.xzDistToPlayer[playerIndex] > 160.0f) &&
                     (Rand_ZeroOne() < 0.3f)) {
                     if (Actor_IsTargeted(play, &this->actor)) {
                         EnTest_SetupJumpslash(this);
@@ -571,7 +579,8 @@ void EnTest_WalkAndBlock(EnTest* this, PlayState* play) {
     s32 prevFrame;
     s32 temp_f16;
     f32 playSpeed;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 absPlaySpeed;
     s16 yawDiff;
 
@@ -582,9 +591,9 @@ void EnTest_WalkAndBlock(EnTest* this, PlayState* play) {
             checkDist = 150.0f;
         }
 
-        if (this->actor.xzDistToPlayer <= (80.0f + checkDist)) {
+        if (this->actor.xzDistToPlayer[playerIndex] <= (80.0f + checkDist)) {
             Math_SmoothStepToF(&this->actor.speedXZ, -5.0f, 1.0f, 0.8f, 0.0f);
-        } else if (this->actor.xzDistToPlayer > (110.0f + checkDist)) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] > (110.0f + checkDist)) {
             Math_SmoothStepToF(&this->actor.speedXZ, 5.0f, 1.0f, 0.8f, 0.0f);
         }
 
@@ -623,9 +632,9 @@ void EnTest_WalkAndBlock(EnTest* this, PlayState* play) {
 
         yawDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
-        if ((this->actor.xzDistToPlayer < 100.0f) && (player->swordState != 0)) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 100.0f) && (player->swordState != 0)) {
             if (ABS(yawDiff) >= 0x1F40) {
-                this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
                 if ((Rand_ZeroOne() > 0.7f) && (player->meleeWeaponAnimation != 0x11)) {
                     EnTest_SetupJumpBack(this);
@@ -656,8 +665,8 @@ void EnTest_WalkAndBlock(EnTest* this, PlayState* play) {
             this->timer += (s16)(Rand_ZeroOne() * 5.0f);
         }
 
-        if ((this->actor.xzDistToPlayer < 220.0f) && (this->actor.xzDistToPlayer > 160.0f) &&
-            (Actor_IsFacingPlayer(&this->actor, 0x71C))) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 220.0f) && (this->actor.xzDistToPlayer[playerIndex] > 160.0f) &&
+            (Actor_IsFacingPlayer(&this->actor, 0x71C, player, play))) {
             if (Actor_IsTargeted(play, &this->actor)) {
                 if (Rand_ZeroOne() < 0.1f) {
                     EnTest_SetupJumpslash(this);
@@ -678,16 +687,16 @@ void EnTest_WalkAndBlock(EnTest* this, PlayState* play) {
         }
 
         if (Rand_ZeroOne() < 0.4f) {
-            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         }
 
-        if (!Actor_IsFacingPlayer(&this->actor, 0x11C7)) {
+        if (!Actor_IsFacingPlayer(&this->actor, 0x11C7, player, play)) {
             EnTest_SetupIdle(this);
             this->timer = (Rand_ZeroOne() * 10.0f) + 10.0f;
             return;
         }
 
-        if (this->actor.xzDistToPlayer < 110.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 110.0f) {
             if (Rand_ZeroOne() > 0.2f) {
                 if (player->stateFlags1 & 0x10) {
                     if (this->actor.isTargeted) {
@@ -716,6 +725,8 @@ void func_80860BDC(EnTest* this) {
 
 // a variation of sidestep
 void func_80860C24(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     s16 yawChange;
     f32 playSpeed;
@@ -725,7 +736,7 @@ void func_80860C24(EnTest* this, PlayState* play) {
     s32 absPlaySpeed;
 
     if (!EnTest_ReactToProjectile(play, this)) {
-        yawDiff = this->actor.yawTowardsPlayer;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex];
         yawDiff -= this->actor.shape.rot.y;
 
         if (yawDiff > 0) {
@@ -761,7 +772,7 @@ void func_80860C24(EnTest* this, PlayState* play) {
             }
         }
 
-        if (Actor_IsFacingPlayer(&this->actor, 0x71C)) {
+        if (Actor_IsFacingPlayer(&this->actor, 0x71C, player, play)) {
             if (Rand_ZeroOne() > 0.8f) {
                 if ((Rand_ZeroOne() > 0.7f)) {
                     func_80860EC0(this);
@@ -793,13 +804,14 @@ void func_80860F84(EnTest* this, PlayState* play) {
     s32 prevFrame;
     s32 temp_f16;
     s16 yawDiff;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 checkDist = 0.0f;
     s16 newYaw;
     s32 absPlaySpeed;
 
     if (!EnTest_ReactToProjectile(play, this)) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA0, 1);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA0, 1);
         this->actor.world.rot.y = this->actor.shape.rot.y + 0x3E80;
         playerYaw180 = player->actor.shape.rot.y + 0x8000;
 
@@ -848,9 +860,9 @@ void func_80860F84(EnTest* this, PlayState* play) {
             checkDist = 200.0f;
         }
 
-        if (this->actor.xzDistToPlayer <= (80.0f + checkDist)) {
+        if (this->actor.xzDistToPlayer[playerIndex] <= (80.0f + checkDist)) {
             Math_SmoothStepToF(&this->unk_7EC, -2.5f, 1.0f, 0.8f, 0.0f);
-        } else if (this->actor.xzDistToPlayer > (110.0f + checkDist)) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] > (110.0f + checkDist)) {
             Math_SmoothStepToF(&this->unk_7EC, 2.5f, 1.0f, 0.8f, 0.0f);
         } else {
             Math_SmoothStepToF(&this->unk_7EC, 0.0f, 1.0f, 6.65f, 0.0f);
@@ -906,10 +918,12 @@ void EnTest_SetupSlashDown(EnTest* this) {
 }
 
 void EnTest_SlashDown(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.speedXZ = 0.0f;
 
     if ((s32)this->skelAnime.curFrame < 4) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xBB8, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xBB8, 0);
     }
 
     if ((s32)this->skelAnime.curFrame == 7) {
@@ -939,7 +953,8 @@ void EnTest_SetupSlashDownEnd(EnTest* this) {
 }
 
 void EnTest_SlashDownEnd(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     if (SkelAnime_Update(&this->skelAnime)) {
@@ -969,10 +984,10 @@ void EnTest_SlashDownEnd(EnTest* this, PlayState* play) {
         yawDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
         if (ABS(yawDiff) <= 0x2710) {
-            yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+            yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
             if ((ABS(yawDiff) > 0x3E80) && (this->actor.params != STALFOS_TYPE_CEILING)) {
-                this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                 EnTest_SetupJumpBack(this);
             } else if (player->stateFlags1 & 0x10) {
                 if (this->actor.isTargeted) {
@@ -1041,7 +1056,9 @@ void EnTest_SetupJumpBack(EnTest* this) {
 }
 
 void EnTest_JumpBack(EnTest* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xBB8, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xBB8, 1);
 
     if (this->timer == 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_STAL_WARAU);
@@ -1051,15 +1068,15 @@ void EnTest_JumpBack(EnTest* this, PlayState* play) {
 
     if (SkelAnime_Update(&this->skelAnime)) {
         if (!EnTest_ReactToProjectile(play, this)) {
-            if (this->actor.xzDistToPlayer <= 100.0f) {
-                if (Actor_IsFacingPlayer(&this->actor, 0x1555)) {
+            if (this->actor.xzDistToPlayer[playerIndex] <= 100.0f) {
+                if (Actor_IsFacingPlayer(&this->actor, 0x1555, player, play)) {
                     EnTest_SetupSlashDown(this);
                 } else {
                     EnTest_SetupIdle(this);
                     this->timer = (Rand_ZeroOne() * 5.0f) + 5.0f;
                 }
             } else {
-                if ((this->actor.xzDistToPlayer <= 220.0f) && Actor_IsFacingPlayer(&this->actor, 0xE38)) {
+                if ((this->actor.xzDistToPlayer[playerIndex] <= 220.0f) && Actor_IsFacingPlayer(&this->actor, 0xE38, player, play)) {
                     EnTest_SetupJumpslash(this);
                 } else {
                     EnTest_SetupIdle(this);
@@ -1132,12 +1149,14 @@ void EnTest_SetupJumpUp(EnTest* this) {
 }
 
 void EnTest_JumpUp(EnTest* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA0, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA0, 1);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->actor.world.pos.y <= this->actor.floorHeight) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_M_GND);
-        this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.world.pos.y = this->actor.floorHeight;
         this->unk_7E4 = -(s32)this->actor.velocity.y;
 
@@ -1166,12 +1185,14 @@ void EnTest_SetupStopAndBlock(EnTest* this) {
 }
 
 void EnTest_StopAndBlock(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 0.5f, 0.0f);
     SkelAnime_Update(&this->skelAnime);
 
-    if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) > 0x3E80) &&
+    if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) > 0x3E80) &&
         (this->actor.params != STALFOS_TYPE_CEILING) && ((play->gameplayFrames % 2) != 0)) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         EnTest_SetupJumpBack(this);
     }
 
@@ -1189,6 +1210,8 @@ void EnTest_SetupIdleFromBlock(EnTest* this) {
 }
 
 void EnTest_IdleFromBlock(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 1.5f, 0.0f);
     SkelAnime_Update(&this->skelAnime);
 
@@ -1197,7 +1220,7 @@ void EnTest_IdleFromBlock(EnTest* this, PlayState* play) {
         this->unk_7DE = 0;
 
         if (!EnTest_ReactToProjectile(play, this)) {
-            if (this->actor.xzDistToPlayer < 500.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 500.0f) {
                 EnTest_ChooseAction(this, play);
             } else {
                 func_808627C4(this, play);
@@ -1216,7 +1239,8 @@ void func_80862154(EnTest* this) {
 }
 
 void func_808621D4(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 0.1f, 0.0f);
 
@@ -1224,7 +1248,7 @@ void func_808621D4(EnTest* this, PlayState* play) {
         this->actor.speedXZ = 0.0f;
 
         if ((this->actor.bgCheckFlags & 8) && ((ABS((s16)(this->actor.wallYaw - this->actor.shape.rot.y)) < 0x38A4) &&
-                                               (this->actor.xzDistToPlayer < 80.0f))) {
+                                               (this->actor.xzDistToPlayer[playerIndex] < 80.0f))) {
             EnTest_SetupJumpUp(this);
         } else if (!EnTest_ReactToProjectile(play, this)) {
             EnTest_ChooseAction(this, play);
@@ -1235,7 +1259,7 @@ void func_808621D4(EnTest* this, PlayState* play) {
 
     if (player->swordState != 0) {
         if ((this->actor.bgCheckFlags & 8) && ((ABS((s16)(this->actor.wallYaw - this->actor.shape.rot.y)) < 0x38A4) &&
-                                               (this->actor.xzDistToPlayer < 80.0f))) {
+                                               (this->actor.xzDistToPlayer[playerIndex] < 80.0f))) {
             EnTest_SetupJumpUp(this);
         } else if ((Rand_ZeroOne() > 0.7f) && (this->actor.params != STALFOS_TYPE_CEILING) &&
                    (player->meleeWeaponAnimation != 0x11)) {
@@ -1258,7 +1282,8 @@ void func_80862398(EnTest* this) {
 }
 
 void func_80862418(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 0.1f, 0.0f);
 
@@ -1274,7 +1299,7 @@ void func_80862418(EnTest* this, PlayState* play) {
 
     if (player->swordState != 0) {
         if ((this->actor.bgCheckFlags & 8) && ((ABS((s16)(this->actor.wallYaw - this->actor.shape.rot.y)) < 0x38A4) &&
-                                               (this->actor.xzDistToPlayer < 80.0f))) {
+                                               (this->actor.xzDistToPlayer[playerIndex] < 80.0f))) {
             EnTest_SetupJumpUp(this);
         } else if ((Rand_ZeroOne() > 0.7f) && (this->actor.params != STALFOS_TYPE_CEILING) &&
                    (player->meleeWeaponAnimation != 0x11)) {
@@ -1311,7 +1336,8 @@ void EnTest_SetupStunned(EnTest* this) {
 }
 
 void EnTest_Stunned(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 1.0f, 0.0f);
 
@@ -1321,7 +1347,7 @@ void EnTest_Stunned(EnTest* this, PlayState* play) {
         } else if (player->swordState != 0) {
             if ((this->actor.bgCheckFlags & 8) &&
                 ((ABS((s16)(this->actor.wallYaw - this->actor.shape.rot.y)) < 0x38A4) &&
-                 (this->actor.xzDistToPlayer < 80.0f))) {
+                 (this->actor.xzDistToPlayer[playerIndex] < 80.0f))) {
                 EnTest_SetupJumpUp(this);
             } else if ((Rand_ZeroOne() > 0.7f) && (player->meleeWeaponAnimation != 0x11)) {
                 EnTest_SetupJumpBack(this);
@@ -1341,13 +1367,15 @@ void EnTest_Stunned(EnTest* this, PlayState* play) {
 
 // a variation of sidestep
 void func_808627C4(EnTest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_OtherIsTargeted(play, &this->actor)) {
         func_80860EC0(this);
         return;
     }
 
     Animation_MorphToLoop(&this->skelAnime, &gStalfosSidestepAnim, -2.0f);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA0, 1);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA0, 1);
     this->actor.speedXZ = ((play->gameplayFrames % 2) != 0) ? -4.0f : 4.0f;
     this->actor.world.rot.y = this->actor.shape.rot.y + 0x3FFF;
     this->timer = (Rand_ZeroOne() * 20.0f) + 20.0f;
@@ -1359,7 +1387,8 @@ void func_808627C4(EnTest* this, PlayState* play) {
 // a variation of sidestep
 void func_808628C8(EnTest* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad1;
     s32 prevFrame;
     s32 temp_f16;
@@ -1368,7 +1397,7 @@ void func_808628C8(EnTest* this, PlayState* play) {
     s16 newYaw;
     f32 absPlaySpeed;
 
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA0, 1);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA0, 1);
 
     if (this->unk_7DE == 0) {
         this->unk_7DE++;
@@ -1421,9 +1450,9 @@ void func_808628C8(EnTest* this, PlayState* play) {
         checkDist = 200.0f;
     }
 
-    if (this->actor.xzDistToPlayer <= (80.0f + checkDist)) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= (80.0f + checkDist)) {
         Math_SmoothStepToF(&this->unk_7EC, -2.5f, 1.0f, 0.8f, 0.0f);
-    } else if (this->actor.xzDistToPlayer > (110.0f + checkDist)) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] > (110.0f + checkDist)) {
         Math_SmoothStepToF(&this->unk_7EC, 2.5f, 1.0f, 0.8f, 0.0f);
     } else {
         Math_SmoothStepToF(&this->unk_7EC, 0.0f, 1.0f, 6.65f, 0.0f);
@@ -1639,7 +1668,9 @@ void func_808633E8(EnTest* this, PlayState* play) {
 }
 
 void EnTest_UpdateHeadRot(EnTest* this, PlayState* play) {
-    s16 lookAngle = this->actor.yawTowardsPlayer;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 lookAngle = this->actor.yawTowardsPlayer[playerIndex];
 
     lookAngle -= (s16)(this->headRot.y + this->actor.shape.rot.y);
 
@@ -1649,7 +1680,8 @@ void EnTest_UpdateHeadRot(EnTest* this, PlayState* play) {
 }
 
 void EnTest_UpdateDamage(EnTest* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->shieldCollider.base.acFlags & AC_BOUNCED) {
         this->shieldCollider.base.acFlags &= ~AC_BOUNCED;
@@ -1668,7 +1700,7 @@ void EnTest_UpdateDamage(EnTest* this, PlayState* play) {
                 this->swordState = 0;
             }
             this->unk_7DC = player->unk_845;
-            this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+            this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
             Actor_SetDropFlag(&this->actor, &this->bodyCollider.info, false);
             Audio_StopSfxByPosAndId(&this->actor.projectedPos, NA_SE_EN_STAL_WARAU);
 
@@ -1680,7 +1712,7 @@ void EnTest_UpdateDamage(EnTest* this, PlayState* play) {
                     EnTest_SetupStunned(this);
                 }
             } else {
-                if (Actor_IsFacingPlayer(&this->actor, 0x4000)) {
+                if (Actor_IsFacingPlayer(&this->actor, 0x4000, player, play)) {
                     if (Actor_ApplyDamage(&this->actor) == 0) {
                         Enemy_StartFinishingBlow(play, &this->actor);
                         func_80862FA8(this, play);

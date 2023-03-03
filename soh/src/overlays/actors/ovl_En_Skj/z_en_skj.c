@@ -447,7 +447,7 @@ void EnSkj_Init(Actor* thisx, PlayState* play2) {
             this->actor.gravity = -1.0f;
             EnSkj_CalculateCenter(this);
 
-            player = GET_PLAYER(play);
+            player = GET_PLAYER(play); // unused
             osSyncPrintf("Player_X : %f\n", player->actor.world.pos.x);
             osSyncPrintf("Player_Z : %f\n", player->actor.world.pos.z);
             osSyncPrintf("World_X  : %f\n", this->actor.world.pos.x);
@@ -576,6 +576,8 @@ void EnSkj_SpawnBlood(PlayState* play, Vec3f* pos) {
 }
 
 s32 EnSkj_CollisionCheck(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     Vec3f effectPos;
 
@@ -590,7 +592,7 @@ s32 EnSkj_CollisionCheck(EnSkj* this, PlayState* play) {
                 EnSkj_SpawnBlood(play, &effectPos);
                 EffectSsHitMark_SpawnFixedScale(play, 1, &effectPos);
 
-                yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
+                yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y;
                 if ((this->action == 2) || (this->action == 6)) {
                     if ((yawDiff > 0x6000) || (yawDiff < -0x6000)) {
                         Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0, 8);
@@ -625,16 +627,18 @@ s32 EnSkj_CollisionCheck(EnSkj* this, PlayState* play) {
 }
 
 s32 func_80AFEDF8(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
-    if (this->actor.xzDistToPlayer < this->unk_2EC) {
+    if (this->actor.xzDistToPlayer[playerIndex] < this->unk_2EC) {
         this = this;
-        if (func_8002DDE4(play) != 0) {
+        if (func_8002DDE4(play, player) != 0) {
             return 1;
         }
     }
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y;
 
     if ((yawDiff < this->unk_2C8) && (-this->unk_2C8 < yawDiff)) {
         return 1;
@@ -711,12 +715,13 @@ void EnSkj_SetupResetFight(EnSkj* this) {
 }
 
 void EnSkj_SariasSongKidIdle(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->actor.params == 0) {
-        if (!(gSaveContext.itemGetInf[1] & 0x40) && (this->actor.xzDistToPlayer < 200.0f)) {
+        if (!(gSaveContext.itemGetInf[1] & 0x40) && (this->actor.xzDistToPlayer[playerIndex] < 200.0f)) {
             this->backflipFlag = 1;
             EnSkj_Backflip(this);
         } else if (sSmallStumpSkullKid.unk_0 != 0) {
-            Player* player = GET_PLAYER(play);
             if (EnSkj_RangeCheck(player, sSmallStumpSkullKid.skullkid)) {
                 EnSkj_SetupWaitInRange(this);
                 player->stateFlags2 |= 0x800000;
@@ -804,6 +809,8 @@ void EnSkj_SetupStand(EnSkj* this) {
 }
 
 void EnSkj_Fight(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f pos1;
     Vec3f pos2;
     s32 pad[3];
@@ -816,7 +823,7 @@ void EnSkj_Fight(EnSkj* this, PlayState* play) {
         EnSkj_SetupWaitToShootNeedle(this);
     } else if (this->battleExitTimer != 0) {
         yawDistToPlayer =
-            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, this->unk_2F0, 0);
+            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, this->unk_2F0, 0);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         Math_ApproachF(&this->unk_2F0, 2000.0f, 1.0f, 200.0f);
 
@@ -899,7 +906,7 @@ void EnSkj_SetupWaitInRange(EnSkj* this) {
 }
 
 void EnSkj_WaitInRange(EnSkj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     // When link pulls out the Ocarina center him on the stump
     // Link was probably supposed to be pointed towards skull kid as well
@@ -950,7 +957,7 @@ void EnSkj_SetupWaitForSong(EnSkj* this) {
 }
 
 void EnSkj_WaitForSong(EnSkj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     // Played a song thats not Saria's song
     if (!(gSaveContext.itemGetInf[1] & 0x40) && ((play->msgCtx.msgMode == MSGMODE_OCARINA_FAIL) ||
@@ -1129,10 +1136,12 @@ void EnSkj_SetupWalkToPlayer(EnSkj* this) {
 }
 
 void EnSkj_WalkToPlayer(EnSkj* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, this->unk_2F0, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, this->unk_2F0, 0);
     Math_ApproachF(&this->unk_2F0, 2000.0f, 1.0f, 100.0f);
     this->actor.world.rot.y = this->actor.shape.rot.y;
-    if (this->actor.xzDistToPlayer < 120.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
         this->actor.speedXZ = 0.0f;
         EnSkj_SetupAskForMask(this, play);
     }
@@ -1207,7 +1216,7 @@ void EnSkj_SetupWaitForTextClear(EnSkj* this) {
 
 void EnSkj_SariasSongWaitForTextClear(EnSkj* this, PlayState* play) {
     u8 state = Message_GetState(&play->msgCtx);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (state == TEXT_STATE_DONE && Message_ShouldAdvance(play)) {
         EnSkj_SetupWaitInRange(this);
@@ -1368,7 +1377,7 @@ void EnSkj_TurnPlayer(EnSkj* this, Player* player) {
 }
 
 void EnSkj_SetupWaitForOcarina(EnSkj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (EnSkj_RangeCheck(player, this)) {
         sOcarinaMinigameSkullKids[SKULL_KID_LEFT].skullkid->playerInRange = true;
@@ -1388,7 +1397,7 @@ void EnSkj_SetupWaitForOcarina(EnSkj* this, PlayState* play) {
 }
 
 void EnSkj_WaitForOcarina(EnSkj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->stateFlags2 & 0x1000000) {
         player->stateFlags2 |= 0x2000000;
@@ -1404,7 +1413,7 @@ void EnSkj_WaitForOcarina(EnSkj* this, PlayState* play) {
 
 void EnSkj_StartOcarinaMinigame(EnSkj* this, PlayState* play) {
     u8 dialogState = Message_GetState(&play->msgCtx);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     EnSkj_TurnPlayer(this, player);
 
@@ -1419,7 +1428,7 @@ void EnSkj_StartOcarinaMinigame(EnSkj* this, PlayState* play) {
 }
 
 void EnSkj_WaitForPlayback(EnSkj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     EnSkj_TurnPlayer(this, player);
 
@@ -1516,7 +1525,7 @@ void EnSkj_WaitForOfferResponse(EnSkj* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0: // yes
-                player = GET_PLAYER(play);
+                player = Player_NearestToActor(&this->actor, play);
                 player->stateFlags3 |= 0x20; // makes player take ocarina out right away after closing box
                 this->actionFunc = EnSkj_SetupWaitForOcarina;
                 break;
@@ -1601,6 +1610,8 @@ void EnSkj_CleanupOcarinaGame(EnSkj* this, PlayState* play) {
 
 void EnSkj_OcarinaMinigameShortStumpUpdate(Actor* thisx, PlayState* play) {
     EnSkj* this = (EnSkj*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     D_80B01EA0 = Actor_ProcessTalkRequest(&this->actor, play);
     this->timer++;
@@ -1618,7 +1629,7 @@ void EnSkj_OcarinaMinigameShortStumpUpdate(Actor* thisx, PlayState* play) {
     this->actionFunc(this, play);
 
     this->actor.textId = this->textId;
-    this->actor.xzDistToPlayer = 50.0;
+    this->actor.xzDistToPlayer[playerIndex] = 50.0;
 }
 
 s32 EnSkj_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx) {

@@ -70,7 +70,7 @@ void EnMb_SetupSpearPatrolTurnTowardsWaypoint(EnMb* this, PlayState* play);
 void EnMb_SetupClubWaitPlayerNear(EnMb* this);
 void EnMb_SpearGuardLookAround(EnMb* this, PlayState* play);
 void EnMb_SetupSpearGuardLookAround(EnMb* this);
-void EnMb_SetupSpearDamaged(EnMb* this);
+void EnMb_SetupSpearDamaged(EnMb* this, PlayState* play);
 void EnMb_SpearGuardWalk(EnMb* this, PlayState* play);
 void EnMb_SpearGuardPrepareAndCharge(EnMb* this, PlayState* play);
 void EnMb_SpearPatrolPrepareAndCharge(EnMb* this, PlayState* play);
@@ -82,7 +82,7 @@ void EnMb_ClubWaitPlayerNear(EnMb* this, PlayState* play);
 void EnMb_ClubAttack(EnMb* this, PlayState* play);
 void EnMb_SpearDead(EnMb* this, PlayState* play);
 void EnMb_SpearDamaged(EnMb* this, PlayState* play);
-void EnMb_SetupSpearDead(EnMb* this);
+void EnMb_SetupSpearDead(EnMb* this, PlayState* play);
 void EnMb_SpearPatrolTurnTowardsWaypoint(EnMb* this, PlayState* play);
 void EnMb_SpearPatrolWalkTowardsWaypoint(EnMb* this, PlayState* play);
 void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play);
@@ -259,7 +259,7 @@ void EnMb_SetupAction(EnMb* this, EnMbActionFunc actionFunc) {
 void EnMb_Init(Actor* thisx, PlayState* play) {
     EnMb* this = (EnMb*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // actor init
     s16 relYawFromPlayer;
 
     Actor_ProcessInitChain(&this->actor, sInitChain);
@@ -371,7 +371,7 @@ void EnMb_NextWaypoint(EnMb* this, PlayState* play) {
  *       and they all are 100 units wide.
  */
 s32 EnMb_IsPlayerInCorridor(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 xFromPlayer;
     f32 zFromPlayer;
     f32 cos;
@@ -405,6 +405,8 @@ s32 EnMb_IsPlayerInCorridor(EnMb* this, PlayState* play) {
 }
 
 void EnMb_FindWaypointTowardsPlayer(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Path* path = &play->setupPathList[this->path];
     s16 yawToWaypoint;
     Vec3f waypointPosF;
@@ -419,7 +421,7 @@ void EnMb_FindWaypointTowardsPlayer(EnMb* this, PlayState* play) {
         waypointPosF.y = waypointPosS->y;
         waypointPosF.z = waypointPosS->z;
         yawToWaypoint = Math_Vec3f_Yaw(&this->actor.world.pos, &waypointPosF);
-        yawPlayerToWaypoint = yawToWaypoint - this->actor.yawTowardsPlayer;
+        yawPlayerToWaypoint = yawToWaypoint - this->actor.yawTowardsPlayer[playerIndex];
         if (ABS(yawPlayerToWaypoint) <= 0x1770) {
             this->actor.world.rot.y = yawToWaypoint;
             if (waypoint == this->waypoint) {
@@ -503,21 +505,23 @@ void EnMb_SetupSpearPatrolImmediateCharge(EnMb* this) {
     EnMb_SetupAction(this, EnMb_SpearPatrolImmediateCharge);
 }
 
-void EnMb_SetupClubAttack(EnMb* this) {
+void EnMb_SetupClubAttack(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 frames = Animation_GetLastFrame(&gEnMbClubLiftClubAnim);
     s16 relYawFromPlayer;
 
     // Rotate Club Moblin towards player in Enemy Randomizer because they're
     // borderline useless otherwise in most scenarios.
     if (CVarGetInteger("gRandomizedEnemies", 0)) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
     }
 
     this->state = ENMB_STATE_ATTACK;
     Animation_Change(&this->skelAnime, &gEnMbClubLiftClubAnim, 3.0f, 0.0f, frames, ANIMMODE_ONCE_INTERP, 0.0f);
     this->timer3 = 1;
-    relYawFromPlayer = this->actor.world.rot.y - this->actor.yawTowardsPlayer;
+    relYawFromPlayer = this->actor.world.rot.y - this->actor.yawTowardsPlayer[playerIndex];
 
     if (ABS(relYawFromPlayer) <= 0x258) {
         this->attack = ENMB_ATTACK_CLUB_MIDDLE;
@@ -607,7 +611,7 @@ void EnMb_SetupStunned(EnMb* this) {
 }
 
 void EnMb_Stunned(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((player->stateFlags2 & 0x80) && player->actor.parent == &this->actor) {
         player->stateFlags2 &= ~0x80;
@@ -629,9 +633,9 @@ void EnMb_Stunned(EnMb* this, PlayState* play) {
             }
         } else {
             if (this->actor.colChkInfo.health == 0) {
-                EnMb_SetupSpearDead(this);
+                EnMb_SetupSpearDead(this, play);
             } else {
-                EnMb_SetupSpearDamaged(this);
+                EnMb_SetupSpearDamaged(this, play);
             }
         }
     }
@@ -653,6 +657,8 @@ void EnMb_SpearGuardLookAround(EnMb* this, PlayState* play) {
 }
 
 void EnMb_SpearPatrolTurnTowardsWaypoint(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 relYawFromPlayer;
 
     SkelAnime_Update(&this->skelAnime);
@@ -668,9 +674,9 @@ void EnMb_SpearPatrolTurnTowardsWaypoint(EnMb* this, PlayState* play) {
         Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.home.rot.y, 1, 0x3E8, 0);
     }
 
-    if (ABS(this->actor.yDistToPlayer) <= 20.0f && EnMb_IsPlayerInCorridor(this, play)) {
-        relYawFromPlayer = this->actor.shape.rot.y - this->actor.yawTowardsPlayer;
-        if (ABS(relYawFromPlayer) <= 0x4000 || (func_8002DDE4(play) && this->actor.xzDistToPlayer < 160.0f)) {
+    if (ABS(this->actor.yDistToPlayer[playerIndex]) <= 20.0f && EnMb_IsPlayerInCorridor(this, play)) {
+        relYawFromPlayer = this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex];
+        if (ABS(relYawFromPlayer) <= 0x4000 || (func_8002DDE4(play, player) && this->actor.xzDistToPlayer[playerIndex] < 160.0f)) {
             EnMb_FindWaypointTowardsPlayer(this, play);
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_MORIBLIN_VOICE);
             EnMb_SetupSpearPrepareAndCharge(this);
@@ -711,12 +717,14 @@ void EnMb_SpearEndChargeQuick(EnMb* this, PlayState* play) {
 }
 
 void EnMb_ClubWaitAfterAttack(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     // Rotate Club Moblin towards player in Enemy Randomizer because they're
     // borderline useless otherwise in most scenarios.
     if (CVarGetInteger("gRandomizedEnemies", 0)) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
     }
 
     this->attack = ENMB_ATTACK_NONE;
@@ -729,7 +737,8 @@ void EnMb_ClubWaitAfterAttack(EnMb* this, PlayState* play) {
  * Slow down, charge again if the player is near, or resume walking.
  */
 void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 lastFrame;
     s16 relYawFromPlayer;
     s16 yawPlayerToWaypoint;
@@ -751,10 +760,10 @@ void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play) {
         if (this->timer1 != 0) {
             this->timer3--;
             if (this->timer3 == 0) {
-                relYawFromPlayer = this->actor.shape.rot.y - this->actor.yawTowardsPlayer;
+                relYawFromPlayer = this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex];
 
-                if (ABS(this->actor.yDistToPlayer) <= 20.0f && EnMb_IsPlayerInCorridor(this, play) &&
-                    ABS(relYawFromPlayer) <= 0x4000 && this->actor.xzDistToPlayer <= 200.0f) {
+                if (ABS(this->actor.yDistToPlayer[playerIndex]) <= 20.0f && EnMb_IsPlayerInCorridor(this, play) &&
+                    ABS(relYawFromPlayer) <= 0x4000 && this->actor.xzDistToPlayer[playerIndex] <= 200.0f) {
                     EnMb_SetupSpearPrepareAndCharge(this);
                 } else {
                     lastFrame = Animation_GetLastFrame(&gEnMbSpearPrepareChargeAnim);
@@ -765,7 +774,7 @@ void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play) {
                     Audio_PlayActorSound2(&this->actor, NA_SE_EN_MORIBLIN_SPEAR_NORM);
                 }
             } else {
-                if (this->actor.xzDistToPlayer <= 160.0f) {
+                if (this->actor.xzDistToPlayer[playerIndex] <= 160.0f) {
                     this->actor.speedXZ = -5.0f;
                 } else {
                     this->actor.speedXZ = 0.0f;
@@ -781,7 +790,7 @@ void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play) {
                 this->timer1 = 1;
             } else {
                 yawPlayerToWaypoint =
-                    Math_Vec3f_Yaw(&this->actor.world.pos, &this->waypointPos) - this->actor.yawTowardsPlayer;
+                    Math_Vec3f_Yaw(&this->actor.world.pos, &this->waypointPos) - this->actor.yawTowardsPlayer[playerIndex];
 
                 if (ABS(yawPlayerToWaypoint) <= 0x4000) {
                     EnMb_SetupSpearPatrolTurnTowardsWaypoint(this, play);
@@ -797,8 +806,10 @@ void EnMb_SpearPatrolEndCharge(EnMb* this, PlayState* play) {
  * Prepare charge (animation), then charge until the player isn't in front.
  */
 void EnMb_SpearGuardPrepareAndCharge(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 prevFrame;
-    s16 relYawTowardsPlayerAbs = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 relYawTowardsPlayerAbs = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (relYawTowardsPlayerAbs < 0) {
         relYawTowardsPlayerAbs = -relYawTowardsPlayerAbs;
@@ -813,7 +824,7 @@ void EnMb_SpearGuardPrepareAndCharge(EnMb* this, PlayState* play) {
 
     if (this->timer3 != 0) {
         this->timer3--;
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0xBB8, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xBB8, 0);
     } else {
         this->actor.speedXZ = 10.0f;
         this->attack = ENMB_ATTACK_SPEAR;
@@ -831,7 +842,8 @@ void EnMb_SpearGuardPrepareAndCharge(EnMb* this, PlayState* play) {
 }
 
 void EnMb_ClubAttack(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f effSpawnPos;
     Vec3f effWhiteShockwaveDynamics = { 0.0f, 0.0f, 0.0f };
@@ -844,8 +856,8 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
     if (!CVarGetInteger("gRandomizedEnemies", 0)) {
         Math_SmoothStepToS(&this->actor.shape.rot.y, relYawTarget[this->attack - 1] + this->actor.world.rot.y, 1, 0x2EE, 0);
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
     }
     
     if (this->attackCollider.base.atFlags & AT_HIT) {
@@ -862,7 +874,7 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
                 }
             }
 
-            func_8002F71C(play, &this->actor, (650.0f - this->actor.xzDistToPlayer) * 0.04f + 4.0f,
+            func_8002F71C(play, &this->actor, (650.0f - this->actor.xzDistToPlayer[playerIndex]) * 0.04f + 4.0f,
                           this->actor.world.rot.y, 8.0f);
 
             player->invincibilityTimer = prevPlayerInvincibilityTimer;
@@ -881,7 +893,7 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
             effSpawnPos = this->effSpawnPos;
             effSpawnPos.y = this->actor.floorHeight;
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_MONBLIN_HAM_LAND);
-            func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+            func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
             EffectSsBlast_SpawnWhiteShockwave(play, &effSpawnPos, &effWhiteShockwaveDynamics,
                                               &effWhiteShockwaveDynamics);
             func_80033480(play, &effSpawnPos, 2.0f, 3, 0x12C, 0xB4, 1);
@@ -889,9 +901,7 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
             // This camera shake gets very annoying as these Moblins can spawn in many rooms,
             // and also often (initially) out of reach for the player.
             if (!CVarGetInteger("gRandomizedEnemies", 0)) {
-                for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                    Camera_AddQuake(&play->mainCameras[0], 2, 0x19, 5);
-                }
+                Camera_AddQuake(&play->mainCameras[playerIndex], 2, 0x19, 5);
             }
             func_800358DC(&this->actor, &effSpawnPos, &this->actor.world.rot, flamesParams, 20, flamesUnused, play,
                           -1, 0);
@@ -911,7 +921,7 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
  * Prepare charge (animation), then charge to the end of the floor collision.
  */
 void EnMb_SpearPatrolPrepareAndCharge(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 prevFrame;
     s32 hasHitPlayer = false;
     s32 endCharge = !Actor_TestFloorInDirection(&this->actor, play, 110.0f, this->actor.world.rot.y);
@@ -991,7 +1001,7 @@ void EnMb_SpearPatrolPrepareAndCharge(EnMb* this, PlayState* play) {
  * Charge and follow the path, until hitting the player or, after some time, reaching home.
  */
 void EnMb_SpearPatrolImmediateCharge(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 prevFrame;
     s32 hasHitPlayer = false;
     s32 endCharge = !Actor_TestFloorInDirection(&this->actor, play, 110.0f, this->actor.world.rot.y);
@@ -1069,11 +1079,13 @@ void EnMb_SpearPatrolImmediateCharge(EnMb* this, PlayState* play) {
 }
 
 void EnMb_ClubDamaged(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
         if (this->timer3 != 0) {
             Animation_PlayOnce(&this->skelAnime, &gEnMbClubStandUpAnim);
             this->timer3 = 0;
-            func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+            func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
             for (u32 i = 0; i < PLAYER_COUNT; i++) {
                 Camera_AddQuake(&play->mainCameras[0], 2, 25, 5);
             }
@@ -1107,6 +1119,8 @@ void EnMb_ClubDamagedWhileKneeling(EnMb* this, PlayState* play) {
 }
 
 void EnMb_ClubDead(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f effPos;
     Vec3f effPosBase;
 
@@ -1134,12 +1148,10 @@ void EnMb_ClubDead(EnMb* this, PlayState* play) {
             Actor_Kill(&this->actor);
         }
     } else if ((s32)this->skelAnime.curFrame == 15 || (s32)this->skelAnime.curFrame == 22) {
-        func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+        func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
         Actor_SpawnFloorDustRing(play, &this->actor, &effPos, 50.0f, 10, 3.0f, 400, 60, false);
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_RIZA_DOWN);
-        for (u32 i = 0; i < PLAYER_COUNT; i++) {
-            Camera_AddQuake(&play->mainCameras[0], 2, 25, 5);
-        }
+        Camera_AddQuake(&play->mainCameras[playerIndex], 2, 25, 5);
     }
 }
 
@@ -1151,8 +1163,9 @@ void EnMb_SpearGuardWalk(EnMb* this, PlayState* play) {
     s32 beforeCurFrame;
     s32 pad1;
     s32 pad2;
-    Player* player = GET_PLAYER(play);
-    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     s16 yawTowardsHome;
     f32 playSpeedAbs;
 
@@ -1167,9 +1180,9 @@ void EnMb_SpearGuardWalk(EnMb* this, PlayState* play) {
     playSpeedAbs = ABS(this->skelAnime.playSpeed);
     if (this->timer3 == 0 &&
         Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos) < this->playerDetectionRange) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0x2EE, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x2EE, 0);
         this->actor.flags |= ACTOR_FLAG_0;
-        if (this->actor.xzDistToPlayer < 500.0f && relYawTowardsPlayer < 0x1388) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 500.0f && relYawTowardsPlayer < 0x1388) {
             EnMb_SetupSpearPrepareAndCharge(this);
         }
     } else {
@@ -1209,6 +1222,8 @@ void EnMb_SpearGuardWalk(EnMb* this, PlayState* play) {
 }
 
 void EnMb_SpearPatrolWalkTowardsWaypoint(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 prevFrame;
     s32 beforeCurFrame;
     s16 relYawTowardsPlayer;
@@ -1226,10 +1241,10 @@ void EnMb_SpearPatrolWalkTowardsWaypoint(EnMb* this, PlayState* play) {
     this->yawToWaypoint = Math_Vec3f_Yaw(&this->actor.world.pos, &this->waypointPos);
     Math_SmoothStepToS(&this->actor.world.rot.y, this->yawToWaypoint, 1, 0x5DC, 0);
 
-    yDistToPlayerAbs = (this->actor.yDistToPlayer >= 0.0f) ? this->actor.yDistToPlayer : -this->actor.yDistToPlayer;
+    yDistToPlayerAbs = (this->actor.yDistToPlayer[playerIndex] >= 0.0f) ? this->actor.yDistToPlayer[playerIndex] : -this->actor.yDistToPlayer[playerIndex];
     if (yDistToPlayerAbs <= 20.0f && EnMb_IsPlayerInCorridor(this, play)) {
-        relYawTowardsPlayer = (this->actor.shape.rot.y - this->actor.yawTowardsPlayer);
-        if (ABS(relYawTowardsPlayer) <= 0x4000 || (func_8002DDE4(play) && this->actor.xzDistToPlayer < 160.0f)) {
+        relYawTowardsPlayer = (this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex]);
+        if (ABS(relYawTowardsPlayer) <= 0x4000 || (func_8002DDE4(play, player) && this->actor.xzDistToPlayer[playerIndex] < 160.0f)) {
             EnMb_FindWaypointTowardsPlayer(this, play);
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_MORIBLIN_VOICE);
             EnMb_SetupSpearPrepareAndCharge(this);
@@ -1264,15 +1279,16 @@ void EnMb_SpearPatrolWalkTowardsWaypoint(EnMb* this, PlayState* play) {
 }
 
 void EnMb_ClubWaitPlayerNear(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 relYawFromPlayer = this->actor.world.rot.y - this->actor.yawTowardsPlayer;
+    s16 relYawFromPlayer = this->actor.world.rot.y - this->actor.yawTowardsPlayer[playerIndex];
 
     // Rotate Club Moblin towards player in Enemy Randomizer because they're
     // borderline useless otherwise in most scenarios.
     if (CVarGetInteger("gRandomizedEnemies", 0)) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 100.0f, 0);
     }
 
     SkelAnime_Update(&this->skelAnime);
@@ -1282,14 +1298,16 @@ void EnMb_ClubWaitPlayerNear(EnMb* this, PlayState* play) {
         // Without the height check, the Moblin will attack (and play the sound effect) a lot even though
         // the Moblin is very far away from the player in vertical rooms (like the first room in Deku Tree).
         s8 enemyRando = CVarGetInteger("gRandomizedEnemies", 0);
-        if (!enemyRando || (enemyRando && this->actor.yDistToPlayer <= 100.0f && this->actor.yDistToPlayer >= -100.0f)) {
-            EnMb_SetupClubAttack(this);
+        if (!enemyRando || (enemyRando && this->actor.yDistToPlayer[playerIndex] <= 100.0f && this->actor.yDistToPlayer[playerIndex] >= -100.0f)) {
+            EnMb_SetupClubAttack(this, play);
         }
     }
 }
 
-void EnMb_SetupSpearDamaged(EnMb* this) {
-    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+void EnMb_SetupSpearDamaged(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(relYawTowardsPlayer) <= 0x4000) {
         Animation_MorphToPlayOnce(&this->skelAnime, &gEnMbSpearDamagedFromFrontAnim, -4.0f);
@@ -1317,8 +1335,10 @@ void EnMb_SpearDamaged(EnMb* this, PlayState* play) {
     }
 }
 
-void EnMb_SetupSpearDead(EnMb* this) {
-    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+void EnMb_SetupSpearDead(EnMb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 relYawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(relYawTowardsPlayer) <= 0x4000) {
         Animation_MorphToPlayOnce(&this->skelAnime, &gEnMbSpearFallOnItsBackAnim, -4.0f);
@@ -1338,7 +1358,7 @@ void EnMb_SetupSpearDead(EnMb* this) {
 }
 
 void EnMb_SpearDead(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 0.5f, 0.0f);
 
@@ -1416,7 +1436,7 @@ void EnMb_ClubUpdateAttackCollider(Actor* thisx, PlayState* play) {
 }
 
 void EnMb_CheckColliding(EnMb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->frontShielding.base.acFlags & AC_HIT) {
         this->frontShielding.base.acFlags &= ~(AC_HIT | AC_BOUNCED);
@@ -1452,10 +1472,10 @@ void EnMb_CheckColliding(EnMb* this, PlayState* play) {
                     }
                 } else {
                     if (this->actor.colChkInfo.health == 0) {
-                        EnMb_SetupSpearDead(this);
+                        EnMb_SetupSpearDead(this, play);
                         gSaveContext.sohStats.count[COUNT_ENEMIES_DEFEATED_MOBLIN]++;
                     } else {
-                        EnMb_SetupSpearDamaged(this);
+                        EnMb_SetupSpearDamaged(this, play);
                     }
                 }
             }

@@ -84,7 +84,7 @@ void EnFhgFire_SetUpdate(EnFhgFire* this, EnFhgFireUpdateFunc updateFunc) {
 void EnFhgFire_Init(Actor* thisx, PlayState* play) {
     s32 pad;
     EnFhgFire* this = (EnFhgFire*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // init
 
     ActorShape_Init(&this->actor.shape, 0.0f, NULL, 0.0f);
     if ((this->actor.params == FHGFIRE_LIGHTNING_SHOCK) || (this->actor.params == FHGFIRE_LIGHTNING_BURST) ||
@@ -178,7 +178,9 @@ void EnFhgFire_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnFhgFire_LightningStrike(EnFhgFire* this, PlayState* play) {
-    Camera* camera = Play_GetCamera(play, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* camera = Play_GetCamera(play, playerIndex);
     s16 i;
 
     switch (this->work[FHGFIRE_FIRE_MODE]) {
@@ -213,7 +215,7 @@ void EnFhgFire_LightningStrike(EnFhgFire* this, PlayState* play) {
                                                         (s16)(Rand_ZeroOne() * 100.0f) + 240, FHGFLASH_LIGHTBALL_GREEN);
                     }
                 }
-                func_80033E88(&this->actor, play, 4, 10);
+                func_80033E88(&this->actor, play, 4, 10, playerIndex);
             }
 
             break;
@@ -282,7 +284,7 @@ void EnFhgFire_LightningTrail(EnFhgFire* this, PlayState* play) {
 }
 
 void EnFhgFire_LightningShock(EnFhgFire* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f pos;
 
     if (this->collider.base.atFlags & AT_HIT) {
@@ -309,7 +311,7 @@ void EnFhgFire_LightningShock(EnFhgFire* this, PlayState* play) {
 }
 
 void EnFhgFire_LightningBurst(EnFhgFire* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     play->envCtx.fillScreen = true;
     this->actor.shape.rot.y += 0x1000;
@@ -422,7 +424,8 @@ void EnFhgFire_EnergyBall(EnFhgFire* this, PlayState* play) {
     f32 dzPG;
     u8 killMode = BALL_FIZZLE;
     u8 canBottleReflect1;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->work[FHGFIRE_KILL_TIMER] != 0) {
         this->work[FHGFIRE_KILL_TIMER]--;
@@ -471,7 +474,7 @@ void EnFhgFire_EnergyBall(EnFhgFire* this, PlayState* play) {
             case FHGFIRE_LIGHT_GREEN:
                 canBottleReflect1 =
                     ((player->stateFlags1 & PLAYER_STATE1_SWINGING_BOTTLE) &&
-                     (ABS((s16)(player->actor.shape.rot.y - (s16)(bossGnd->actor.yawTowardsPlayer + 0x8000))) <
+                     (ABS((s16)(player->actor.shape.rot.y - (s16)(bossGnd->actor.yawTowardsPlayer[playerIndex] + 0x8000))) <
                       0x2000) &&
                      (sqrtf(SQ(dxL) + SQ(dyL) + SQ(dzL)) <= 25.0f))
                         ? true
@@ -496,7 +499,7 @@ void EnFhgFire_EnergyBall(EnFhgFire* this, PlayState* play) {
                         killMode = BALL_IMPACT;
                         Audio_PlaySoundGeneral(NA_SE_IT_SHIELD_REFLECT_MG, &player->actor.projectedPos, 4, &D_801333E0,
                                                &D_801333E0, &D_801333E8);
-                        func_800AA000(this->actor.xyzDistToPlayerSq, 0xFF, 0x14, 0x96);
+                        func_800AA000(this->actor.xyzDistToPlayerSq[playerIndex], 0xFF, 0x14, 0x96);
                     } else {
                         if (bossGnd->flyMode == GND_FLY_NEUTRAL) {
                             angleModX = Rand_CenteredFloat(0x2000);
@@ -525,7 +528,7 @@ void EnFhgFire_EnergyBall(EnFhgFire* this, PlayState* play) {
                         this->work[FHGFIRE_FX_TIMER] = 2;
                         Audio_PlaySoundGeneral(NA_SE_IT_SWORD_REFLECT_MG, &player->actor.projectedPos, 4, &D_801333E0,
                                                &D_801333E0, &D_801333E8);
-                        func_800AA000(this->actor.xyzDistToPlayerSq, 0xB4, 0x14, 0x64);
+                        func_800AA000(this->actor.xyzDistToPlayerSq[playerIndex], 0xB4, 0x14, 0x64);
                     }
                 } else if (sqrtf(SQ(dxL) + SQ(dyL) + SQ(dzL)) <= 25.0f) {
                     killMode = BALL_BURST;

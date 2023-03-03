@@ -243,8 +243,8 @@ void BossFd_Destroy(Actor* thisx, PlayState* play) {
     Collider_DestroyJntSph(play, &this->collider);
 }
 
-s32 BossFd_IsFacingLink(BossFd* this) {
-    return ABS((s16)(this->actor.yawTowardsPlayer - this->actor.world.rot.y)) < 0x2000;
+s32 BossFd_IsFacingLink(BossFd* this, u16 playerIndex) {
+    return ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y)) < 0x2000;
 }
 
 void BossFd_SetupFly(BossFd* this, PlayState* play) {
@@ -275,7 +275,8 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
     f32 dx;
     f32 dy;
     f32 dz;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 angleToTarget;
     f32 pitchToTarget;
     Vec3f* holePosition1;
@@ -306,8 +307,8 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
     //                                        Boss Intro Cutscene
 
     if (this->introState != BFD_CS_NONE) {
-        Player* player2 = GET_PLAYER(play);
-        Camera* mainCam = Play_GetCamera(play, MAIN_CAM);
+        Player* player2 = Player_NearestToActor(&this->actor, play);
+        Camera* mainCam = Play_GetCamera(play, playerIndex);
 
         switch (this->introState) {
             case BFD_CS_WAIT:
@@ -702,7 +703,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
             this->fwork[BFD_FLY_WOBBLE_AMP] = 0.0f;
             if (((this->timers[0] % 64) == 0) && (this->timers[0] < 450)) {
                 this->work[BFD_ROAR_TIMER] = 40;
-                if (BossFd_IsFacingLink(this)) {
+                if (BossFd_IsFacingLink(this, playerIndex)) {
                     this->fireBreathTimer = 20;
                 }
             }
@@ -1431,7 +1432,7 @@ void BossFd_Update(Actor* thisx, PlayState* play) {
 
 void BossFd_UpdateEffects(BossFd* this, PlayState* play) {
     BossFdEffect* effect = this->effects;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Color_RGB8 colors[4] = { { 255, 128, 0 }, { 255, 0, 0 }, { 255, 255, 0 }, { 255, 0, 0 } };
     Vec3f diff;
     s16 i1;

@@ -171,16 +171,16 @@ void func_80ACE5B8(EnPart* this, PlayState* play) {
 }
 
 void func_80ACE5C8(EnPart* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     this->timer--;
     if (this->timer == 0) {
         Actor_Kill(&this->actor);
     } else {
         Vec3f velocity = { 0.0f, 8.0f, 0.0f };
         Vec3f accel = { 0.0f, -1.5f, 0.0f };
-
-        if (sqrt(this->actor.xyzDistToPlayerSq) <= 40.0f) {
+        
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (sqrt(this->actor.xyzDistToPlayerSq[playerIndex]) <= 40.0f) {
             u8 prevInvincibilityTimer = player->invincibilityTimer;
 
             if (player->invincibilityTimer <= 0) {
@@ -191,7 +191,7 @@ void func_80ACE5C8(EnPart* this, PlayState* play) {
                     play->damagePlayer(play, -8);
                 }
             }
-            func_8002F71C(play, this->actor.parent, (650.0f - this->actor.parent->xzDistToPlayer) * 0.04f + 4.0f,
+            func_8002F71C(play, this->actor.parent, (650.0f - this->actor.parent->xzDistToPlayer[playerIndex]) * 0.04f + 4.0f,
                           this->actor.parent->world.rot.y, 8.0f);
             player->invincibilityTimer = prevInvincibilityTimer;
             this->timer = 1;

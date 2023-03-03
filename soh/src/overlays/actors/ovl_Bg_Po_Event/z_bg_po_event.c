@@ -234,6 +234,8 @@ void BgPoEvent_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgPoEvent_BlockWait(BgPoEvent* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->dyna.actor.world.pos.y = 833.0f;
     if (sBgPoEventPuzzleState == 0x3F) {
         if (this->type == 1) {
@@ -241,7 +243,7 @@ void BgPoEvent_BlockWait(BgPoEvent* this, PlayState* play) {
         }
         this->timer = 45;
         this->actionFunc = BgPoEvent_BlockShake;
-    } else if (this->dyna.actor.xzDistToPlayer > 50.0f) {
+    } else if (this->dyna.actor.xzDistToPlayer[playerIndex] > 50.0f) {
         if (this->type != 1) {
             sBgPoEventPuzzleState |= (1 << this->index);
         } else {
@@ -305,6 +307,8 @@ void BgPoEvent_CheckBlock(BgPoEvent* this) {
 }
 
 void BgPoEvent_BlockFall(BgPoEvent* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static s32 firstFall = 0;
 
     this->dyna.actor.velocity.y++;
@@ -316,12 +320,12 @@ void BgPoEvent_BlockFall(BgPoEvent* this, PlayState* play) {
             BgPoEvent_CheckBlock(this);
         } else {
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
-            func_80033E88(&this->dyna.actor, play, 5, 5);
+            func_80033E88(&this->dyna.actor, play, 5, 5, playerIndex);
             func_80088B34(this->timer);
             if (firstFall == 0) {
                 firstFall = 1;
             } else {
-                func_8002DF54(play, &GET_PLAYER(play)->actor, 7);
+                func_8002DF54(play, &player->actor, 7);
             }
         }
         this->direction = 0;
@@ -330,7 +334,7 @@ void BgPoEvent_BlockFall(BgPoEvent* this, PlayState* play) {
 }
 
 void BgPoEvent_BlockIdle(BgPoEvent* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* amy;
 
     if (sBgPoEventPuzzleState == 0xF) {
@@ -385,7 +389,7 @@ f32 sBgPoEventblockPushDist = 0.0f;
 void BgPoEvent_BlockPush(BgPoEvent* this, PlayState* play) {
     f32 displacement;
     s32 blockStop;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->dyna.actor.speedXZ = this->dyna.actor.speedXZ + (CVarGetInteger("gFasterBlockPush", 0) * 0.3) + 0.5f;
     this->dyna.actor.speedXZ = CLAMP_MAX(this->dyna.actor.speedXZ, 2.0f + (CVarGetInteger("gFasterBlockPush", 0) * 0.5));
@@ -416,7 +420,7 @@ void BgPoEvent_BlockPush(BgPoEvent* this, PlayState* play) {
 }
 
 void BgPoEvent_BlockReset(BgPoEvent* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -436,7 +440,7 @@ void BgPoEvent_BlockReset(BgPoEvent* this, PlayState* play) {
 }
 
 void BgPoEvent_BlockSolved(BgPoEvent* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -514,14 +518,15 @@ void BgPoEvent_PaintingVanish(BgPoEvent* this, PlayState* play) {
 
 void BgPoEvent_PaintingPresent(BgPoEvent* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     DECR(this->timer);
 
-    if (((this->timer == 0) || ((thisx->xzDistToPlayer < 150.0f) && (thisx->yDistToPlayer < 50.0f)) ||
-         (func_8002DD78(player) && (thisx->xzDistToPlayer < 320.0f) &&
-          ((this->index != 2) ? (thisx->yDistToPlayer < 100.0f) : (thisx->yDistToPlayer < 0.0f)) &&
-          Player_IsFacingActor(thisx, 0x2000, play))) &&
+    if (((this->timer == 0) || ((thisx->xzDistToPlayer[playerIndex] < 150.0f) && (thisx->yDistToPlayer[playerIndex] < 50.0f)) ||
+         (func_8002DD78(player) && (thisx->xzDistToPlayer[playerIndex] < 320.0f) &&
+          ((this->index != 2) ? (thisx->yDistToPlayer[playerIndex] < 100.0f) : (thisx->yDistToPlayer[playerIndex] < 0.0f)) &&
+          Player_IsFacingActor(thisx, 0x2000, player, play))) &&
         ((thisx->parent != NULL) || (thisx->child != NULL))) {
         /*The third condition in the || is checking if
             1) Link is holding a ranged weapon

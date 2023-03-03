@@ -192,7 +192,8 @@ void ObjectKankyo_Snow(ObjectKankyo* this, PlayState* play) {
 
 void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
     static Vec3f sSoundPos = { 0.0f, 0.0f, 0.0f };
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 dist;
     s32 playerMoved;
     f32 dx;
@@ -211,14 +212,12 @@ void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
     s16 i;
     Vec3f viewForwards;
 
-    player = GET_PLAYER(play);
-
     if (play->sceneNum == SCENE_SPOT04 && gSaveContext.sceneSetupIndex == 7) {
-        dist = Math3D_Vec3f_DistXYZ(&this->prevEyePos, &play->views[0].eye);
+        dist = Math3D_Vec3f_DistXYZ(&this->prevEyePos, &play->views[playerIndex].eye);
 
-        this->prevEyePos.x = play->views[0].eye.x;
-        this->prevEyePos.y = play->views[0].eye.y;
-        this->prevEyePos.z = play->views[0].eye.z;
+        this->prevEyePos.x = play->views[playerIndex].eye.x;
+        this->prevEyePos.y = play->views[playerIndex].eye.y;
+        this->prevEyePos.z = play->views[playerIndex].eye.z;
 
         dist /= 30.0f;
         if (dist > 1.0f) {
@@ -252,9 +251,9 @@ void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
 
     for (i = 0; i < play->envCtx.unk_EE[3]; i++) {
         // spawn in front of the camera
-        dx = play->views[0].lookAt.x - play->views[0].eye.x;
-        dy = play->views[0].lookAt.y - play->views[0].eye.y;
-        dz = play->views[0].lookAt.z - play->views[0].eye.z;
+        dx = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        dy = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        dz = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
         dist = sqrtf(SQ(dx) + SQ(dy) + SQ(dz));
 
         viewForwards.x = dx / dist;
@@ -267,9 +266,9 @@ void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
 
         switch (this->effects[i].state) {
             case 0: // init
-                this->effects[i].base.x = play->views[0].eye.x + viewForwardsX * 80.0f;
-                this->effects[i].base.y = play->views[0].eye.y + viewForwardsY * 80.0f;
-                this->effects[i].base.z = play->views[0].eye.z + viewForwardsZ * 80.0f;
+                this->effects[i].base.x = play->views[playerIndex].eye.x + viewForwardsX * 80.0f;
+                this->effects[i].base.y = play->views[playerIndex].eye.y + viewForwardsY * 80.0f;
+                this->effects[i].base.z = play->views[playerIndex].eye.z + viewForwardsZ * 80.0f;
 
                 this->effects[i].pos.x = (Rand_ZeroOne() - 0.5f) * 160.0f;
                 this->effects[i].pos.y = 30.0f;
@@ -289,9 +288,9 @@ void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
             case 1: // blinking fairies / inactive fairy trails
             case 2: // fairy trails
                 this->effects[i].alphaTimer++;
-                baseX = play->views[0].eye.x + viewForwards.x * 80.0f;
-                baseY = play->views[0].eye.y + viewForwards.y * 80.0f;
-                baseZ = play->views[0].eye.z + viewForwards.z * 80.0f;
+                baseX = play->views[playerIndex].eye.x + viewForwards.x * 80.0f;
+                baseY = play->views[playerIndex].eye.y + viewForwards.y * 80.0f;
+                baseZ = play->views[playerIndex].eye.z + viewForwards.z * 80.0f;
 
                 this->effects[i].prevPos.x = this->effects[i].pos.x;
                 this->effects[i].prevPos.y = this->effects[i].pos.y;
@@ -601,6 +600,8 @@ void ObjectKankyo_DrawFairies(ObjectKankyo* this2, PlayState* play2) {
 void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
     ObjectKankyo* this = this2;
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 dist;
     f32 dx;
     f32 dy;
@@ -632,16 +633,16 @@ void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
             switch (this->effects[i].state) {
                 case 0:
                     // spawn in front of the camera
-                    dx = play->views[0].lookAt.x - play->views[0].eye.x;
-                    dy = play->views[0].lookAt.y - play->views[0].eye.y;
-                    dz = play->views[0].lookAt.z - play->views[0].eye.z;
+                    dx = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+                    dy = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+                    dz = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
                     dist = sqrtf(SQ(dx) + SQ(dy) + SQ(dz));
 
                     // fake
                     temp = dz / dist;
-                    this->effects[i].base.x = play->views[0].eye.x + dx / dist * 80.0f;
-                    this->effects[i].base.y = play->views[0].eye.y + dy / dist * 80.0f;
-                    this->effects[i].base.z = play->views[0].eye.z + temp * 80.0f;
+                    this->effects[i].base.x = play->views[playerIndex].eye.x + dx / dist * 80.0f;
+                    this->effects[i].base.y = play->views[playerIndex].eye.y + dy / dist * 80.0f;
+                    this->effects[i].base.z = play->views[playerIndex].eye.z + temp * 80.0f;
 
                     this->effects[i].pos.x = (Rand_ZeroOne() - 0.5f) * 160.0f;
                     this->effects[i].pos.y = 80.0f;
@@ -656,14 +657,14 @@ void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
                     break;
 
                 case 1:
-                    dx = play->views[0].lookAt.x - play->views[0].eye.x;
-                    dy = play->views[0].lookAt.y - play->views[0].eye.y;
-                    dz = play->views[0].lookAt.z - play->views[0].eye.z;
+                    dx = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+                    dy = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+                    dz = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
                     dist = sqrtf(SQ(dx) + SQ(dy) + SQ(dz));
 
-                    baseX = play->views[0].eye.x + dx / dist * 80.0f;
-                    baseY = play->views[0].eye.y + dy / dist * 80.0f;
-                    baseZ = play->views[0].eye.z + dz / dist * 80.0f;
+                    baseX = play->views[playerIndex].eye.x + dx / dist * 80.0f;
+                    baseY = play->views[playerIndex].eye.y + dy / dist * 80.0f;
+                    baseZ = play->views[playerIndex].eye.z + dz / dist * 80.0f;
 
                     this->effects[i].dirPhase.x += 0.049999997f * Rand_ZeroOne();
                     this->effects[i].dirPhase.z += 0.049999997f * Rand_ZeroOne();
@@ -672,7 +673,7 @@ void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
                     this->effects[i].pos.y += -this->effects[i].speed;
 
                     if (this->effects[i].base.y + this->effects[i].pos.y < this->actor.world.pos.y ||
-                        this->effects[i].base.y + this->effects[i].pos.y < play->views[0].eye.y - 150.0f) {
+                        this->effects[i].base.y + this->effects[i].pos.y < play->views[playerIndex].eye.y - 150.0f) {
                         this->effects[i].state++;
                     }
 

@@ -126,8 +126,7 @@ u16 func_80A78FB0(PlayState* play) {
     }
 }
 
-u16 func_80A79010(PlayState* play) {
-    Player* player = GET_PLAYER(play);
+u16 func_80A79010(PlayState* play, Player* player) {
     u16 temp_v0 = Text_GetFaceReaction(play, 25);
 
     if (temp_v0 != 0) {
@@ -180,6 +179,7 @@ u16 func_80A79010(PlayState* play) {
 }
 
 u16 func_80A79168(PlayState* play, Actor* thisx) {
+    Player* player = Player_NearestToActor(thisx, play);
     u16 temp_v0 = Text_GetFaceReaction(play, 25);
 
     if (temp_v0 != 0) {
@@ -188,7 +188,7 @@ u16 func_80A79168(PlayState* play, Actor* thisx) {
     if (!LINK_IS_ADULT) {
         return func_80A78FB0(play);
     } else {
-        return func_80A79010(play);
+        return func_80A79010(play, player);
     }
 }
 
@@ -317,7 +317,7 @@ s16 func_80A79500(PlayState* play, Actor* thisx) {
 }
 
 void func_80A795C8(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 npcTrackingMode;
 
     if (this->skelAnime.animation == &object_in_Anim_0003B4 || this->skelAnime.animation == &object_in_Anim_001BE0 ||
@@ -443,7 +443,7 @@ void func_80A79BAC(EnIn* this, PlayState* play, s32 index, u32 arg3) {
 }
 
 void func_80A79C78(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp48;
     Vec3f sp3C;
     Vec3s zeroVec = { 0, 0, 0 };
@@ -651,7 +651,7 @@ void func_80A7A4C8(EnIn* this, PlayState* play) {
 }
 
 void func_80A7A568(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 phi_a2;
     s32 phi_a3;
 
@@ -672,7 +672,7 @@ void func_80A7A568(EnIn* this, PlayState* play) {
                 return;
             }
             gSaveContext.eventInf[0] =
-                (gSaveContext.eventInf[0] & ~0x10) | (((EnHorse*)GET_PLAYER(play)->rideActor)->type << 4);
+                (gSaveContext.eventInf[0] & ~0x10) | (((EnHorse*)player->rideActor)->type << 4);
             gSaveContext.eventInf[0] = (gSaveContext.eventInf[0] & ~0xF) | 2;
             phi_a2 = 2;
             phi_a3 = 2;
@@ -795,7 +795,7 @@ void func_80A7AA40(EnIn* this, PlayState* play) {
 }
 
 void func_80A7ABD4(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp48;
     Vec3f sp3C;
 
@@ -860,7 +860,7 @@ void func_80A7AE84(EnIn* this, PlayState* play) {
 }
 
 void func_80A7AEF0(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 yaw;
     Vec3f pos = this->actor.world.pos;
 
@@ -883,7 +883,7 @@ void func_80A7B018(EnIn* this, PlayState* play) {
 }
 
 void func_80A7B024(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->rideActor != NULL) {
         player->rideActor->freezeTimer = 10;

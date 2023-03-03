@@ -114,10 +114,11 @@ void EnDntJiji_SetupWait(EnDntJiji* this, PlayState* play) {
 }
 
 void EnDntJiji_Wait(EnDntJiji* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
-    if ((this->timer == 1) && (this->actor.xzDistToPlayer < 150.0f) && !Play_InCsMode(play) &&
+    if ((this->timer == 1) && (this->actor.xzDistToPlayer[playerIndex] < 150.0f) && !Play_InCsMode(play) &&
         !(player->stateFlags1 & 0x800)) {
         OnePointCutscene_Init(play, 2230, -99, &this->actor, MAIN_CAM);
         this->timer = 0;
@@ -135,9 +136,11 @@ void EnDntJiji_SetupUp(EnDntJiji* this, PlayState* play) {
 }
 
 void EnDntJiji_Up(EnDntJiji* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
-    if (this->actor.xzDistToPlayer < 150.0f) {
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
+    if (this->actor.xzDistToPlayer[playerIndex] < 150.0f) {
         this->actionFunc = EnDntJiji_SetupCower;
     }
 }
@@ -173,8 +176,10 @@ void EnDntJiji_SetupWalk(EnDntJiji* this, PlayState* play) {
 }
 
 void EnDntJiji_Walk(EnDntJiji* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 0x3E8, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 0x3E8, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
     Math_ApproachF(&this->actor.speedXZ, 1.0f, 0.2f, 0.4f);
     if (this->sfxTimer == 0) {
@@ -185,7 +190,7 @@ void EnDntJiji_Walk(EnDntJiji* this, PlayState* play) {
         this->actor.velocity.y = 9.0f;
         this->actor.speedXZ = 3.0f;
     }
-    if (this->actor.xzDistToPlayer < 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
         if (CUR_UPG_VALUE(UPG_STICKS) == 1) {
             this->getItemId = GI_STICK_UPGRADE_20;
         } else {
@@ -230,10 +235,12 @@ void EnDntJiji_SetupCower(EnDntJiji* this, PlayState* play) {
 }
 
 void EnDntJiji_Cower(EnDntJiji* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 frame = this->skelAnime.curFrame;
 
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     if (frame >= this->endFrame) {
         if (Actor_ProcessTalkRequest(&this->actor, play)) {
             this->actionFunc = EnDntJiji_SetupTalk;
@@ -250,8 +257,10 @@ void EnDntJiji_SetupTalk(EnDntJiji* this, PlayState* play) {
 }
 
 void EnDntJiji_Talk(EnDntJiji* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         func_8005B1A4(GET_ACTIVE_CAM(play));
         Message_CloseTextbox(play);

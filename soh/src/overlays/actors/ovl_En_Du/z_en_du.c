@@ -164,7 +164,7 @@ s32 func_809FDDB4(EnDu* this, PlayState* play) {
 }
 
 void func_809FDE24(EnDu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode = NPC_TRACKING_PLAYER_AUTO_TURN;
 
     if (this->interactInfo.talkState == NPC_TALK_STATE_IDLE) {
@@ -319,7 +319,8 @@ void func_809FE3B4(EnDu* this, PlayState* play) {
 }
 
 void func_809FE3C0(EnDu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (player->stateFlags2 & 0x1000000) {
         func_8010BD88(play, OCARINA_ACTION_CHECK_SARIA);
@@ -332,14 +333,12 @@ void func_809FE3C0(EnDu* this, PlayState* play) {
         func_8002DF54(play, &this->actor, 7);
         this->interactInfo.talkState = NPC_TALK_STATE_IDLE;
     }
-    if (this->actor.xzDistToPlayer < 116.0f + this->collider.dim.radius) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 116.0f + this->collider.dim.radius) {
         player->stateFlags2 |= 0x800000;
     }
 }
 
 void func_809FE4A4(EnDu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_04) {
         play->msgCtx.ocarinaMode = OCARINA_MODE_00;
         EnDu_SetupAction(this, func_809FE3C0);
@@ -361,12 +360,13 @@ void func_809FE4A4(EnDu* this, PlayState* play) {
         EnDu_SetupAction(this, func_809FE890);
         play->msgCtx.ocarinaMode = OCARINA_MODE_04;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
         player->stateFlags2 |= 0x800000;
     }
 }
 
 void func_809FE638(EnDu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (!(player->stateFlags1 & 0x20000000)) {
         OnePointCutscene_Init(play, 3330, -99, &this->actor, MAIN_CAM);
@@ -547,12 +547,14 @@ void func_809FEC70(EnDu* this, PlayState* play) {
         this->actor.parent = NULL;
         EnDu_SetupAction(this, func_809FECE4);
     } else {
-        f32 xzRange = this->actor.xzDistToPlayer + 1.0f;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        f32 xzRange = this->actor.xzDistToPlayer[playerIndex] + 1.0f;
         if (!gSaveContext.n64ddFlag) {
-            func_8002F434(&this->actor, play, GI_BRACELET, xzRange, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            func_8002F434(&this->actor, play, GI_BRACELET, xzRange, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         } else {
             GetItemEntry getItemEntry = Randomizer_GetItemFromKnownCheck(RC_GC_DARUNIAS_JOY, GI_BRACELET);
-            GiveItemEntryFromActor(&this->actor, play, getItemEntry, xzRange, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            GiveItemEntryFromActor(&this->actor, play, getItemEntry, xzRange, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         }
     }
 }

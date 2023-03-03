@@ -7,6 +7,7 @@
 #include "vt.h"
 #include "z_item_shield.h"
 #include "objects/object_link_child/object_link_child.h"
+#include "global.h"
 
 #define FLAGS ACTOR_FLAG_4
 
@@ -185,7 +186,7 @@ void func_80B86CA8(ItemShield* this, PlayState* play) {
 
 void func_80B86F68(ItemShield* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     MtxF* shield = &player->shieldMf;
 
     this->actor.world.pos.x = shield->xw;

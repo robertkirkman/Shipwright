@@ -132,19 +132,20 @@ void func_809D1D0C(Actor* thisx, PlayState* play) {
 
 void EnBx_Update(Actor* thisx, PlayState* play) {
     EnBx* this = (EnBx*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s16 tmp32;
     s32 tmp33;
 
-    if ((thisx->xzDistToPlayer <= 70.0f) || (this->collider.base.atFlags & AT_HIT) ||
+    if ((thisx->xzDistToPlayer[playerIndex] <= 70.0f) || (this->collider.base.atFlags & AT_HIT) ||
         (this->collider.base.acFlags & AC_HIT) || (this->colliderQuad.base.atFlags & AT_HIT)) {
-        if ((thisx->xzDistToPlayer <= 70.0f) || (&player->actor == this->collider.base.at) ||
+        if ((thisx->xzDistToPlayer[playerIndex] <= 70.0f) || (&player->actor == this->collider.base.at) ||
             (&player->actor == this->collider.base.ac) || (&player->actor == this->colliderQuad.base.at)) {
             tmp33 = player->invincibilityTimer & 0xFF;
             tmp32 = thisx->world.rot.y;
             if (!(thisx->params & 0x80)) {
-                tmp32 = thisx->yawTowardsPlayer;
+                tmp32 = thisx->yawTowardsPlayer[playerIndex];
             }
             if ((&player->actor != this->collider.base.at) && (&player->actor != this->collider.base.ac) &&
                 (&player->actor != this->colliderQuad.base.at) && (player->invincibilityTimer <= 0)) {

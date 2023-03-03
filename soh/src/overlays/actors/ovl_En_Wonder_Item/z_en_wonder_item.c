@@ -201,7 +201,7 @@ void EnWonderItem_Init(Actor* thisx, PlayState* play) {
 }
 
 void EnWonderItem_MultitagFree(EnWonderItem* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 prevTagFlags = this->tagFlags;
     s32 i;
     s32 mask;
@@ -238,9 +238,10 @@ void EnWonderItem_MultitagFree(EnWonderItem* this, PlayState* play) {
 }
 
 void EnWonderItem_ProximityDrop(EnWonderItem* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if ((this->actor.xzDistToPlayer < 50.0f) && (fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 30.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 50.0f) && (fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 30.0f)) {
         EnWonderItem_DropCollectible(this, play, true);
     }
 }
@@ -253,9 +254,10 @@ void EnWonderItem_InteractSwitch(EnWonderItem* this, PlayState* play) {
 }
 
 void EnWonderItem_ProximitySwitch(EnWonderItem* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if ((this->actor.xzDistToPlayer < 50.0f) && (fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 30.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 50.0f) && (fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 30.0f)) {
         if (this->switchFlag >= 0) {
             Flags_SetSwitch(play, this->switchFlag);
         }
@@ -264,7 +266,7 @@ void EnWonderItem_ProximitySwitch(EnWonderItem* this, PlayState* play) {
 }
 
 void EnWonderItem_MultitagOrdered(EnWonderItem* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 prevTagFlags = this->tagFlags;
     s32 i;
     s32 mask;
@@ -305,10 +307,12 @@ void EnWonderItem_MultitagOrdered(EnWonderItem* this, PlayState* play) {
 }
 
 void EnWonderItem_BombSoldier(EnWonderItem* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->collider.base.acFlags &= ~AC_HIT;
         if (Actor_Spawn(&play->actorCtx, play, ACTOR_EN_HEISHI2, this->actor.world.pos.x,
-                        this->actor.world.pos.y, this->actor.world.pos.z, 0, this->actor.yawTowardsPlayer, 0,
+                        this->actor.world.pos.y, this->actor.world.pos.z, 0, this->actor.yawTowardsPlayer[playerIndex], 0,
                         9, true) != NULL) {
             // "Careless soldier spawned"
             osSyncPrintf(VT_FGCOL(YELLOW) "☆☆☆☆☆ うっかり兵セット完了 ☆☆☆☆☆ \n" VT_RST);
@@ -321,9 +325,10 @@ void EnWonderItem_BombSoldier(EnWonderItem* this, PlayState* play) {
 }
 
 void EnWonderItem_RollDrop(EnWonderItem* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if ((this->actor.xzDistToPlayer < 50.0f) && (player->invincibilityTimer < 0) &&
+    if ((this->actor.xzDistToPlayer[playerIndex] < 50.0f) && (player->invincibilityTimer < 0) &&
         (fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 30.0f)) {
         EnWonderItem_DropCollectible(this, play, true);
     }

@@ -115,10 +115,12 @@ u32 func_809CBCEC(EnBubble* this) {
 }
 
 void EnBubble_DamagePlayer(EnBubble* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 damage = -this->colliderSphere.elements[0].info.toucher.damage;
 
     play->damagePlayer(play, damage);
-    func_8002F7A0(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer, 6.0f);
+    func_8002F7A0(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
 }
 
 s32 EnBubble_Explosion(EnBubble* this, PlayState* play) {

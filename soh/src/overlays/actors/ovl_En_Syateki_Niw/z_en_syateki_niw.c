@@ -366,7 +366,7 @@ void func_80B123A8(EnSyatekiNiw* this, PlayState* play) {
 }
 
 void func_80B12460(EnSyatekiNiw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 phi_f16 = 0.0f;
 
     player->actor.freezeTimer = 10;

@@ -492,7 +492,8 @@ void func_809EEAF8(EnDivingGame* this, PlayState* play) {
 void EnDivingGame_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnDivingGame* this = (EnDivingGame*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f pos;
 
     if (this->csCameraTimer != 0) {

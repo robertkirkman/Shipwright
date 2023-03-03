@@ -130,6 +130,8 @@ void func_80B391CC(EnWonderTalk* this, PlayState* play) {
 }
 
 void func_80B3943C(EnWonderTalk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     s16 yawDiffTemp;
 
@@ -152,8 +154,8 @@ void func_80B3943C(EnWonderTalk* this, PlayState* play) {
                 }
                 this->actionFunc = func_80B391CC;
             }
-        } else if (!(this->unk_15C < this->actor.xzDistToPlayer)) {
-            yawDiffTemp = (this->actor.yawTowardsPlayer - this->actor.world.rot.y);
+        } else if (!(this->unk_15C < this->actor.xzDistToPlayer[playerIndex])) {
+            yawDiffTemp = (this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y);
             yawDiff = ABS(yawDiffTemp);
 
             if (yawDiff < 0x4000) {

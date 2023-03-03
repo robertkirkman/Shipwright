@@ -124,7 +124,7 @@ void BgHidanDalm_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgHidanDalm_Wait(BgHidanDalm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if ((this->collider.base.acFlags & AC_HIT) && !Player_InCsMode(play) &&
         (player->meleeWeaponAnimation == 22 || player->meleeWeaponAnimation == 23)) {
@@ -145,7 +145,7 @@ void BgHidanDalm_Wait(BgHidanDalm* this, PlayState* play) {
         this->dyna.actor.bgCheckFlags &= ~8;
         this->dyna.actor.speedXZ = 10.0f;
         Flags_SetSwitch(play, this->switchFlag);
-        func_8002F7DC(&GET_PLAYER(play)->actor, NA_SE_IT_HAMMER_HIT);
+        func_8002F7DC(&player->actor, NA_SE_IT_HAMMER_HIT);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_DARUMA_VANISH);
     } else {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);

@@ -235,7 +235,9 @@ void EnKarebaba_Grow(EnKarebaba* this, PlayState* play) {
 }
 
 void EnKarebaba_Idle(EnKarebaba* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < 200.0f && fabsf(this->actor.yDistToPlayer) < 30.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f && fabsf(this->actor.yDistToPlayer[playerIndex]) < 30.0f) {
         EnKarebaba_SetupAwaken(this);
     }
 }
@@ -252,7 +254,7 @@ void EnKarebaba_Awaken(EnKarebaba* this, PlayState* play) {
 }
 
 void EnKarebaba_Upright(EnKarebaba* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     SkelAnime_Update(&this->skelAnime);
 

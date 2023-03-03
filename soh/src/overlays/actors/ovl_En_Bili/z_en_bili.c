@@ -309,8 +309,8 @@ void EnBili_UpdateTentaclesIndex(EnBili* this) {
 /**
  * Tracks Player height, with oscillation, and moves away from walls
  */
-void EnBili_UpdateFloating(EnBili* this) {
-    f32 playerHeight = this->actor.world.pos.y + this->actor.yDistToPlayer;
+void EnBili_UpdateFloating(EnBili* this, u16 playerIndex) {
+    f32 playerHeight = this->actor.world.pos.y + this->actor.yDistToPlayer[playerIndex];
     f32 heightOffset = ((this->actionFunc == EnBili_SetNewHomeHeight) ? 100.0f : 40.0f);
     f32 baseHeight = CLAMP_MIN(this->actor.floorHeight, playerHeight);
 
@@ -326,6 +326,8 @@ void EnBili_UpdateFloating(EnBili* this) {
 // Action functions
 
 void EnBili_FloatIdle(EnBili* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->timer != 0) {
@@ -336,13 +338,13 @@ void EnBili_FloatIdle(EnBili* this, PlayState* play) {
         this->actor.world.rot.y += Rand_CenteredFloat(1820.0f);
     }
 
-    EnBili_UpdateFloating(this);
+    EnBili_UpdateFloating(this, playerIndex);
 
     if (this->timer == 0) {
         this->timer = 32;
     }
 
-    if ((this->actor.xzDistToPlayer < 160.0f) && (fabsf(this->actor.yDistToPlayer) < 45.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 160.0f) && (fabsf(this->actor.yDistToPlayer[playerIndex]) < 45.0f)) {
         EnBili_SetupApproachPlayer(this);
     }
 }
@@ -394,6 +396,8 @@ void EnBili_DischargeLightning(EnBili* this, PlayState* play) {
 }
 
 void EnBili_Climb(EnBili* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 skelAnimeUpdate = SkelAnime_Update(&this->skelAnime);
     f32 curFrame = this->skelAnime.curFrame;
 
@@ -402,7 +406,7 @@ void EnBili_Climb(EnBili* this, PlayState* play) {
     }
 
     if (curFrame > 9.0f) {
-        Math_ApproachF(&this->actor.world.pos.y, this->actor.world.pos.y + this->actor.yDistToPlayer + 100.0f, 0.5f,
+        Math_ApproachF(&this->actor.world.pos.y, this->actor.world.pos.y + this->actor.yDistToPlayer[playerIndex] + 100.0f, 0.5f,
                        5.0f);
     }
 
@@ -412,33 +416,37 @@ void EnBili_Climb(EnBili* this, PlayState* play) {
 }
 
 void EnBili_ApproachPlayer(EnBili* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 2, 1820);
+    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 1820);
 
     if (this->timer != 0) {
         this->timer--;
     }
 
-    EnBili_UpdateFloating(this);
+    EnBili_UpdateFloating(this, playerIndex);
 
     if (this->timer == 0) {
         this->timer = 32;
     }
 
-    if (this->actor.xzDistToPlayer > 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 200.0f) {
         EnBili_SetupFloatIdle(this);
     }
 }
 
 void EnBili_SetNewHomeHeight(EnBili* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->timer != 0) {
         this->timer--;
     }
 
-    Math_ScaledStepToS(&this->actor.world.rot.y, (s16)(this->actor.yawTowardsPlayer + 0x8000), 910);
-    EnBili_UpdateFloating(this);
+    Math_ScaledStepToS(&this->actor.world.rot.y, (s16)(this->actor.yawTowardsPlayer[playerIndex] + 0x8000), 910);
+    EnBili_UpdateFloating(this, playerIndex);
 
     if (this->timer == 0) {
         EnBili_SetupFloatIdle(this);

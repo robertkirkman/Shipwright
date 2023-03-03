@@ -76,7 +76,7 @@ void BgJyaZurerukabe_InitDynaPoly(BgJyaZurerukabe* this, PlayState* play, Collis
 }
 
 void func_8089B4C8(BgJyaZurerukabe* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if ((player->stateFlags1 == 0x200000) && (player->actor.wallPoly != NULL)) {
         s32 i;

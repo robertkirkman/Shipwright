@@ -331,7 +331,7 @@ void EnClearTag_Update(Actor* thisx, PlayState* play2) {
     s16 rotationScale;
     PlayState* play = play2;
     EnClearTag* this = (EnClearTag*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     this->frameCounter++;
 

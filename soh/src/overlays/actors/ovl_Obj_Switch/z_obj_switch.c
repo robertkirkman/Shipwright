@@ -422,9 +422,11 @@ void ObjSwitch_FloorPress(ObjSwitch* this, PlayState* play) {
         func_8005B198() == this->dyna.actor.category || this->cooldownTimer <= 0) {
         this->dyna.actor.scale.y -= 99.0f / 2000.0f;
         if (this->dyna.actor.scale.y <= 33.0f / 2000.0f) {
+            Player* player = Player_NearestToActor(&this->dyna.actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
             ObjSwitch_FloorDownInit(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
-            func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 120, 20, 10);
+            func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 120, 20, 10);
         }
     }
 }
@@ -481,7 +483,9 @@ void ObjSwitch_FloorRelease(ObjSwitch* this, PlayState* play) {
             ObjSwitch_FloorUpInit(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
             if (subType == OBJSWITCH_SUBTYPE_FLOOR_1) {
-                func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 120, 20, 10);
+                Player* player = Player_NearestToActor(&this->dyna.actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 120, 20, 10);
             }
         }
     }

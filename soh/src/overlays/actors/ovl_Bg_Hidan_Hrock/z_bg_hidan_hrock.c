@@ -162,7 +162,9 @@ void func_808894B0(BgHidanHrock* this, PlayState* play) {
         (Math_CosS(this->dyna.actor.world.rot.y + (this->unk_168 << 0xE)) * 5.0f) + this->dyna.actor.home.pos.z;
 
     if (!(this->unk_168 % 4)) {
-        func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 180, 10, 100);
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 180, 10, 100);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BLOCK_SHAKE);
     }
 

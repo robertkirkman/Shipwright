@@ -126,9 +126,11 @@ void func_80A5046C(EnGuest* this) {
 }
 
 void func_80A50518(EnGuest* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = func_80A5057C;
-    } else if (this->actor.xzDistToPlayer < 100.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
         func_8002F2CC(&this->actor, play, 100.0f);
     }
 }
@@ -142,9 +144,8 @@ void func_80A5057C(EnGuest* this, PlayState* play) {
 void func_80A505CC(Actor* thisx, PlayState* play) {
     EnGuest* this = (EnGuest*)thisx;
     s32 pad;
-    Player* player;
+    Player* player = Player_NearestToActor(thisx, play);
 
-    player = GET_PLAYER(play);
     this->unk_2C8++;
 
     func_80A5046C(this);

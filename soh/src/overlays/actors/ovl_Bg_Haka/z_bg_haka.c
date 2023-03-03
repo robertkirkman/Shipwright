@@ -66,7 +66,7 @@ void func_8087B758(BgHaka* this, Player* player) {
 }
 
 void func_8087B7E8(BgHaka* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         if (play->sceneNum == SCENE_SPOT02 && !LINK_IS_ADULT && IS_DAY && !gSaveContext.n64ddFlag && !CVarGetInteger("gDayGravePull", 0)) {
@@ -90,7 +90,7 @@ void func_8087B7E8(BgHaka* this, PlayState* play) {
 }
 
 void func_8087B938(BgHaka* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 sp38;
 
     this->dyna.actor.speedXZ += 0.05f;
@@ -142,7 +142,7 @@ void func_8087B938(BgHaka* this, PlayState* play) {
 }
 
 void func_8087BAAC(BgHaka* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         this->dyna.unk_150 = 0.0f;
@@ -151,7 +151,7 @@ void func_8087BAAC(BgHaka* this, PlayState* play) {
 }
 
 void func_8087BAE4(BgHaka* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
 
     if (this->dyna.actor.params != 0) {

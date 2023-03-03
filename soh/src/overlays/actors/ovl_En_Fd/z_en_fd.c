@@ -236,10 +236,12 @@ s32 EnFd_SpawnCore(EnFd* this, PlayState* play) {
 }
 
 void EnFd_SpawnChildFire(EnFd* this, PlayState* play, s16 fireCnt, s16 color) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
 
     for (i = 0; i < fireCnt; i++) {
-        s16 angle = (s16)((((i * 360.0f) / fireCnt) * (0x10000 / 360.0f))) + this->actor.yawTowardsPlayer;
+        s16 angle = (s16)((((i * 360.0f) / fireCnt) * (0x10000 / 360.0f))) + this->actor.yawTowardsPlayer[playerIndex];
         Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_FD_FIRE, this->actor.world.pos.x,
                            this->actor.world.pos.y, this->actor.world.pos.z, 0, angle, 0, (color << 0xF) | i);
     }
@@ -265,11 +267,13 @@ void EnFd_SpawnDot(EnFd* this, PlayState* play) {
  * Checks to see if the hammer effect is active, and if it should be applied
  */
 s32 EnFd_CheckHammer(EnFd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->actionFunc == EnFd_Reappear || this->actionFunc == EnFd_SpinAndGrow ||
         this->actionFunc == EnFd_JumpToGround || this->actionFunc == EnFd_WaitForCore) {
         return false;
-    } else if (play->actorCtx.unk_02 != 0 && this->actor.xzDistToPlayer < 300.0f &&
-               this->actor.yDistToPlayer < 60.0f) {
+    } else if (play->actorCtx.unk_02 != 0 && this->actor.xzDistToPlayer[playerIndex] < 300.0f &&
+               this->actor.yDistToPlayer[playerIndex] < 60.0f) {
         return true;
     } else {
         return false;
@@ -277,7 +281,8 @@ s32 EnFd_CheckHammer(EnFd* this, PlayState* play) {
 }
 
 s32 EnFd_ColliderCheck(EnFd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     ColliderInfo* info;
 
     if (this->collider.base.acFlags & AC_HIT || EnFd_CheckHammer(this, play)) {
@@ -309,7 +314,7 @@ s32 EnFd_ColliderCheck(EnFd* this, PlayState* play) {
         }
         this->attackTimer = 30;
         Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
-        func_8002F71C(play, &this->actor, this->actor.speedXZ + 2.0f, this->actor.yawTowardsPlayer, 6.0f);
+        func_8002F71C(play, &this->actor, this->actor.speedXZ + 2.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
     }
     return false;
 }
@@ -371,7 +376,7 @@ Actor* EnFd_FindBomb(EnFd* this, PlayState* play) {
 }
 
 Actor* EnFd_FindPotentialTheat(EnFd* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* bomb = EnFd_FindBomb(this, play);
 
     if (bomb != NULL) {
@@ -382,7 +387,6 @@ Actor* EnFd_FindPotentialTheat(EnFd* this, PlayState* play) {
         return NULL;
     }
 
-    player = GET_PLAYER(play);
     if (!EnFd_CanSeeActor(this, &player->actor, play)) {
         return NULL;
     }
@@ -540,7 +544,9 @@ void EnFd_SpinAndSpawnFire(EnFd* this, PlayState* play) {
     if (DECR(this->spinTimer) != 0) {
         this->actor.shape.rot.y += (this->runDir * 0x2000);
         if (this->spinTimer == 30 && this->invincibilityTimer == 0) {
-            if (this->actor.xzDistToPlayer > 160.0f) {
+            Player* player = Player_NearestToActor(&this->actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
+            if (this->actor.xzDistToPlayer[playerIndex] > 160.0f) {
                 // orange flames
                 EnFd_SpawnChildFire(this, play, 8, 0);
             } else {

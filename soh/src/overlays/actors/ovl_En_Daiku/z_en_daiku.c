@@ -556,7 +556,7 @@ void EnDaiku_EscapeRun(EnDaiku* this, PlayState* play) {
 void EnDaiku_Update(Actor* thisx, PlayState* play) {
     EnDaiku* this = (EnDaiku*)thisx;
     s32 curFrame;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->currentAnimIndex == ENDAIKU_ANIM_RUN) {
         curFrame = this->skelAnime.curFrame;

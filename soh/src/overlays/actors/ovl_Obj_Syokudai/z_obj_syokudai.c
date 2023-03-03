@@ -129,7 +129,7 @@ void ObjSyokudai_Update(Actor* thisx, PlayState* play2) {
     f32 waterSurface;
     s32 lightRadius = -1;
     u8 brightness = 0;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnArrow* arrow;
     s32 interactionType;
     u32 dmgFlags;
@@ -152,7 +152,6 @@ void ObjSyokudai_Update(Actor* thisx, PlayState* play2) {
             }
         }
     } else {
-        player = GET_PLAYER(play);
         interactionType = 0;
         if (this->actor.params & 0x400) {
             this->litTimer = -1;

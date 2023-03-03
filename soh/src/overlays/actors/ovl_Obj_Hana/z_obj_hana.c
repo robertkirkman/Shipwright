@@ -102,8 +102,10 @@ void ObjHana_Destroy(Actor* thisx, PlayState* play) {
 
 void ObjHana_Update(Actor* thisx, PlayState* play) {
     ObjHana* this = (ObjHana*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (sHanaParams[this->actor.params & 3].radius >= 0 && this->actor.xzDistToPlayer < 400.0f) {
+    if (sHanaParams[this->actor.params & 3].radius >= 0 && this->actor.xzDistToPlayer[playerIndex] < 400.0f) {
         CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
     }
 }

@@ -21,7 +21,7 @@ void func_809CE9A8(EnBw* this);
 void func_809CEA24(EnBw* this, PlayState* play);
 void func_809CF72C(EnBw* this);
 void func_809CF7AC(EnBw* this, PlayState* play);
-void func_809CF8F0(EnBw* this);
+void func_809CF8F0(EnBw* this, u16 playerIndex);
 void func_809CF984(EnBw* this, PlayState* play);
 void func_809CFBA8(EnBw* this);
 void func_809CFC4C(EnBw* this, PlayState* play);
@@ -192,8 +192,8 @@ void func_809CEA24(EnBw* this, PlayState* play) {
     s16 sp60;
     f32 sp5C;
     f32 sp58;
-    Player* player = GET_PLAYER(play);
-    Player* player2 = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
     this->unk_244 = this->unk_250 + 0.1f;
@@ -251,7 +251,7 @@ void func_809CEA24(EnBw* this, PlayState* play) {
                             this->unk_238 = -0x4000;
                         }
                     } else {
-                        if ((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y) >= 0.0f) {
+                        if ((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) >= 0.0f) {
                             this->unk_238 = 0x4000;
                         } else {
                             this->unk_238 = -0x4000;
@@ -293,7 +293,7 @@ void func_809CEA24(EnBw* this, PlayState* play) {
                 this->actor.bgCheckFlags &= ~8;
                 this->unk_222 = (Rand_ZeroOne() * 20.0f) + 160.0f;
             } else {
-                if ((s16)(this->actor.yawTowardsPlayer - this->unk_236) >= 0) {
+                if ((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->unk_236) >= 0) {
                     this->unk_238 = 0x4000;
                 } else {
                     this->unk_238 = -0x4000;
@@ -309,7 +309,7 @@ void func_809CEA24(EnBw* this, PlayState* play) {
                 sp74 = SEGMENTED_TO_VIRTUAL(sp74);
                 sp60 = Math_FAtan2F(sp74->normal.x, sp74->normal.z) * ((f32)0x8000 / M_PI);
                 if (this->unk_236 != sp60) {
-                    if ((s16)(this->actor.yawTowardsPlayer - sp60) >= 0) {
+                    if ((s16)(this->actor.yawTowardsPlayer[playerIndex] - sp60) >= 0) {
                         this->unk_238 = 0x4000;
                     } else {
                         this->unk_238 = -0x4000;
@@ -334,8 +334,8 @@ void func_809CEA24(EnBw* this, PlayState* play) {
     switch (this->unk_221) {
         case 3:
             Math_SmoothStepToF(&this->unk_248, 0.6f, 1.0f, 0.05f, 0.0f);
-            if ((this->unk_224 == 0) && (this->actor.xzDistToPlayer < 200.0f) &&
-                (ABS(this->actor.yDistToPlayer) < 50.0f) && Actor_IsFacingPlayer(&this->actor, 0x1C70)) {
+            if ((this->unk_224 == 0) && (this->actor.xzDistToPlayer[playerIndex] < 200.0f) &&
+                (ABS(this->actor.yDistToPlayer[playerIndex]) < 50.0f) && Actor_IsFacingPlayer(&this->actor, 0x1C70, player, play)) {
                 func_809CF72C(this);
             } else {
                 Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_236 + this->unk_238, 1,
@@ -345,29 +345,29 @@ void func_809CEA24(EnBw* this, PlayState* play) {
         case 0:
             Math_SmoothStepToF(&this->unk_248, 0.6f, 1.0f, 0.05f, 0.0f);
             if (sp64 == 0) {
-                Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1,
+                Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1,
                                    this->actor.speedXZ * 1000.0f, 0);
-                if ((this->actor.xzDistToPlayer < 90.0f) && (this->actor.yDistToPlayer < 50.0f) &&
-                    Actor_IsFacingPlayer(&this->actor, 0x1554) &&
-                    Actor_TestFloorInDirection(&this->actor, play, 71.24802f, this->actor.yawTowardsPlayer)) {
-                    func_809CF8F0(this);
+                if ((this->actor.xzDistToPlayer[playerIndex] < 90.0f) && (this->actor.yDistToPlayer[playerIndex] < 50.0f) &&
+                    Actor_IsFacingPlayer(&this->actor, 0x1554, player, play) &&
+                    Actor_TestFloorInDirection(&this->actor, play, 71.24802f, this->actor.yawTowardsPlayer[playerIndex])) {
+                    func_809CF8F0(this, playerIndex);
                 }
             } else {
                 Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_236 + this->unk_238, 1,
                                    this->actor.speedXZ * 1000.0f, 0);
             }
-            if ((this->unk_224 == 0) || (ABS(this->actor.yDistToPlayer) > 60.0f) || (player2->stateFlags1 & 0x6000)) {
+            if ((this->unk_224 == 0) || (ABS(this->actor.yDistToPlayer[playerIndex]) > 60.0f) || (player->stateFlags1 & 0x6000)) {
                 this->unk_221 = 3;
                 this->unk_224 = 150;
                 this->unk_250 = 0.0f;
             }
             break;
         case 1:
-            if (((sp64 == 0) && !(this->actor.bgCheckFlags & 8)) || Actor_IsFacingPlayer(&this->actor, 0x1C70)) {
-                if (Actor_IsFacingPlayer(&this->actor, 0x1C70)) {
+            if (((sp64 == 0) && !(this->actor.bgCheckFlags & 8)) || Actor_IsFacingPlayer(&this->actor, 0x1C70, player, play)) {
+                if (Actor_IsFacingPlayer(&this->actor, 0x1C70, player, play)) {
                     this->unk_238 = -this->unk_238;
                 }
-                Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer - 0x8000, 1,
+                Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] - 0x8000, 1,
                                    this->actor.speedXZ * 1000.0f, 0);
             } else {
                 Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_236 + this->unk_238, 1,
@@ -422,10 +422,10 @@ void func_809CF7AC(EnBw* this, PlayState* play) {
     }
 }
 
-void func_809CF8F0(EnBw* this) {
+void func_809CF8F0(EnBw* this, u16 playerIndex) {
     Animation_MorphToPlayOnce(&this->skelAnime, &object_bw_Anim_002250, -1.0f);
     this->actor.speedXZ = 7.0f;
-    this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     this->unk_220 = 4;
     this->unk_222 = 1000;
     this->actor.velocity.y = 11.0f;
@@ -435,7 +435,8 @@ void func_809CF8F0(EnBw* this) {
 }
 
 void func_809CF984(EnBw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 floorPolyType;
 
     Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 0.5f, 0.0f);
@@ -446,7 +447,7 @@ void func_809CF984(EnBw* this, PlayState* play) {
     if (this->collider1.base.atFlags & AT_HIT) {
         this->collider1.base.atFlags &= ~AT_HIT;
         this->actor.speedXZ = -6.0f;
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         if ((&player->actor == this->collider1.base.at) && !(this->collider1.base.atFlags & AT_BOUNCED)) {
             Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
         }
@@ -646,6 +647,7 @@ void func_809D03CC(EnBw* this) {
 }
 
 void func_809D0424(EnBw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->actor.colorFilterTimer == 0) {
         this->unk_23C = 0;
         if (this->actor.colChkInfo.health != 0) {
@@ -663,7 +665,7 @@ void func_809D0424(EnBw* this, PlayState* play) {
                 func_809CFF10(this);
             }
         } else {
-            if (func_800355E4(play, &this->collider2.base)) {
+            if (func_800355E4(play, &this->collider2.base, player)) {
                 this->unk_230 = 0;
                 this->actor.scale.y -= 0.009f;
                 Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, 30.0f, 11, 4.0f, 0, 0, false);
@@ -677,6 +679,8 @@ void func_809D0424(EnBw* this, PlayState* play) {
 }
 
 void func_809D0584(EnBw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((this->actor.bgCheckFlags & 0x10) && (this->actor.bgCheckFlags & 1)) {
         this->unk_230 = 0;
         this->actor.scale.y -= 0.009f;
@@ -705,7 +709,7 @@ void func_809D0584(EnBw* this, PlayState* play) {
             if (((this->unk_221 == 1) || (this->unk_221 == 4)) && (this->actor.colChkInfo.health == 0)) {
                 if (this->unk_220 != 0) {
                     Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0, 8);
-                    if (func_800355E4(play, &this->collider2.base)) {
+                    if (func_800355E4(play, &this->collider2.base, player)) {
                         this->unk_230 = 0;
                         this->actor.scale.y -= 0.009f;
                         Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, 30.0f, 11, 4.0f, 0, 0,
@@ -725,7 +729,7 @@ void func_809D0584(EnBw* this, PlayState* play) {
                 this->unk_248 = 0.0f;
             }
         }
-        if ((play->actorCtx.unk_02 != 0) && (this->actor.xzDistToPlayer <= 400.0f) &&
+        if ((play->actorCtx.unk_02 != 0) && (this->actor.xzDistToPlayer[playerIndex] <= 400.0f) &&
             (this->actor.bgCheckFlags & 1)) {
             if (this->unk_220 == 5) {
                 this->unk_23C = 0;

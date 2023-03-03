@@ -209,7 +209,8 @@ void func_80A91284(EnKakasi3* this, PlayState* play) {
 }
 
 void func_80A91348(EnKakasi3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     func_80A90E28(this);
     SkelAnime_Update(&this->skelAnime);
@@ -225,9 +226,9 @@ void func_80A91348(EnKakasi3* this, PlayState* play) {
             this->actionFunc = func_80A91284;
         }
     } else {
-        s16 angleTowardsLink = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        s16 angleTowardsLink = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-        if (!(this->actor.xzDistToPlayer > 120.0f)) {
+        if (!(this->actor.xzDistToPlayer[playerIndex]> 120.0f)) {
             s16 absAngleTowardsLink = ABS(angleTowardsLink);
 
             if (absAngleTowardsLink < 0x4300) {
@@ -243,7 +244,7 @@ void func_80A91348(EnKakasi3* this, PlayState* play) {
                         this->actionFunc = func_80A915B8;
                         return;
                     }
-                    if (this->actor.xzDistToPlayer < 80.0f) {
+                    if (this->actor.xzDistToPlayer[playerIndex] < 80.0f) {
                         player->stateFlags2 |= 0x800000;
                     }
                 } else if (gSaveContext.scarecrowSpawnSongSet && !this->unk_195) {
@@ -258,7 +259,7 @@ void func_80A91348(EnKakasi3* this, PlayState* play) {
                         this->actionFunc = func_80A9187C;
                         return;
                     }
-                    if (this->actor.xzDistToPlayer < 80.0f) {
+                    if (this->actor.xzDistToPlayer[playerIndex] < 80.0f) {
                         player->stateFlags2 |= 0x800000;
                     }
                 }
@@ -277,8 +278,6 @@ void func_80A915B8(EnKakasi3* this, PlayState* play) {
 }
 
 void func_80A91620(EnKakasi3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if ((play->msgCtx.ocarinaMode == OCARINA_MODE_04 ||
          (play->msgCtx.ocarinaMode >= OCARINA_MODE_05 && play->msgCtx.ocarinaMode < OCARINA_MODE_0B)) &&
         (play->msgCtx.msgMode == MSGMODE_NONE)) {
@@ -303,6 +302,7 @@ void func_80A91620(EnKakasi3* this, PlayState* play) {
     }
 
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_01) {
+        Player* player = Player_NearestToActor(&this->actor, play);
         func_80A90EBC(this, play, 0);
         player->stateFlags2 |= 0x800000;
     }
@@ -341,8 +341,6 @@ void func_80A9187C(EnKakasi3* this, PlayState* play) {
 }
 
 void func_80A918E4(EnKakasi3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (BREG(3) != 0) {
         // "No way!"
         osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ まさか！ ☆☆☆☆☆ %d\n" VT_RST, play->msgCtx.ocarinaMode);
@@ -377,6 +375,7 @@ void func_80A918E4(EnKakasi3* this, PlayState* play) {
     }
 
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_01) {
+        Player* player = Player_NearestToActor(&this->actor, play);
         func_80A90EBC(this, play, 0);
         player->stateFlags2 |= 0x800000;
     }

@@ -1481,18 +1481,16 @@ void Play_Draw(PlayState* play) {
                     if ((HREG(80) != 10) || (HREG(83) != 0)) {
                         if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) &&
                             !play->envCtx.skyboxDisabled) {         
-                            for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                                if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
-                                    (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
-                                    Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
+                            if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
+                                (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
+                                Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
 
-                                    SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
-                                                    play->envCtx.skyboxBlend, play->views[i].eye.x, play->views[i].eye.y,
-                                                    play->views[i].eye.z);
-                                } else if (play->skyboxCtx.unk_140 == 0) {
-                                    SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                                    play->views[i].eye.x, play->views[i].eye.y, play->views[i].eye.z);
-                                }
+                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
+                                                play->envCtx.skyboxBlend, play->views[i].eye.x, play->views[i].eye.y,
+                                                play->views[i].eye.z);
+                            } else if (play->skyboxCtx.unk_140 == 0) {
+                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                                play->views[i].eye.x, play->views[i].eye.y, play->views[i].eye.z);
                             }
                         }
                     }
@@ -1532,16 +1530,14 @@ void Play_Draw(PlayState* play) {
                     }
 
                     if ((HREG(80) != 10) || (HREG(83) != 0)) {
-                        for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                            if ((play->skyboxCtx.unk_140 != 0) &&
-                                (play->cameraPtrs[i]->setting != CAM_SET_PREREND_FIXED)) {
-                                Vec3f sp74;
+                        if ((play->skyboxCtx.unk_140 != 0) &&
+                            (play->cameraPtrs[i]->setting != CAM_SET_PREREND_FIXED)) {
+                            Vec3f sp74;
 
-                                Camera_GetSkyboxOffset(&sp74, play->cameraPtrs[i]);
-                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                                play->views[i].eye.x + sp74.x, play->views[i].eye.y + sp74.y,
-                                                play->views[i].eye.z + sp74.z);
-                            }
+                            Camera_GetSkyboxOffset(&sp74, play->cameraPtrs[i]);
+                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                            play->views[i].eye.x + sp74.x, play->views[i].eye.y + sp74.y,
+                                            play->views[i].eye.z + sp74.z);
                         }
                     }
 
@@ -1563,12 +1559,10 @@ void Play_Draw(PlayState* play) {
 
                     if ((HREG(80) != 10) || (HREG(86) != 0)) {
                         if (!play->envCtx.sunMoonDisabled) {
-                            for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                                sp21C.x = play->views[i].eye.x + play->envCtx.sunPos.x;
-                                sp21C.y = play->views[i].eye.y + play->envCtx.sunPos.y;
-                                sp21C.z = play->views[i].eye.z + play->envCtx.sunPos.z;
-                                Environment_DrawSunLensFlare(play, &play->envCtx, &play->views[i], gfxCtx, sp21C, 0);
-                            }
+                            sp21C.x = play->views[i].eye.x + play->envCtx.sunPos.x;
+                            sp21C.y = play->views[i].eye.y + play->envCtx.sunPos.y;
+                            sp21C.z = play->views[i].eye.z + play->envCtx.sunPos.z;
+                            Environment_DrawSunLensFlare(play, &play->envCtx, &play->views[i], gfxCtx, sp21C, 0);
                         }
                         Environment_DrawCustomLensFlare(play);
                     }

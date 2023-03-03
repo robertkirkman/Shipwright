@@ -15,13 +15,13 @@ void BgJyaAmishutter_Update(Actor* thisx, PlayState* play);
 void BgJyaAmishutter_Draw(Actor* thisx, PlayState* play);
 
 void BgJyaAmishutter_SetupWaitForPlayer(BgJyaAmishutter* this);
-void BgJyaAmishutter_WaitForPlayer(BgJyaAmishutter* this);
+void BgJyaAmishutter_WaitForPlayer(BgJyaAmishutter* this, u16 playerIndex);
 void func_80893428(BgJyaAmishutter* this);
-void func_80893438(BgJyaAmishutter* this);
+void func_80893438(BgJyaAmishutter* this, u16 playerIndex);
 void func_808934B0(BgJyaAmishutter* this);
-void func_808934C0(BgJyaAmishutter* this);
+void func_808934C0(BgJyaAmishutter* this, u16 playerIndex);
 void func_808934FC(BgJyaAmishutter* this);
-void func_8089350C(BgJyaAmishutter* this);
+void func_8089350C(BgJyaAmishutter* this, u16 playerIndex);
 
 const ActorInit Bg_Jya_Amishutter_InitVars = {
     ACTOR_BG_JYA_AMISHUTTER,
@@ -76,8 +76,8 @@ void BgJyaAmishutter_SetupWaitForPlayer(BgJyaAmishutter* this) {
     this->actionFunc = BgJyaAmishutter_WaitForPlayer;
 }
 
-void BgJyaAmishutter_WaitForPlayer(BgJyaAmishutter* this) {
-    if ((this->dyna.actor.xzDistToPlayer < 60.0f) && (fabsf(this->dyna.actor.yDistToPlayer) < 30.0f)) {
+void BgJyaAmishutter_WaitForPlayer(BgJyaAmishutter* this, u16 playerIndex) {
+    if ((this->dyna.actor.xzDistToPlayer[playerIndex] < 60.0f) && (fabsf(this->dyna.actor.yDistToPlayer[playerIndex]) < 30.0f)) {
         func_80893428(this);
     }
 }
@@ -86,7 +86,7 @@ void func_80893428(BgJyaAmishutter* this) {
     this->actionFunc = func_80893438;
 }
 
-void func_80893438(BgJyaAmishutter* this) {
+void func_80893438(BgJyaAmishutter* this, u16 playerIndex) {
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y + 100.0f, 3.0f)) {
         func_808934B0(this);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_METALDOOR_STOP);
@@ -99,8 +99,8 @@ void func_808934B0(BgJyaAmishutter* this) {
     this->actionFunc = func_808934C0;
 }
 
-void func_808934C0(BgJyaAmishutter* this) {
-    if (this->dyna.actor.xzDistToPlayer > 300.0f) {
+void func_808934C0(BgJyaAmishutter* this, u16 playerIndex) {
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] > 300.0f) {
         func_808934FC(this);
     }
 }
@@ -109,7 +109,7 @@ void func_808934FC(BgJyaAmishutter* this) {
     this->actionFunc = func_8089350C;
 }
 
-void func_8089350C(BgJyaAmishutter* this) {
+void func_8089350C(BgJyaAmishutter* this, u16 playerIndex) {
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y, 3.0f)) {
         BgJyaAmishutter_SetupWaitForPlayer(this);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_METALDOOR_STOP);
@@ -120,8 +120,10 @@ void func_8089350C(BgJyaAmishutter* this) {
 
 void BgJyaAmishutter_Update(Actor* thisx, PlayState* play) {
     BgJyaAmishutter* this = (BgJyaAmishutter*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    this->actionFunc(this);
+    this->actionFunc(this, playerIndex);
 }
 
 void BgJyaAmishutter_Draw(Actor* thisx, PlayState* play) {

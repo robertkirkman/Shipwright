@@ -93,6 +93,7 @@ void BgJyaLift_SetInitPosY(BgJyaLift* this) {
 }
 
 void BgJyaLift_DelayMove(BgJyaLift* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->dyna.actor.params & 0x3F) || (this->moveDelay > 0)) {
         this->moveDelay++;
         if (this->moveDelay >= 20) {
@@ -100,10 +101,10 @@ void BgJyaLift_DelayMove(BgJyaLift* this, PlayState* play) {
             // Link is not standing on the platform as it lowers. Therefore check for the Sunlight arrows
             // enhancement and if it's enabled, check that Link is on the platform. Otherwise skip it.
             if (!(CVarGetInteger("gSunlightArrows", 0) || Randomizer_GetSettingValue(RSK_SUNLIGHT_ARROWS)) || 
-                                                      (GET_PLAYER(play)->actor.world.pos.x >   -19.0f &&
-                                                       GET_PLAYER(play)->actor.world.pos.x <   139.0f &&
-                                                       GET_PLAYER(play)->actor.world.pos.z > -1172.0f &&
-                                                       GET_PLAYER(play)->actor.world.pos.z < -1009.0f)) {
+                                                      (player->actor.world.pos.x >   -19.0f &&
+                                                       player->actor.world.pos.x <   139.0f &&
+                                                       player->actor.world.pos.z > -1172.0f &&
+                                                       player->actor.world.pos.z < -1009.0f)) {
                 OnePointCutscene_Init(play, 3430, -99, &this->dyna.actor, MAIN_CAM);
             }
             BgJyaLift_SetupMove(this);

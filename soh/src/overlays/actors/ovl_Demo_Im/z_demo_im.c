@@ -177,20 +177,21 @@ void func_80984DB8(DemoIm* this) {
 }
 
 void func_80984E58(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     s16 npcTrackingMode;
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) + 4.0f;
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     npcTrackingMode = (ABS(yawDiff) < 0x18E3) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE;
     Npc_TrackPoint(&this->actor, &this->interactInfo, kREG(17) + 0xC, npcTrackingMode);
 }
 
 void func_80984F10(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) + 12.0f;
@@ -199,7 +200,7 @@ void func_80984F10(DemoIm* this, PlayState* play) {
 }
 
 void func_80984F94(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) + 4.0f;
@@ -311,7 +312,7 @@ void func_80985358(DemoIm* this, PlayState* play) {
 }
 
 void func_809853B4(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 playerX = player->actor.world.pos.x;
     f32 playerY = player->actor.world.pos.y + 80.0f;
     f32 playerZ = player->actor.world.pos.z;
@@ -329,7 +330,7 @@ void func_8098544C(DemoIm* this, PlayState* play) {
     s32 pad[2];
 
     if ((gSaveContext.chamberCutsceneNum == 4) && (gSaveContext.sceneSetupIndex < 4)) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
 
         this->action = 1;
         play->csCtx.segment = D_8098786C;
@@ -829,7 +830,7 @@ void func_809869B0(DemoIm* this, PlayState* play) {
 }
 
 s32 func_809869F8(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 playerPosX = player->actor.world.pos.x;
     f32 thisPosX = this->actor.world.pos.x;
 
@@ -841,7 +842,7 @@ s32 func_809869F8(DemoIm* this, PlayState* play) {
 }
 
 s32 func_80986A5C(DemoIm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 playerPosX = player->actor.world.pos.x;
     f32 thisPosX = this->actor.world.pos.x;
 
@@ -863,9 +864,9 @@ s32 func_80986AD0(DemoIm* this, PlayState* play) {
     return false;
 }
 
-void func_80986B2C(PlayState* play) {
+void func_80986B2C(DemoIm* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
 
         // In entrance rando have impa bring link back to the front of castle grounds
         if (gSaveContext.n64ddFlag && Randomizer_GetSettingValue(RSK_SHUFFLE_OVERWORLD_ENTRANCES)) {
@@ -996,7 +997,7 @@ void func_80986EAC(DemoIm* this, PlayState* play) {
     func_80984BE0(this);
     func_80984F94(this, play);
     DemoIm_UpdateCollider(this, play);
-    func_80986B2C(play);
+    func_80986B2C(this, play);
 }
 
 void func_80986F08(DemoIm* this, PlayState* play) {

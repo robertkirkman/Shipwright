@@ -477,6 +477,8 @@ void EnDekubaba_SetupDeadStickDrop(EnDekubaba* this, PlayState* play) {
 // Action functions
 
 void EnDekubaba_Wait(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->timer != 0) {
         this->timer--;
     }
@@ -485,14 +487,14 @@ void EnDekubaba_Wait(EnDekubaba* this, PlayState* play) {
     this->actor.world.pos.z = this->actor.home.pos.z;
     this->actor.world.pos.y = this->actor.home.pos.y + 14.0f * this->size;
 
-    if ((this->timer == 0) && (this->actor.xzDistToPlayer < 200.0f * this->size) &&
-        (fabsf(this->actor.yDistToPlayer) < 30.0f * this->size)) {
+    if ((this->timer == 0) && (this->actor.xzDistToPlayer[playerIndex] < 200.0f * this->size) &&
+        (fabsf(this->actor.yDistToPlayer[playerIndex]) < 30.0f * this->size)) {
         EnDekubaba_SetupGrow(this);
     }
 }
 
 void EnDekubaba_Grow(EnDekubaba* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 headDistHorizontal;
     f32 headDistVertical;
     f32 headShiftX;
@@ -632,7 +634,8 @@ void EnDekubaba_UpdateHeadPosition(EnDekubaba* this) {
 }
 
 void EnDekubaba_DecideLunge(EnDekubaba* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) || Animation_OnFrame(&this->skelAnime, 12.0f)) {
@@ -672,12 +675,14 @@ void EnDekubaba_DecideLunge(EnDekubaba* this, PlayState* play) {
 
     if (240.0f * this->size < Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos)) {
         EnDekubaba_SetupRetract(this);
-    } else if ((this->timer == 0) || (this->actor.xzDistToPlayer < 80.0f * this->size)) {
+    } else if ((this->timer == 0) || (this->actor.xzDistToPlayer[playerIndex] < 80.0f * this->size)) {
         EnDekubaba_SetupPrepareLunge(this);
     }
 }
 
 void EnDekubaba_Lunge(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Color_RGBA8 primColor = { 105, 255, 105, 255 };
     static Color_RGBA8 envColor = { 150, 250, 150, 0 };
     s32 allStepsDone;
@@ -720,8 +725,8 @@ void EnDekubaba_Lunge(EnDekubaba* this, PlayState* play) {
     } else {
         this->timer++;
 
-        if ((this->timer >= 4) && !Actor_IsFacingPlayer(&this->actor, 0x16C)) {
-            Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xF, 0x71C);
+        if ((this->timer >= 4) && !Actor_IsFacingPlayer(&this->actor, 0x16C, player, play)) {
+            Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xF, 0x71C);
         }
 
         if (Animation_OnFrame(&this->skelAnime, 0.0f) || Animation_OnFrame(&this->skelAnime, 12.0f)) {
@@ -737,7 +742,7 @@ void EnDekubaba_Lunge(EnDekubaba* this, PlayState* play) {
 }
 
 void EnDekubaba_PrepareLunge(EnDekubaba* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->timer != 0) {
         this->timer--;
@@ -757,6 +762,8 @@ void EnDekubaba_PrepareLunge(EnDekubaba* this, PlayState* play) {
 }
 
 void EnDekubaba_PullBack(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f dustPos;
     f32 xIncr;
     f32 zIncr;
@@ -820,7 +827,7 @@ void EnDekubaba_PullBack(EnDekubaba* this, PlayState* play) {
         this->timer++;
 
         if (this->timer > 30) {
-            if (this->actor.xzDistToPlayer < 80.0f * this->size) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 80.0f * this->size) {
                 EnDekubaba_SetupPrepareLunge(this);
             } else {
                 EnDekubaba_SetupDecideLunge(this);
@@ -872,6 +879,8 @@ void EnDekubaba_Recover(EnDekubaba* this, PlayState* play) {
  * Hit by a weapon or hit something when lunging.
  */
 void EnDekubaba_Hit(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 allStepsDone;
 
     SkelAnime_Update(&this->skelAnime);
@@ -888,7 +897,7 @@ void EnDekubaba_Hit(EnDekubaba* this, PlayState* play) {
         } else {
             this->collider.base.acFlags |= AC_ON;
             if (this->timer == 0) {
-                if (this->actor.xzDistToPlayer < 80.0f * this->size) {
+                if (this->actor.xzDistToPlayer[playerIndex] < 80.0f * this->size) {
                     EnDekubaba_SetupPrepareLunge(this);
                 } else {
                     EnDekubaba_SetupRecover(this);
@@ -903,6 +912,8 @@ void EnDekubaba_Hit(EnDekubaba* this, PlayState* play) {
 }
 
 void EnDekubaba_StunnedVertical(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->timer != 0) {
@@ -912,7 +923,7 @@ void EnDekubaba_StunnedVertical(EnDekubaba* this, PlayState* play) {
     if (this->timer == 0) {
         EnDekubaba_DisableHitboxes(this);
 
-        if (this->actor.xzDistToPlayer < 80.0f * this->size) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 80.0f * this->size) {
             EnDekubaba_SetupPrepareLunge(this);
         } else {
             EnDekubaba_SetupRecover(this);
@@ -924,6 +935,8 @@ void EnDekubaba_StunnedVertical(EnDekubaba* this, PlayState* play) {
  * Sway back and forth with decaying amplitude until close enough to vertical.
  */
 void EnDekubaba_Sway(EnDekubaba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 angleToVertical;
 
     SkelAnime_Update(&this->skelAnime);
@@ -938,7 +951,7 @@ void EnDekubaba_Sway(EnDekubaba* this, PlayState* play) {
 
     if (ABS(angleToVertical) < 0x100) {
         this->collider.base.acFlags |= AC_ON;
-        if (this->actor.xzDistToPlayer < 80.0f * this->size) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 80.0f * this->size) {
             EnDekubaba_SetupPrepareLunge(this);
         } else {
             EnDekubaba_SetupRecover(this);

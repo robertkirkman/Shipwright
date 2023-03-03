@@ -184,6 +184,8 @@ void BossGanon2_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_808FD4D4(BossGanon2* this, PlayState* play, s16 arg2, s16 arg3) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((arg2 == 0) || (arg2 == 1)) {
         Actor_SpawnFloorDustRing(play, &this->actor, &this->unk_1D0, 25.0f, arg3, 8.0f, 500, 10, true);
     }
@@ -193,7 +195,7 @@ void func_808FD4D4(BossGanon2* this, PlayState* play, s16 arg2, s16 arg3) {
     }
 
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_MGANON_WALK);
-    func_80033E88(&this->actor, play, 2, 0xA);
+    func_80033E88(&this->actor, play, 2, 0xA, playerIndex);
 }
 
 void func_808FD5C4(BossGanon2* this, PlayState* play) {
@@ -205,13 +207,13 @@ void func_808FD5C4(BossGanon2* this, PlayState* play) {
 void func_808FD5F4(BossGanon2* this, PlayState* play) {
     s16 pad;
     u8 sp8D;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 objectIdx;
     s32 zero = 0;
     s32 pad2;
 
     sp8D = false;
-    player = GET_PLAYER(play);
     this->csTimer++;
 
     switch (this->csState) {
@@ -361,7 +363,7 @@ void func_808FD5F4(BossGanon2* this, PlayState* play) {
             break;
         case 5:
             this->unk_339 = 4;
-            if (this->actor.xzDistToPlayer < 500.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 500.0f) {
                 Message_CloseTextbox(play);
                 this->csState = 10;
                 this->csTimer = 0;
@@ -1000,11 +1002,13 @@ s32 func_808FFA24(BossGanon2* this, PlayState* play) {
 }
 
 void func_808FFAC8(BossGanon2* this, PlayState* play, u8 arg2) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 temp_v1;
     s16 phi_a1;
 
     if (this->unk_313 || (arg2 != 0)) {
-        phi_a1 = this->actor.shape.rot.y - this->actor.yawTowardsPlayer;
+        phi_a1 = this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex];
 
         if (phi_a1 > 0x3000) {
             phi_a1 = 0x3000;
@@ -1019,7 +1023,7 @@ void func_808FFAC8(BossGanon2* this, PlayState* play, u8 arg2) {
 
     Math_ApproachS(&this->unk_31A, phi_a1, 5, 0x7D0);
 
-    temp_v1 = Math_Atan2S(this->actor.xzDistToPlayer, 150.0f) - 0xBB8;
+    temp_v1 = Math_Atan2S(this->actor.xzDistToPlayer[playerIndex], 150.0f) - 0xBB8;
     temp_v1 = CLAMP_MAX(temp_v1, 0x1B58);
     temp_v1 = CLAMP_MIN(temp_v1, -0x1B58);
 
@@ -1027,11 +1031,13 @@ void func_808FFAC8(BossGanon2* this, PlayState* play, u8 arg2) {
 }
 
 void func_808FFBBC(BossGanon2* this, PlayState* play, u8 arg2) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (arg2 != 0 || this->unk_313) {
         f32 phi_f0;
         f32 phi_f2;
 
-        Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 5, this->unk_320);
+        Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, this->unk_320);
 
         if (this->unk_334 != 0) {
             phi_f0 = 5000.0f;
@@ -1047,8 +1053,10 @@ void func_808FFBBC(BossGanon2* this, PlayState* play, u8 arg2) {
     }
 }
 
-void func_808FFC84(BossGanon2* this) {
-    if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) < 0x2800) {
+void func_808FFC84(BossGanon2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) < 0x2800) {
         this->unk_313 = true;
         this->actor.focus.pos = this->unk_1B8;
     } else {
@@ -1058,8 +1066,10 @@ void func_808FFC84(BossGanon2* this) {
 }
 
 void func_808FFCFC(BossGanon2* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < 150.0f &&
-        ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) < 0x2800) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < 150.0f &&
+        ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) < 0x2800) {
         this->unk_311 = false;
         func_80900580(this, play);
         Audio_StopSfxById(NA_SE_EN_MGANON_UNARI);
@@ -1196,6 +1206,8 @@ void func_809002CC(BossGanon2* this, PlayState* play) {
 }
 
 void func_80900344(BossGanon2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 phi_f0;
 
     if (this->unk_390 == 0) {
@@ -1211,11 +1223,11 @@ void func_80900344(BossGanon2* this, PlayState* play) {
         } else if (Animation_OnFrame(&this->skelAnime, 28.0f)) {
             func_808FD4D4(this, play, 2, 3);
         }
-        if (this->actor.xzDistToPlayer < 200.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
             this->unk_338 = 0;
             Animation_MorphToLoop(&this->skelAnime, &gGanonGuardWalkAnim, -10.0f);
         } else {
-            this->skelAnime.playSpeed = ((this->actor.xzDistToPlayer - 300.0f) * 0.005f) + 1.0f;
+            this->skelAnime.playSpeed = ((this->actor.xzDistToPlayer[playerIndex] - 300.0f) * 0.005f) + 1.0f;
             if (this->skelAnime.playSpeed > 2.0f) {
                 this->skelAnime.playSpeed = 2.0f;
             }
@@ -1226,7 +1238,7 @@ void func_80900344(BossGanon2* this, PlayState* play) {
         phi_f0 = this->skelAnime.playSpeed * 3.0f;
     } else {
         phi_f0 = 2.0f;
-        if (this->actor.xzDistToPlayer >= 200.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] >= 200.0f) {
             this->unk_338 = 1;
             Animation_MorphToLoop(&this->skelAnime, &gGanonWalkAnim, -10.0f);
         }
@@ -1260,6 +1272,8 @@ void func_80900580(BossGanon2* this, PlayState* play) {
 }
 
 void func_80900650(BossGanon2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if (Animation_OnFrame(&this->skelAnime, this->unk_198)) {
@@ -1282,7 +1296,7 @@ void func_80900650(BossGanon2* this, PlayState* play) {
     if (Animation_OnFrame(&this->skelAnime, this->unk_194)) {
         this->unk_311 = 1 - this->unk_311;
 
-        if ((this->unk_311 == 1) && (this->actor.xzDistToPlayer < 250.0f) && this->unk_313) {
+        if ((this->unk_311 == 1) && (this->actor.xzDistToPlayer[playerIndex] < 250.0f) && this->unk_313) {
             func_80900580(this, play);
         } else {
             func_808FFDB0(this, play);
@@ -1312,7 +1326,7 @@ void func_80900890(BossGanon2* this, PlayState* play) {
     Vec3f sp5C;
     Vec3f sp50;
     Camera* sp4C;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     Camera* temp_v0;
     Camera* temp_v0_2;
     s32 pad;
@@ -1320,7 +1334,6 @@ void func_80900890(BossGanon2* this, PlayState* play) {
     f32 temp_f2;
 
     sp4C = Play_GetCamera(play, MAIN_CAM);
-    player = GET_PLAYER(play);
     SkelAnime_Update(&this->skelAnime);
     this->csTimer++;
     this->unk_339 = 20;
@@ -1505,7 +1518,7 @@ void func_8090109C(BossGanon2* this, PlayState* play) {
 }
 
 void func_8090120C(BossGanon2* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 temp_f14;
     f32 temp_f12;
     Camera* temp_v0_2;
@@ -1513,7 +1526,6 @@ void func_8090120C(BossGanon2* this, PlayState* play) {
     f32 phi_f0;
     s32 phi_a1;
 
-    player = GET_PLAYER(play);
     this->csTimer++;
     SkelAnime_Update(&this->skelAnime);
 
@@ -1874,7 +1886,8 @@ void func_8090120C(BossGanon2* this, PlayState* play) {
 }
 
 void func_80902348(BossGanon2* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 temp_f2;
     f32 temp_f12;
     s16 i;
@@ -1894,7 +1907,7 @@ void func_80902348(BossGanon2* this, PlayState* play) {
                     phi_v0_2 = 0;
                 }
 
-                func_8002F6D4(play, &this->actor, 15.0f, this->actor.yawTowardsPlayer + phi_v0_2, 2.0f, 0);
+                func_8002F6D4(play, &this->actor, 15.0f, this->actor.yawTowardsPlayer[playerIndex] + phi_v0_2, 2.0f, 0);
                 sBossGanon2Zelda->unk_3C8 = 8;
                 this->unk_316 = 10;
                 break;
@@ -1903,7 +1916,6 @@ void func_80902348(BossGanon2* this, PlayState* play) {
     }
 
     if (this->unk_324 > 0.0f) {
-        player = GET_PLAYER(play);
         temp_f2 = -200.0f - player->actor.world.pos.x;
         temp_f12 = -200.0f - player->actor.world.pos.z;
 
@@ -2015,7 +2027,7 @@ void BossGanon2_Update(Actor* thisx, PlayState* play) {
         BossGanon2_SetObjectSegment(this, play, OBJECT_GANON2, false);
         Math_ApproachZeroF(&this->unk_30C, 1.0f, 0.5f);
     }
-    func_808FFC84(this);
+    func_808FFC84(this, play);
     this->unk_312 = 0;
     this->unk_19C++;
     Actor_SetScale(&this->actor, 0.01f);
@@ -2043,7 +2055,9 @@ void BossGanon2_Update(Actor* thisx, PlayState* play) {
         Actor_UpdateBgCheckInfo(play, &this->actor, 60.0f, 60.0f, 100.0f, 5);
         if (this->actor.bgCheckFlags & 1) {
             if (this->actor.velocity.y < -5.0f) {
-                func_80033E88(&this->actor, play, 5, 20);
+                Player* player = Player_NearestToActor(&this->actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                func_80033E88(&this->actor, play, 5, 20, playerIndex);
                 func_80078884(NA_SE_IT_BOMB_EXPLOSION);
             }
             this->actor.velocity.y = 0.0f;
@@ -2722,7 +2736,7 @@ void func_8090523C(BossGanon2* this, PlayState* play) {
     if (this->unk_38C > 0.0f) {
         s8 i;
 
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, 255, 255, 255, (s16)this->unk_38C);
         gDPSetEnvColor(POLY_XLU_DISP++, 0, 255, 255, 0);
@@ -2880,7 +2894,7 @@ void BossGanon2_Draw(Actor* thisx, PlayState* play) {
 
 void func_80905DA8(BossGanon2* this, PlayState* play) {
     s32 pad[5];
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     BossGanon2Effect* effect = play->specialEffects;
     Vec3f sp78;
     s16 i;

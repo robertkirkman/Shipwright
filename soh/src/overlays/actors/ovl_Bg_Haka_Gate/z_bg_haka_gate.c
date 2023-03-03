@@ -150,7 +150,7 @@ void BgHakaGate_DoNothing(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueInactive(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -159,16 +159,17 @@ void BgHakaGate_StatueInactive(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueIdle(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 linkDirection;
     f32 forceDirection;
 
     if (this->dyna.unk_150 != 0.0f) {
         if (this->vTimer == 0) {
-            this->vInitTurnAngle = this->dyna.actor.shape.rot.y - this->dyna.actor.yawTowardsPlayer;
-            sStatueDistToPlayer = this->dyna.actor.xzDistToPlayer;
+            this->vInitTurnAngle = this->dyna.actor.shape.rot.y - this->dyna.actor.yawTowardsPlayer[playerIndex];
+            sStatueDistToPlayer = this->dyna.actor.xzDistToPlayer[playerIndex];
             forceDirection = (this->dyna.unk_150 >= 0.0f) ? 1.0f : -1.0f;
-            linkDirection = ((s16)(this->dyna.actor.yawTowardsPlayer - player->actor.shape.rot.y) > 0) ? -1 : 1;
+            linkDirection = ((s16)(this->dyna.actor.yawTowardsPlayer[playerIndex] - player->actor.shape.rot.y) > 0) ? -1 : 1;
             this->vTurnDirection = linkDirection * forceDirection;
             this->actionFunc = BgHakaGate_StatueTurn;
         } else {
@@ -188,7 +189,7 @@ void BgHakaGate_StatueIdle(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueTurn(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 turnFinished;
     s16 turnAngle;
 
@@ -222,7 +223,7 @@ void BgHakaGate_StatueTurn(BgHakaGate* this, PlayState* play) {
 
 void BgHakaGate_FloorClosed(BgHakaGate* this, PlayState* play) {
     if ((sStatueDistToPlayer > 1.0f) && (sStatueRotY != 0)) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
         f32 radialDist;
         f32 angDist;
         f32 cos = Math_CosS(sStatueRotY);

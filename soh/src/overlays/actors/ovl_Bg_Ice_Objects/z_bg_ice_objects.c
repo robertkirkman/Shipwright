@@ -134,8 +134,8 @@ void BgIceObjects_CheckPits(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Idle(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -199,8 +199,8 @@ void BgIceObjects_Slide(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Reset(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -215,7 +215,7 @@ void BgIceObjects_Reset(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Stuck(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;

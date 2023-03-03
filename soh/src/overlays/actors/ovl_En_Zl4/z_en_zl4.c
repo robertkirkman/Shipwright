@@ -321,7 +321,7 @@ void EnZl4_SetMove(EnZl4* this, PlayState* play) {
 }
 
 void func_80B5BB78(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2, NPC_TRACKING_HEAD_AND_TORSO);
@@ -334,8 +334,8 @@ void EnZl4_GetActionStartPos(CsCmdActorAction* action, Vec3f* vec) {
 }
 
 s32 EnZl4_SetupFromLegendCs(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &GET_PLAYER(play)->actor;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Actor* playerx = &player->actor;
     s16 rotY;
 
     func_8002DF54(play, &this->actor, 8);
@@ -442,14 +442,15 @@ void EnZl4_ReverseAnimation(EnZl4* this) {
 }
 
 s32 EnZl4_CsWaitForPlayer(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &GET_PLAYER(play)->actor;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Actor* playerx = &player->actor;
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 rotY;
     s16 yawDiff;
     s16 absYawDiff;
 
     if (!Actor_ProcessTalkRequest(&this->actor, play)) {
-        yawDiff = (f32)this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = (f32)this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         absYawDiff = ABS(yawDiff);
         if ((playerx->world.pos.y != this->actor.world.pos.y) || (absYawDiff >= 0x3FFC)) {
             return false;
@@ -956,7 +957,7 @@ s32 EnZl4_CsLookWindow(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 rotY;
 
     switch (this->talkState) {
@@ -1072,6 +1073,8 @@ s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     switch (this->talkState) {
         case 0:
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_18);
@@ -1125,8 +1128,8 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
                 Camera_ChangeSetting(GET_ACTIVE_CAM(play), 1);
                 this->talkState = 7;
                 play->talkWithPlayer(play, &this->actor);
-                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer) + 1.0f,
-                              fabsf(this->actor.yDistToPlayer) + 1.0f);
+                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer[playerIndex]) + 1.0f,
+                              fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
                 play->msgCtx.stateTimer = 4;
                 play->msgCtx.msgMode = MSGMODE_TEXT_CLOSING;
             }
@@ -1136,8 +1139,8 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_0);
                 this->talkState++;
             } else {
-                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer) + 1.0f,
-                              fabsf(this->actor.yDistToPlayer) + 1.0f);
+                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer[playerIndex]) + 1.0f,
+                              fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
             }
             // no break here is required for matching
     }
@@ -1145,7 +1148,7 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
 }
 
 void EnZl4_Cutscene(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     switch (this->csState) {
         case ZL4_CS_WAIT:

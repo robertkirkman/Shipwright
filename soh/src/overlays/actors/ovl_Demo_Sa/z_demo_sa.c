@@ -233,7 +233,7 @@ void func_8098E86C(DemoSa* this, PlayState* play) {
 }
 
 void func_8098E8C8(DemoSa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 posX = player->actor.world.pos.x;
     f32 posY = player->actor.world.pos.y + 80.0f;
     f32 posZ = player->actor.world.pos.z;
@@ -252,7 +252,7 @@ void func_8098E960(DemoSa* this, PlayState* play) {
     Player* player;
 
     if ((gSaveContext.chamberCutsceneNum == 0) && (gSaveContext.sceneSetupIndex < 4)) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         this->action = 1;
         play->csCtx.segment = D_8099010C;
         gSaveContext.cutsceneTrigger = 2;

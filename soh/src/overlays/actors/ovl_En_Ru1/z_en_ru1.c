@@ -152,12 +152,14 @@ void func_80AEAC10(EnRu1* this, PlayState* play) {
 }
 
 void func_80AEAC54(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad[5];
 
     Collider_UpdateCylinder(&this->actor, &this->collider2);
     if (this->unk_34C != 0) {
         CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider2.base);
-    } else if (this->actor.xzDistToPlayer > 32.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] > 32.0f) {
         this->unk_34C = 1;
     }
 }
@@ -587,11 +589,8 @@ void func_80AEBBF4(EnRu1* this) {
     }
 }
 
-void func_80AEBC30(PlayState* play) {
-    Player* player;
-
+void func_80AEBC30(PlayState* play, Player* player) {
     if (play->csCtx.frames == 0xCD) {
-        player = GET_PLAYER(play);
         Audio_PlaySoundGeneral(NA_SE_EV_DIVE_INTO_WATER, &player->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                                &D_801333E8);
     }
@@ -697,10 +696,11 @@ void func_80AEC070(EnRu1* this, PlayState* play, UNK_TYPE arg2) {
 }
 
 void func_80AEC0B4(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     func_80AEB89C(this, play);
     EnRu1_UpdateSkelAnime(this);
     func_80AEBC84(this, play);
-    func_80AEBC30(play);
+    func_80AEBC30(play, player);
     func_80AEBD1C(this, play);
 }
 
@@ -826,7 +826,7 @@ void func_80AEC4F4(EnRu1* this) {
 }
 
 s32 func_80AEC5FC(EnRu1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 thisPosZ = this->actor.world.pos.z;
     f32 playerPosZ = player->actor.world.pos.z;
 
@@ -862,7 +862,7 @@ void func_80AEC6E4(EnRu1* this, PlayState* play) {
 
 void func_80AEC780(EnRu1* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((func_80AEC5FC(this, play)) && (!Play_InCsMode(play)) && (!(player->stateFlags1 & 0x206000)) &&
         (player->actor.bgCheckFlags & 1)) {
@@ -993,6 +993,8 @@ void func_80AECC84(EnRu1* this, PlayState* play) {
 }
 
 void func_80AECCB0(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f* pos;
     s16 yawTowardsPlayer;
@@ -1001,7 +1003,7 @@ void func_80AECCB0(EnRu1* this, PlayState* play) {
     f32 spawnZ;
     s32 pad2[2];
 
-    yawTowardsPlayer = this->actor.yawTowardsPlayer;
+    yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
     pos = &this->actor.world.pos;
     spawnX = ((kREG(1) + 12.0f) * Math_SinS(yawTowardsPlayer)) + pos->x;
     spawnY = pos->y;
@@ -1024,7 +1026,7 @@ void func_80AECE04(EnRu1* this, PlayState* play) {
 
 void func_80AECE20(EnRu1* this, PlayState* play) {
     s32 pad2;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f* playerPos = &player->actor.world.pos;
     s16 shapeRotY = player->actor.shape.rot.y;
     s32 pad;
@@ -1038,7 +1040,7 @@ void func_80AECE20(EnRu1* this, PlayState* play) {
 
 void func_80AECEB4(EnRu1* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f* player_unk_450 = &player->unk_450;
     Vec3f* pos = &this->actor.world.pos;
     s16 shapeRotY = this->actor.shape.rot.y;
@@ -1049,7 +1051,7 @@ void func_80AECEB4(EnRu1* this, PlayState* play) {
 
 s32 func_80AECF6C(EnRu1* this, PlayState* play) {
     s16* shapeRotY;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Player* otherPlayer;
     s16 temp_f16;
     f32 temp1;
@@ -1058,7 +1060,7 @@ s32 func_80AECF6C(EnRu1* this, PlayState* play) {
 
     this->unk_26C += 1.0f;
     if ((player->actor.speedXZ == 0.0f) && (this->unk_26C >= 3.0f)) {
-        otherPlayer = GET_PLAYER(play);
+        otherPlayer = Player_NearestToActor(&this->actor, play);
         player->actor.world.pos.x = otherPlayer->unk_450.x;
         player->actor.world.pos.y = otherPlayer->unk_450.y;
         player->actor.world.pos.z = otherPlayer->unk_450.z;
@@ -1094,10 +1096,12 @@ void func_80AED0C8(EnRu1* this, PlayState* play) {
 }
 
 void func_80AED0D8(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->action = 17;
     this->drawConfig = 1;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     func_80AECCB0(this, play);
 }
 
@@ -1127,7 +1131,7 @@ void func_80AED19C(EnRu1* this, s32 cond) {
     }
 }
 
-void func_80AED218(EnRu1* this, UNK_TYPE arg1) {
+void func_80AED218(EnRu1* this, UNK_TYPE arg1, u16 playerIndex) {
     if (func_80AED084(this, WARP_BLUE_RUTO_STATE_TALKING)) {
         if (arg1 != 0) {
             Animation_Change(&this->skelAnime, &gRutoChildWaitSittingAnim, 1.0f, 0,
@@ -1137,7 +1141,7 @@ void func_80AED218(EnRu1* this, UNK_TYPE arg1) {
         Animation_Change(&this->skelAnime, &gRutoChildWaitInBlueWarpAnim, 1.0f, 0,
                          Animation_GetLastFrame(&gRutoChildWaitInBlueWarpAnim), ANIMMODE_ONCE, -8.0f);
         this->action = 21;
-        this->unk_27C = this->actor.xzDistToPlayer;
+        this->unk_27C = this->actor.xzDistToPlayer[playerIndex];
     }
 }
 
@@ -1166,8 +1170,10 @@ void func_80AED3A4(EnRu1* this, PlayState* play) {
 }
 
 void func_80AED3E0(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     func_80AEAECC(this, play);
-    func_80AED218(this, EnRu1_UpdateSkelAnime(this));
+    func_80AED218(this, EnRu1_UpdateSkelAnime(this), playerIndex);
 }
 
 void func_80AED414(EnRu1* this, PlayState* play) {
@@ -1202,7 +1208,7 @@ void func_80AED4FC(EnRu1* this) {
 }
 
 void func_80AED520(EnRu1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Audio_PlaySoundGeneral(NA_SE_PL_PULL_UP_RUTO, &player->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                            &D_801333E8);
@@ -1649,7 +1655,7 @@ void func_80AEE7C4(EnRu1* this, PlayState* play) {
         return;
     }
 
-    player = GET_PLAYER(play);
+    player = Player_NearestToActor(&this->actor, play);
     if (player->stateFlags2 & 0x10000000) {
         this->unk_370 += 1.0f;
         if (this->action != 32) {
@@ -1790,7 +1796,7 @@ void func_80AEEF5C(EnRu1* this, PlayState* play) {
 }
 
 void func_80AEEF68(EnRu1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 something;
 
     this->interactInfo.trackPos = player->actor.world.pos;
@@ -1800,7 +1806,7 @@ void func_80AEEF68(EnRu1* this, PlayState* play) {
 }
 
 void func_80AEEFEC(EnRu1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 something;
 
     this->interactInfo.trackPos = player->actor.world.pos;

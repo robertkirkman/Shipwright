@@ -100,6 +100,8 @@ void EnBomBowMan_SetupWaitAsleep(EnBomBowlMan* this, PlayState* play) {
 }
 
 void EnBomBowMan_WaitAsleep(EnBomBowlMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     SkelAnime_Update(&this->skelAnime);
@@ -107,9 +109,9 @@ void EnBomBowMan_WaitAsleep(EnBomBowlMan* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = EnBomBowMan_TalkAsleep;
     } else {
-        yawDiff = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y));
+        yawDiff = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y));
 
-        if (!(this->actor.xzDistToPlayer > 120.0f) && (yawDiff < 0x4300)) {
+        if (!(this->actor.xzDistToPlayer[playerIndex] > 120.0f) && (yawDiff < 0x4300)) {
             func_8002F2CC(&this->actor, play, 120.0f);
         }
     }
@@ -243,6 +245,8 @@ void EnBomBowMan_SetupRunGame(EnBomBowlMan* this, PlayState* play) {
 }
 
 void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     SkelAnime_Update(&this->skelAnime);
@@ -303,9 +307,9 @@ void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
                 this->actionFunc = func_809C41FC;
             }
         } else {
-            yawDiff = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y));
+            yawDiff = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y));
 
-            if (!(this->actor.xzDistToPlayer > 120.0f) && (yawDiff < 0x4300)) {
+            if (!(this->actor.xzDistToPlayer[playerIndex] > 120.0f) && (yawDiff < 0x4300)) {
                 func_8002F2CC(&this->actor, play, 120.0f);
             }
         }

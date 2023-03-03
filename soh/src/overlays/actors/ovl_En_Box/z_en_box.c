@@ -300,7 +300,7 @@ void EnBox_FallOnSwitchFlag(EnBox* this, PlayState* play) {
 // used for types 9, 10
 void func_809C9700(EnBox* this, PlayState* play) {
     s32 treasureFlag = this->dyna.actor.params & 0x1F;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (treasureFlag >= ENBOX_TREASURE_FLAG_UNK_MIN && treasureFlag < ENBOX_TREASURE_FLAG_UNK_MAX) {
         func_8002F5F0(&this->dyna.actor, play);
@@ -408,7 +408,7 @@ void EnBox_WaitOpen(EnBox* this, PlayState* play) {
     s32 linkAge;
     s32 pad;
     Vec3f sp4C;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->alpha = 255;
     this->movementFlags |= ENBOX_MOVE_IMMOBILE;
@@ -457,10 +457,9 @@ void EnBox_WaitOpen(EnBox* this, PlayState* play) {
             }
         }
     } else {
-        player = GET_PLAYER(play);
         func_8002DBD0(&this->dyna.actor, &sp4C, &player->actor.world.pos);
         if (sp4C.z > -50.0f && sp4C.z < 0.0f && fabsf(sp4C.y) < 10.0f && fabsf(sp4C.x) < 20.0f &&
-            Player_IsFacingActor(&this->dyna.actor, 0x3000, play)) {
+            Player_IsFacingActor(&this->dyna.actor, 0x3000, player, play)) {
             sItem = Randomizer_GetItemFromActor(this->dyna.actor.id, play->sceneNum, this->dyna.actor.params, this->dyna.actor.params >> 5 & 0x7F);
             GetItemEntry blueRupee = ItemTable_RetrieveEntry(MOD_NONE, GI_RUPEE_BLUE);
             

@@ -247,10 +247,12 @@ void DemoKekkai_TowerBarrier(DemoKekkai* this, PlayState* play) {
 void DemoKekkai_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     DemoKekkai* this = (DemoKekkai*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->energyAlpha > 0.99f) {
         if ((this->collider1.base.atFlags & AT_HIT) || (this->collider2.base.atFlags & AT_HIT)) {
-            func_8002F71C(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer, 6.0f);
+            func_8002F71C(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
         }
         CollisionCheck_SetAT(play, &play->colChkCtx, &this->collider1.base);
         CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider1.base);
@@ -314,9 +316,11 @@ static CutsceneData* sSageCutscenes[] = {
 void DemoKekkai_TrialBarrierIdle(Actor* thisx, PlayState* play) {
     s32 pad;
     DemoKekkai* this = (DemoKekkai*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->collider1.base.atFlags & AT_HIT) {
-        func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer, 5.0f);
+        func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer[playerIndex], 5.0f);
     }
     CollisionCheck_SetAT(play, &play->colChkCtx, &this->collider1.base);
     CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider1.base);

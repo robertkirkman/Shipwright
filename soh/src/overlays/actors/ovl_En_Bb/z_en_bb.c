@@ -454,7 +454,9 @@ void EnBb_FlameTrail(EnBb* this, PlayState* play) {
 
 void EnBb_SetupDeath(EnBb* this, PlayState* play) {
     if (this->actor.params <= ENBB_BLUE) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.speedXZ = -7.0f;
         this->timer = 5;
         this->actor.shape.rot.x += 0x4E20;
@@ -516,11 +518,13 @@ void EnBb_Death(EnBb* this, PlayState* play) {
     Actor_Kill(&this->actor);
 }
 
-void EnBb_SetupDamage(EnBb* this) {
+void EnBb_SetupDamage(EnBb* this, PlayState* play) {
     this->action = BB_DAMAGE;
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_BUBLE_DAMAGE);
     if (this->actor.params > ENBB_GREEN) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         if ((this->actor.bgCheckFlags & 8) == 0) {
             this->actor.speedXZ = -7.0f;
         }
@@ -553,6 +557,8 @@ void EnBb_SetupBlue(EnBb* this) {
 }
 
 void EnBb_Blue(EnBb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* explosive;
     s16 moveYawToWall;
     s16 thisYawToWall;
@@ -587,9 +593,9 @@ void EnBb_Blue(EnBb* this, PlayState* play) {
             this->actor.speedXZ = 0.0f;
             if (this->charge && (this->targetActor == NULL)) {
                 this->vMoveAngleY = this->actor.world.rot.y;
-                if (this->actor.xzDistToPlayer < 200.0f) {
+                if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
                     Animation_PlayLoop(&this->skelAnime, &object_Bb_Anim_000184);
-                    this->vMoveAngleY = this->actor.yawTowardsPlayer;
+                    this->vMoveAngleY = this->actor.yawTowardsPlayer[playerIndex];
                 }
                 this->maxSpeed = (Rand_ZeroOne() * 1.5f) + 6.0f;
                 this->timer = (Rand_ZeroOne() * 5.0f) + 20.0f;
@@ -601,16 +607,16 @@ void EnBb_Blue(EnBb* this, PlayState* play) {
                 this->vMoveAngleY = Math_SinF(this->bobPhase) * 65535.0f;
             }
         }
-        if ((this->actor.xzDistToPlayer < 150.0f) && (this->actionState != BBBLUE_NORMAL)) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 150.0f) && (this->actionState != BBBLUE_NORMAL)) {
             if (!this->charge) {
                 Animation_PlayLoop(&this->skelAnime, &object_Bb_Anim_000184);
                 this->maxSpeed = (Rand_ZeroOne() * 1.5f) + 6.0f;
                 this->timer = (Rand_ZeroOne() * 5.0f) + 20.0f;
-                this->vMoveAngleY = this->actor.yawTowardsPlayer;
+                this->vMoveAngleY = this->actor.yawTowardsPlayer[playerIndex];
                 this->actionState = this->charge = true; // Sets actionState to BBBLUE_AGGRO
             }
-        } else if (this->actor.xzDistToPlayer < 200.0f) {
-            this->vMoveAngleY = this->actor.yawTowardsPlayer;
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
+            this->vMoveAngleY = this->actor.yawTowardsPlayer[playerIndex];
         }
         if (this->targetActor == NULL) {
             explosive = EnBb_FindExplosive(play, this, 300.0f);
@@ -648,7 +654,7 @@ void EnBb_Blue(EnBb* this, PlayState* play) {
     }
     Math_SmoothStepToS(&this->actor.world.rot.y, this->vMoveAngleY, 1, 0x3E8, 0);
     if ((this->collider.base.acFlags & AC_HIT) || (this->collider.base.atFlags & AT_HIT)) {
-        this->vMoveAngleY = this->actor.yawTowardsPlayer + 0x8000;
+        this->vMoveAngleY = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         if (this->collider.base.acFlags & AC_HIT) {
             afterHitAngle = -0x8000;
         } else {
@@ -658,7 +664,7 @@ void EnBb_Blue(EnBb* this, PlayState* play) {
                 afterHitAngle = -0x4000;
             }
         }
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer + afterHitAngle;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + afterHitAngle;
         this->collider.base.acFlags &= ~AC_HIT;
         this->collider.base.atFlags &= ~AT_HIT;
     }
@@ -695,6 +701,8 @@ void EnBb_SetupDown(EnBb* this) {
 }
 
 void EnBb_Down(EnBb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff = this->actor.world.rot.y - this->actor.wallYaw;
 
     SkelAnime_Update(&this->skelAnime);
@@ -726,7 +734,7 @@ void EnBb_Down(EnBb* this, PlayState* play) {
         }
         this->actor.bgCheckFlags &= ~1;
         Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, 7.0f, 2, 2.0f, 0, 0, false);
-        Math_SmoothStepToS(&this->actor.world.rot.y, -this->actor.yawTowardsPlayer, 1, 0xBB8, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, -this->actor.yawTowardsPlayer[playerIndex], 1, 0xBB8, 0);
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
     if ((s32)this->skelAnime.curFrame == 5) {
@@ -784,7 +792,8 @@ void EnBb_SetupRed(PlayState* play, EnBb* this) {
 }
 
 void EnBb_Red(EnBb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 floorType;
     s16 yawDiff;
 
@@ -793,7 +802,7 @@ void EnBb_Red(EnBb* this, PlayState* play) {
         this->timer--;
     }
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     switch (this->actionState) {
         case BBRED_WAIT:
             if ((Actor_WorldDistXYZToActor(&this->actor, &player->actor) <= 250.0f) && (ABS(yawDiff) <= 0x4000) &&
@@ -952,6 +961,8 @@ void EnBb_White(EnBb* this, PlayState* play) {
 }
 
 void EnBb_InitGreen(EnBb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f bobOffset = { 0.0f, 0.0f, 0.0f };
 
     Animation_PlayLoop(&this->skelAnime, &object_Bb_Anim_000444);
@@ -959,7 +970,7 @@ void EnBb_InitGreen(EnBb* this, PlayState* play) {
     this->actionState = BBGREEN_FLAME_ON;
     this->bobPhase = Rand_ZeroOne();
     this->actor.shape.rot.x = this->actor.shape.rot.z = 0;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     if (this->actor.params == ENBB_GREEN_BIG) {
         EnBb_SetWaypoint(this, play);
         EnBb_FaceWaypoint(this);
@@ -976,7 +987,9 @@ void EnBb_InitGreen(EnBb* this, PlayState* play) {
     EnBb_SetupAction(this, EnBb_Green);
 }
 
-void EnBb_SetupGreen(EnBb* this) {
+void EnBb_SetupGreen(EnBb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_PlayLoop(&this->skelAnime, &object_Bb_Anim_000444);
     this->moveMode = BBMOVE_NOCLIP;
     this->actionState = BBGREEN_FLAME_ON;
@@ -985,12 +998,13 @@ void EnBb_SetupGreen(EnBb* this) {
     this->actor.speedXZ = 0.0f;
     this->vFlameTimer = (Rand_ZeroOne() * 30.0f) + 180.0f;
     this->actor.shape.rot.z = 0;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     EnBb_SetupAction(this, EnBb_Green);
 }
 
 void EnBb_Green(EnBb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f bobOffset = { 0.0f, 0.0f, 0.0f };
     Vec3f nextPos = player->actor.world.pos;
 
@@ -1034,7 +1048,7 @@ void EnBb_Green(EnBb* this, PlayState* play) {
             EnBb_FaceWaypoint(this);
         }
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA0, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA0, 0);
         Math_SmoothStepToS(&this->actor.shape.rot.x, Math_Vec3f_Pitch(&this->actor.world.pos, &nextPos), 1, 0xFA0, 0);
     }
     SkelAnime_Update(&this->skelAnime);
@@ -1131,7 +1145,7 @@ void EnBb_Stunned(EnBb* this, PlayState* play) {
         this->actor.shape.yOffset = 200.0f;
         if (this->actor.colChkInfo.health != 0) {
             if ((this->actor.params == ENBB_GREEN) || (this->actor.params == ENBB_GREEN_BIG)) {
-                EnBb_SetupGreen(this);
+                EnBb_SetupGreen(this, play);
             } else if (this->actor.params == ENBB_WHITE) {
                 this->action = BB_WHITE;
                 EnBb_SetupAction(this, EnBb_White);
@@ -1146,11 +1160,13 @@ void EnBb_Stunned(EnBb* this, PlayState* play) {
 }
 
 void EnBb_CollisionCheck(EnBb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->collider.base.atFlags & AT_BOUNCED) {
         this->collider.base.atFlags &= ~AT_BOUNCED;
         if (this->action != BB_DOWN) {
             if (this->actor.params >= ENBB_RED) {
-                this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer + 0x8000;
+                this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
                 if (this->actor.params == ENBB_RED) {
                     EnBb_KillFlameTrail(this);
                 }
@@ -1219,11 +1235,11 @@ void EnBb_CollisionCheck(EnBb* this, PlayState* play) {
                     Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0, 0xC);
                     this->actor.speedXZ = -8.0f;
                     this->maxSpeed = 0.0f;
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                     Audio_PlayActorSound2(&this->actor, NA_SE_EN_BUBLE_DAMAGE);
                 } else if (((this->action == BB_DOWN) && (this->timer < 190)) ||
                            ((this->actor.params != ENBB_WHITE) && (this->flameScaleX < 20.0f))) {
-                    EnBb_SetupDamage(this);
+                    EnBb_SetupDamage(this, play);
                 }
             case 13:
                 break;

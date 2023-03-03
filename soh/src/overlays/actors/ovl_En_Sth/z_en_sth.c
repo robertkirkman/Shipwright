@@ -183,11 +183,13 @@ void EnSth_WaitForObjectLoaded(EnSth* this, PlayState* play) {
 }
 
 void EnSth_FacePlayer(EnSth* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 diffRot = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 diffRot = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(diffRot) <= 0x4000) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 6, 0xFA0, 0x64);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 6, 0xFA0, 0x64);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2AC, this->actor.focus.pos);
     } else {
@@ -196,15 +198,17 @@ void EnSth_FacePlayer(EnSth* this, PlayState* play) {
         } else {
             Math_SmoothStepToS(&this->headRot.y, 0x2000, 6, 0x1838, 0x100);
         }
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xC, 0x3E8, 0x64);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xC, 0x3E8, 0x64);
         this->actor.world.rot.y = this->actor.shape.rot.y;
     }
 }
 
 void EnSth_LookAtPlayer(EnSth* this, PlayState* play) {
-    s16 diffRot = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 diffRot = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((ABS(diffRot) <= 0x4300) && (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS(diffRot) <= 0x4300) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2AC, this->actor.focus.pos);
     } else {
         Math_SmoothStepToS(&this->headRot.x, 0, 6, 0x1838, 0x64);
@@ -229,8 +233,10 @@ void EnSth_ParentRewardObtainedWait(EnSth* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         EnSth_SetupAction(this, EnSth_RewardObtainedTalk);
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = 0x23;
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F2CC(&this->actor, play, 100.0f);
         }
     }
@@ -314,12 +320,14 @@ void EnSth_RewardUnobtainedWait(EnSth* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         EnSth_SetupAction(this, EnSth_RewardUnobtainedTalk);
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (this->actor.params == 0) {
             this->actor.textId = 0x28;
         } else {
             this->actor.textId = 0x21;
         }
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F2CC(&this->actor, play, 100.0f);
         }
     }
@@ -330,12 +338,14 @@ void EnSth_ChildRewardObtainedWait(EnSth* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         EnSth_SetupAction(this, EnSth_RewardObtainedTalk);
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (gSaveContext.inventory.gsTokens < 50) {
             this->actor.textId = 0x20;
         } else {
             this->actor.textId = 0x1F;
         }
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F2CC(&this->actor, play, 100.0f);
         }
     }

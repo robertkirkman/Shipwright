@@ -106,10 +106,10 @@ void EnOkarinaTag_Init(Actor* thisx, PlayState* play) {
 }
 
 void func_80ABEF2C(EnOkarinaTag* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u16 ocarinaSong;
 
-    player = GET_PLAYER(play);
     this->unk_15A++;
     if ((this->switchFlag >= 0) && (Flags_GetSwitch(play, this->switchFlag))) {
         this->actor.flags &= ~ACTOR_FLAG_0;
@@ -117,9 +117,9 @@ void func_80ABEF2C(EnOkarinaTag* this, PlayState* play) {
         if ((this->ocarinaSong != 6) || (gSaveContext.scarecrowSpawnSongSet)) {
             if (player->stateFlags2 & 0x1000000) {
                 // "North! ! ! ! !"
-                osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 北！！！！！ ☆☆☆☆☆ %f\n" VT_RST, this->actor.xzDistToPlayer);
+                osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 北！！！！！ ☆☆☆☆☆ %f\n" VT_RST, this->actor.xzDistToPlayer[playerIndex]);
             }
-            if ((this->actor.xzDistToPlayer < (90.0f + this->interactRange)) &&
+            if ((this->actor.xzDistToPlayer[playerIndex] < (90.0f + this->interactRange)) &&
                 (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 80.0f)) {
                 if (player->stateFlags2 & 0x2000000) {
                     ocarinaSong = this->ocarinaSong;
@@ -129,7 +129,7 @@ void func_80ABEF2C(EnOkarinaTag* this, PlayState* play) {
                     player->stateFlags2 |= 0x800000;
                     func_8010BD58(play, ocarinaSong + OCARINA_ACTION_CHECK_SARIA);
                     this->actionFunc = func_80ABF0CC;
-                } else if ((this->actor.xzDistToPlayer < (50.0f + this->interactRange) &&
+                } else if ((this->actor.xzDistToPlayer[playerIndex] < (50.0f + this->interactRange) &&
                             ((fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 40.0f)))) {
                     this->unk_15A = 0;
                     player->unk_6A8 = &this->actor;
@@ -140,8 +140,6 @@ void func_80ABEF2C(EnOkarinaTag* this, PlayState* play) {
 }
 
 void func_80ABF0CC(EnOkarinaTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_04) {
         this->actionFunc = func_80ABEF2C;
     } else {
@@ -180,13 +178,15 @@ void func_80ABF0CC(EnOkarinaTag* this, PlayState* play) {
             play->msgCtx.ocarinaMode = OCARINA_MODE_04;
             this->actionFunc = func_80ABEF2C;
         } else if (play->msgCtx.ocarinaMode == OCARINA_MODE_01) {
+            Player* player = Player_NearestToActor(&this->actor, play);
             player->stateFlags2 |= 0x800000;
         }
     }
 }
 
 void func_80ABF28C(EnOkarinaTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->unk_15A++;
     if ((this->ocarinaSong != 6) || (gSaveContext.scarecrowSpawnSongSet)) {
@@ -194,7 +194,7 @@ void func_80ABF28C(EnOkarinaTag* this, PlayState* play) {
             this->actor.flags &= ~ACTOR_FLAG_0;
         } else if (((this->type != 4) || !(gSaveContext.eventChkInf[4] & 0x800)) &&
                    ((this->type != 6) || !(gSaveContext.eventChkInf[1] & 0x2000)) &&
-                   (this->actor.xzDistToPlayer < (90.0f + this->interactRange)) &&
+                   (this->actor.xzDistToPlayer[playerIndex] < (90.0f + this->interactRange)) &&
                    (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 80.0f)) {
             if (player->stateFlags2 & 0x1000000) {
                 switch (this->type) {
@@ -219,7 +219,7 @@ void func_80ABF28C(EnOkarinaTag* this, PlayState* play) {
                 }
                 player->stateFlags2 |= 0x800000;
                 this->actionFunc = func_80ABF4C8;
-            } else if ((this->actor.xzDistToPlayer < (50.0f + this->interactRange)) &&
+            } else if ((this->actor.xzDistToPlayer[playerIndex] < (50.0f + this->interactRange)) &&
                        (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 40.0f)) {
                 this->unk_15A = 0;
                 player->stateFlags2 |= 0x800000;
@@ -229,7 +229,7 @@ void func_80ABF28C(EnOkarinaTag* this, PlayState* play) {
 }
 
 void func_80ABF4C8(EnOkarinaTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (play->msgCtx.ocarinaMode == OCARINA_MODE_04) {
         this->actionFunc = func_80ABF28C;
@@ -308,9 +308,11 @@ void func_80ABF708(EnOkarinaTag* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = func_80ABF7CC;
     } else {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y;
         this->unk_15A++;
-        if (!(this->actor.xzDistToPlayer > 120.0f)) {
+        if (!(this->actor.xzDistToPlayer[playerIndex] > 120.0f)) {
             if (CHECK_QUEST_ITEM(QUEST_SONG_SUN) || gSaveContext.n64ddFlag) {
                 this->actor.textId = 0x5021;
             }

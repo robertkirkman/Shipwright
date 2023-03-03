@@ -317,10 +317,12 @@ void EnExRuppy_WaitInGame(EnExRuppy* this, PlayState* play) {
     if (this->actor.parent != NULL) {
         divingGame = (EnDivingGame*)this->actor.parent;
         if (divingGame->actor.update != NULL) {
+            Player* player = Player_NearestToActor(&this->actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
             if (divingGame->phase == ENDIVINGGAME_PHASE_ENDED) {
                 this->timer = 20;
                 this->actionFunc = EnExRuppy_Kill;
-            } else if (this->actor.xyzDistToPlayerSq < SQ(localConst)) {
+            } else if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(localConst)) {
                 Rupees_ChangeBy(this->rupeeValue);
                 func_80078884(NA_SE_SY_GET_RUPY);
                 divingGame->grabbedRupeesCounter++;
@@ -347,6 +349,8 @@ typedef struct {
 } EnExRuppyParentActor; // Unclear what actor was intended to spawn this.
 
 void EnExRuppy_WaitToBlowUp(EnExRuppy* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnExRuppyParentActor* parent;
     Vec3f accel = { 0.0f, 0.1f, 0.0f };
     Vec3f velocity = { 0.0f, 0.0f, 0.0f };
@@ -357,7 +361,7 @@ void EnExRuppy_WaitToBlowUp(EnExRuppy* this, PlayState* play) {
     if (this->type == 2) {
         distToBlowUp = 30.0f;
     }
-    if (this->actor.xyzDistToPlayerSq < SQ(distToBlowUp)) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(distToBlowUp)) {
         parent = (EnExRuppyParentActor*)this->actor.parent;
         if (parent != NULL) {
             if (parent->actor.update != NULL) {
@@ -376,16 +380,18 @@ void EnExRuppy_WaitToBlowUp(EnExRuppy* this, PlayState* play) {
         }
         EffectSsBomb2_SpawnLayered(play, &this->actor.world.pos, &velocity, &accel, explosionScale,
                                    explosionScaleStep);
-        func_8002F71C(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer, 0.0f);
+        func_8002F71C(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer[playerIndex], 0.0f);
         Audio_PlayActorSound2(&this->actor, NA_SE_IT_BOMB_EXPLOSION);
         Actor_Kill(&this->actor);
     }
 }
 
 void EnExRuppy_WaitAsCollectible(EnExRuppy* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 localConst = 30.0f;
 
-    if (this->actor.xyzDistToPlayerSq < SQ(localConst)) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(localConst)) {
         func_80078884(NA_SE_SY_GET_RUPY);
         Item_DropCollectible(play, &this->actor.world.pos, (sEnExRuppyCollectibleTypes[this->colorIdx] | 0x8000));
         Actor_Kill(&this->actor);

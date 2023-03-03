@@ -240,17 +240,18 @@ void EnHeishi1_SetupMoveToLink(EnHeishi1* this, PlayState* play) {
 }
 
 void EnHeishi1_MoveToLink(EnHeishi1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
     Math_ApproachF(&this->actor.world.pos.x, player->actor.world.pos.x, 1.0f, this->moveSpeed);
     Math_ApproachF(&this->actor.world.pos.z, player->actor.world.pos.z, 1.0f, this->moveSpeed);
     Math_ApproachF(&this->moveSpeed, 6.0f, 1.0f, 0.4f);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, this->bodyTurnSpeed, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, this->bodyTurnSpeed, 0);
     Math_ApproachF(&this->bodyTurnSpeed, 3000.0f, 1.0f, 300.0f);
     Math_ApproachZeroF(&this->headAngle, 0.5f, 2000.0f);
 
-    if (this->actor.xzDistToPlayer < 70.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
         this->actionFunc = EnHeishi1_SetupTurnTowardLink;
     }
 }
@@ -338,7 +339,9 @@ void EnHeishi1_TurnTowardLink(EnHeishi1* this, PlayState* play) {
     SkelAnime_Update(&this->skelAnime);
 
     if (this->type != 5) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, this->bodyTurnSpeed, 0);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, this->bodyTurnSpeed, 0);
         Math_ApproachF(&this->bodyTurnSpeed, 3000.0f, 1.0f, 300.0f);
         Math_ApproachZeroF(&this->headAngle, 0.5f, 2000.0f);
     }
@@ -382,9 +385,11 @@ void EnHeishi1_SetupWaitNight(EnHeishi1* this, PlayState* play) {
 }
 
 void EnHeishi1_WaitNight(EnHeishi1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
-    if (this->actor.xzDistToPlayer < 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
         Message_StartTextbox(play, 0x702D, &this->actor);
         func_80078884(NA_SE_SY_FOUND);
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 発見！ ☆☆☆☆☆ \n" VT_RST); // "Discovered!"
@@ -398,7 +403,8 @@ void EnHeishi1_Update(Actor* thisx, PlayState* play) {
     s16 path;
     u8 i;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad2;
     Camera* activeCam;
 
@@ -414,7 +420,7 @@ void EnHeishi1_Update(Actor* thisx, PlayState* play) {
         this->waypointTimer--;
     }
 
-    activeCam = GET_ACTIVE_CAM(play);
+    activeCam = play->cameraPtrs[playerIndex];
 
     if (player->actor.freezeTimer == 0) {
 
@@ -447,9 +453,9 @@ void EnHeishi1_Update(Actor* thisx, PlayState* play) {
                         EffectSsSolderSrchBall_Spawn(play, &searchBallPos, &searchBallVel, &searchBallAccel, 2,
                                                      &this->linkDetected);
 
-                        if (this->actor.xzDistToPlayer < 60.0f) {
+                        if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
                             this->linkDetected = true;
-                        } else if (this->actor.xzDistToPlayer < 70.0f) {
+                        } else if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
                             // this case probably exists to detect link making a jump sound
                             // from slightly further away than the previous 60 unit check
                             if (player->actor.velocity.y > -4.0f) {

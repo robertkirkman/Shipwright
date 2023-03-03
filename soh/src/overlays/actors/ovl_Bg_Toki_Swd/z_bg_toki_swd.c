@@ -88,7 +88,7 @@ void BgTokiSwd_Init(Actor* thisx, PlayState* play) {
         // don't give child link a kokiri sword if we don't have one
         uint32_t kokiriSwordBitMask = 1 << 0;
         if (!(gSaveContext.inventory.equipment & kokiriSwordBitMask)) {
-            Player* player = GET_PLAYER(gPlayState);
+            Player* player = Player_NearestToActor(thisx, play);
             player->currentSwordItemId = ITEM_NONE;
             gSaveContext.equips.buttonItems[0] = ITEM_NONE;
             Inventory_ChangeEquipment(EQUIP_SWORD, PLAYER_SWORD_NONE);
@@ -112,8 +112,9 @@ void BgTokiSwd_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_808BAF40(BgTokiSwd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (((gSaveContext.eventChkInf[4] & 0x8000) == 0) && (gSaveContext.sceneSetupIndex < 4) &&
-        Actor_IsFacingAndNearPlayer(&this->actor, 800.0f, 0x7530) && !Play_InCsMode(play)) {
+        Actor_IsFacingAndNearPlayer(&this->actor, 800.0f, 0x7530, player, play) && !Play_InCsMode(play)) {
         gSaveContext.eventChkInf[4] |= 0x8000;
         play->csCtx.segment = D_808BBD90;
         gSaveContext.cutsceneTrigger = 1;
@@ -133,8 +134,7 @@ void func_808BAF40(BgTokiSwd* this, PlayState* play) {
             this->actor.parent = NULL;
             BgTokiSwd_SetupAction(this, func_808BB0AC);
         } else {
-            Player* player = GET_PLAYER(play);
-            if (Actor_IsFacingPlayer(&this->actor, 0x2000) && 
+            if (Actor_IsFacingPlayer(&this->actor, 0x2000, player, play) && 
                 (!gSaveContext.n64ddFlag || (gSaveContext.n64ddFlag && player->getItemId == GI_NONE))) {
                 func_8002F580(&this->actor, play);
             }
@@ -162,7 +162,7 @@ void func_808BB0AC(BgTokiSwd* this, PlayState* play) {
         }
         BgTokiSwd_SetupAction(this, func_808BB128);
     } else {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         player->interactRangeActor = &this->actor;
     }
 }

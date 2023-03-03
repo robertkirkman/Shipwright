@@ -426,7 +426,8 @@ void BossMo_Tentacle(BossMo* this, PlayState* play) {
     s16 tentXrot;
     s16 sp1B4 = 0;
     s32 buttons;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 indS0;
     s16 indS1;
     Camera* camera1;
@@ -574,7 +575,7 @@ void BossMo_Tentacle(BossMo* this, PlayState* play) {
             if (this == sMorphaTent2) {
                 this->work[MO_TENT_ACTION_STATE] = MO_TENT_SPAWN;
                 this->timers[0] = 70;
-                this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
             }
             break;
         case MO_TENT_SPAWN:
@@ -633,7 +634,7 @@ void BossMo_Tentacle(BossMo* this, PlayState* play) {
             this->targetPos = this->actor.world.pos;
             Math_ApproachF(&this->actor.speedXZ, 0.75f, 1.0f, 0.04f);
             if (this->work[MO_TENT_ACTION_STATE] == MO_TENT_SWING) {
-                Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer + this->attackAngleMod, 0xA,
+                Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] + this->attackAngleMod, 0xA,
                                0x1F4);
             }
             Math_ApproachF(&this->fwork[MO_TENT_MAX_STRETCH], 1.0f, 0.5f, 0.04);
@@ -687,7 +688,7 @@ void BossMo_Tentacle(BossMo* this, PlayState* play) {
                     this->work[MO_TENT_ACTION_STATE] = MO_TENT_CURL;
                     this->timers[0] = 40;
                     this->tentSpeed = 0;
-                    if ((s16)(this->actor.shape.rot.y - this->actor.yawTowardsPlayer) >= 0) {
+                    if ((s16)(this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex]) >= 0) {
                         this->linkToLeft = false;
                     } else {
                         this->linkToLeft = true;
@@ -740,7 +741,7 @@ void BossMo_Tentacle(BossMo* this, PlayState* play) {
             Math_ApproachF(&this->tentMaxAngle, 0.1f, 1.0f, 0.01f);
             Math_ApproachF(&this->tentSpeed, 960.0f, 1.0f, 30.0f);
             if (this->timers[0] >= 30) {
-                Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 0xC8);
+                Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 0xC8);
             }
             if (this->work[MO_TENT_ACTION_STATE] == MO_TENT_CURL) {
                 if ((this->timers[0] >= 5) && (this->linkHitTimer != 0) && (player->actor.parent == NULL)) {
@@ -1215,7 +1216,8 @@ void BossMo_IntroCs(BossMo* this, PlayState* play) {
     f32 sp80;
     f32 sp7C;
     f32 sp78;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera = Play_GetCamera(play, MAIN_CAM);
     Vec3f bubblePos;
     Vec3f bubblePos2;
@@ -1470,7 +1472,7 @@ void BossMo_IntroCs(BossMo* this, PlayState* play) {
         sMorphaTent1->actor.world.pos.z = -360.0f;
         sMorphaTent1->actor.prevPos = sMorphaTent1->actor.world.pos;
         sMorphaTent1->actor.speedXZ = 0.0f;
-        sMorphaTent1->actor.shape.rot.y = sMorphaTent1->actor.yawTowardsPlayer;
+        sMorphaTent1->actor.shape.rot.y = sMorphaTent1->actor.yawTowardsPlayer[playerIndex];
     }
     if (this->csCamera != 0) {
         if (sp9F) {
@@ -1745,7 +1747,8 @@ void BossMo_DeathCs(BossMo* this, PlayState* play) {
 
 void BossMo_CoreCollisionCheck(BossMo* this, PlayState* play) {
     s16 i;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     osSyncPrintf(VT_FGCOL(YELLOW));
     osSyncPrintf("Core_Damage_check START\n");
@@ -1777,7 +1780,7 @@ void BossMo_CoreCollisionCheck(BossMo* this, PlayState* play) {
 
                 this->actor.speedXZ = 15.0f;
 
-                this->actor.world.rot.y = this->actor.yawTowardsPlayer + 0x8000;
+                this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
                 this->work[MO_CORE_DMG_FLASH_TIMER] = 15;
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_MOFER_CORE_DAMAGE);
                 this->actor.colChkInfo.health -= damage;
@@ -1851,7 +1854,8 @@ void BossMo_Core(BossMo* this, PlayState* play) {
     };
     u8 nearLand;
     s16 i;                                  // not on stack
-    Player* player = GET_PLAYER(play); // not on stack
+    Player* player = Player_NearestToActor(&this->actor, play); // not on stack?
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 spDC;
     f32 spD8;
     f32 spD4;
@@ -1930,7 +1934,7 @@ void BossMo_Core(BossMo* this, PlayState* play) {
                 if (sMorphaTent1->work[MO_TENT_ACTION_STATE] == MO_TENT_WAIT) {
                     sMorphaTent1->work[MO_TENT_ACTION_STATE] = MO_TENT_SPAWN;
                     sMorphaTent1->timers[0] = 70;
-                    sMorphaTent1->actor.shape.rot.y = sMorphaTent1->actor.yawTowardsPlayer;
+                    sMorphaTent1->actor.shape.rot.y = sMorphaTent1->actor.yawTowardsPlayer[playerIndex];
                 }
             }
             break;
@@ -2221,7 +2225,7 @@ void BossMo_UpdateCore(Actor* thisx, PlayState* play) {
     s32 pad;
     BossMo* this = (BossMo*)thisx;
     s16 i;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     osSyncPrintf("CORE mode = <%d>\n", this->work[MO_TENT_ACTION_STATE]);
     if (sMorphaTent2 == NULL) {
@@ -2268,7 +2272,8 @@ void BossMo_UpdateTent(Actor* thisx, PlayState* play) {
     s16 index;
     s32 pad;
     BossMo* this = (BossMo*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 phi_f0;
 
     if ((this == sMorphaTent2) && (this->tent2KillTimer != 0)) {
@@ -2332,7 +2337,7 @@ void BossMo_UpdateTent(Actor* thisx, PlayState* play) {
             this->timers[i]--;
         }
     }
-    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0xA, 0xC8);
+    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0xC8);
     Actor_MoveForward(&this->actor);
     Math_ApproachF(&this->actor.speedXZ, 0.0, 1.0f, 0.02f);
 

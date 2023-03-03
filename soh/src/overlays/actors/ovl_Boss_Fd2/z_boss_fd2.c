@@ -233,7 +233,8 @@ void BossFd2_SetupEmerge(BossFd2* this, PlayState* play) {
 void BossFd2_Emerge(BossFd2* this, PlayState* play) {
     s8 health;
     BossFd* bossFd = (BossFd*)this->actor.parent;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 i;
     s16 holeTime;
 
@@ -285,7 +286,7 @@ void BossFd2_Emerge(BossFd2* this, PlayState* play) {
                     this->fwork[FD2_END_FRAME] = Animation_GetLastFrame(&gHoleVolvagiaEmergeAnim);
                     this->work[FD2_ACTION_STATE] = 2;
                     Audio_PlayActorSound2(&this->actor, NA_SE_EN_VALVAISA_ROAR);
-                    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                     this->timers[0] = 15;
                     this->actor.world.pos.y = 150.0f;
                     for (i = 0; i < 10; i++) {
@@ -299,9 +300,9 @@ void BossFd2_Emerge(BossFd2* this, PlayState* play) {
             }
             break;
         case 2:
-            Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x7D0);
-            if ((this->timers[0] == 1) && (this->actor.xzDistToPlayer < 120.0f)) {
-                func_8002F6D4(play, &this->actor, 3.0f, this->actor.yawTowardsPlayer, 2.0f, 0x20);
+            Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x7D0);
+            if ((this->timers[0] == 1) && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
+                func_8002F6D4(play, &this->actor, 3.0f, this->actor.yawTowardsPlayer[playerIndex], 2.0f, 0x20);
                 Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
             }
             if (Animation_OnFrame(&this->skelAnime, this->fwork[FD2_END_FRAME])) {
@@ -336,12 +337,14 @@ void BossFd2_SetupIdle(BossFd2* this, PlayState* play) {
 }
 
 void BossFd2_Idle(BossFd2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 prevToLink;
 
     SkelAnime_Update(&this->skelAnime);
     prevToLink = this->work[FD2_TURN_TO_LINK];
     this->work[FD2_TURN_TO_LINK] =
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x7D0, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x7D0, 0);
     osSyncPrintf("SW1 = %d\n", prevToLink);
     osSyncPrintf("SW2 = %d\n", this->work[FD2_TURN_TO_LINK]);
     if ((fabsf(prevToLink) <= 1000.0f) && (1000.0f < fabsf(this->work[FD2_TURN_TO_LINK]))) {
@@ -351,7 +354,7 @@ void BossFd2_Idle(BossFd2* this, PlayState* play) {
         Animation_MorphToLoop(&this->skelAnime, &gHoleVolvagiaIdleAnim, -5.0f);
     }
     if (this->timers[0] == 0) {
-        if (this->actor.xzDistToPlayer < 200.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
             BossFd2_SetupClawSwipe(this, play);
         } else {
             BossFd2_SetupBreatheFire(this, play);
@@ -408,7 +411,8 @@ void BossFd2_BreatheFire(BossFd2* this, PlayState* play) {
     s16 angleY;
     s16 breathOpacity = 0;
     BossFd* bossFd = (BossFd*)this->actor.parent;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 tempX;
     f32 tempY;
 
@@ -649,6 +653,8 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
     Vec3f sp64;
     BossFd* bossFd = (BossFd*)this->actor.parent;
     Camera* mainCam = Play_GetCamera(play, MAIN_CAM);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 pad3;
     f32 pad2;
     f32 pad1;
@@ -699,7 +705,7 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_VALVAISA_DAMAGE2);
             }
             Math_ApproachF(&this->skelAnime.playSpeed, retreatSpeed, 1.0f, 1.0f);
-            Matrix_RotateY(((this->actor.yawTowardsPlayer / (f32)0x8000) * M_PI) + 0.2f, MTXMODE_NEW);
+            Matrix_RotateY(((this->actor.yawTowardsPlayer[playerIndex] / (f32)0x8000) * M_PI) + 0.2f, MTXMODE_NEW);
             sp70.x = 0.0f;
             sp70.y = 0.0f;
             sp70.z = 250.0f;
@@ -816,7 +822,7 @@ void BossFd2_CollisionCheck(BossFd2* this, PlayState* play) {
     BossFd* bossFd = (BossFd*)this->actor.parent;
 
     if (this->actionFunc == BossFd2_ClawSwipe) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
 
         for (i = 0; i < ARRAY_COUNT(this->elements); i++) {
             if (this->collider.elements[i].info.toucherFlags & TOUCH_HIT) {

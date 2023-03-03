@@ -489,9 +489,10 @@ void BossGanondrof_Neutral(BossGanondrof* this, PlayState* play) {
     f32 targetX;
     f32 targetY;
     f32 targetZ;
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &player->actor;
     Actor* thisx = &this->actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Actor* playerx = &player->actor;
     f32 rand01;
     s16 i;
 
@@ -597,7 +598,7 @@ void BossGanondrof_Neutral(BossGanondrof* this, PlayState* play) {
     thisx->velocity.x = thisx->world.pos.x - thisx->prevPos.x;
     thisx->velocity.z = thisx->world.pos.z - thisx->prevPos.z;
     thisx->world.pos.y += 2.0f * Math_SinS(this->work[GND_VARIANCE_TIMER] * 1500);
-    Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer, 5, 0xBB8);
+    Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer[playerIndex], 5, 0xBB8);
     if ((this->work[GND_VARIANCE_TIMER] & 1) == 0) {
         Vec3f pos;
         Vec3f vel = { 0.0f, 0.0f, 0.0f };
@@ -646,6 +647,8 @@ void BossGanondrof_SetupThrow(BossGanondrof* this, PlayState* play) {
 }
 
 void BossGanondrof_Throw(BossGanondrof* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     osSyncPrintf("this->fwork[GND_END_FRAME] = %d\n", (s16)this->fwork[GND_END_FRAME]);
     osSyncPrintf("this->work[GND_SHOT_FRAME] = %d\n", this->work[GND_THROW_FRAME]);
@@ -677,7 +680,7 @@ void BossGanondrof_Throw(BossGanondrof* this, PlayState* play) {
         this->actor.child = &horseTemp->actor;
     }
 
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 5, 0x7D0);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 0x7D0);
     this->actor.world.pos.x += this->actor.velocity.x;
     this->actor.world.pos.z += this->actor.velocity.z;
     Math_ApproachZeroF(&this->actor.velocity.x, 1.0f, 0.5f);
@@ -800,9 +803,10 @@ void BossGanondrof_SetupCharge(BossGanondrof* this, PlayState* play) {
 }
 
 void BossGanondrof_Charge(BossGanondrof* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &player->actor;
     Actor* thisx = &this->actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Actor* playerx = &player->actor;
     f32 dxCenter = thisx->world.pos.x - GND_BOSSROOM_CENTER_X;
     f32 dzCenter = thisx->world.pos.z - GND_BOSSROOM_CENTER_Z;
 
@@ -830,7 +834,7 @@ void BossGanondrof_Charge(BossGanondrof* this, PlayState* play) {
                 Animation_MorphToPlayOnce(&this->skelAnime, &gPhantomGanonChargeStartAnim, 0.0f);
             }
 
-            Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer, 5, 0x7D0);
+            Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer[playerIndex], 5, 0x7D0);
             break;
         case CHARGE_START:
             if (Animation_OnFrame(&this->skelAnime, this->fwork[GND_END_FRAME])) {
@@ -842,7 +846,7 @@ void BossGanondrof_Charge(BossGanondrof* this, PlayState* play) {
             if (this->timers[0] != 0) {
                 Vec3f vecToLink;
 
-                Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer, 5, 0x7D0);
+                Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer[playerIndex], 5, 0x7D0);
                 vecToLink.x = playerx->world.pos.x - thisx->world.pos.x;
                 vecToLink.y = playerx->world.pos.y + 40.0f - thisx->world.pos.y;
                 vecToLink.z = playerx->world.pos.z - thisx->world.pos.z;
@@ -854,7 +858,7 @@ void BossGanondrof_Charge(BossGanondrof* this, PlayState* play) {
             func_8002D908(thisx);
             func_8002D7EC(thisx);
             Math_ApproachF(&thisx->speedXZ, 10.0f, 1.0f, 0.5f);
-            if ((sqrtf(SQ(dxCenter) + SQ(dzCenter)) > 280.0f) || (thisx->xyzDistToPlayerSq < SQ(100.0f))) {
+            if ((sqrtf(SQ(dxCenter) + SQ(dzCenter)) > 280.0f) || (thisx->xyzDistToPlayerSq[playerIndex] < SQ(100.0f))) {
                 this->work[GND_ACTION_STATE] = CHARGE_FINISH;
                 this->timers[0] = 20;
             }
@@ -876,7 +880,7 @@ void BossGanondrof_Charge(BossGanondrof* this, PlayState* play) {
             if (this->timers[0] == 0) {
                 Math_ApproachZeroF(&thisx->speedXZ, 1.0f, 2.0f);
                 Math_ApproachZeroF(&thisx->velocity.y, 1.0f, 2.0f);
-                Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer, 5, 0x7D0);
+                Math_ApproachS(&thisx->shape.rot.y, thisx->yawTowardsPlayer[playerIndex], 5, 0x7D0);
                 if ((thisx->speedXZ <= 0.5f) && (fabsf(thisx->velocity.y) <= 0.1f)) {
                     BossGanondrof_SetupNeutral(this, -10.0f);
                     this->timers[0] = 30;
@@ -946,8 +950,8 @@ void BossGanondrof_Death(BossGanondrof* this, PlayState* play) {
     f32 camX;
     f32 camZ;
     f32 pad;
-    Player* player = GET_PLAYER(play);
-    Camera* camera = Play_GetCamera(play, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Camera* camera = Play_GetCamera(play, MAIN_CAM);
 
     osSyncPrintf("PYP %f\n", player->actor.floorHeight);
     SkelAnime_Update(&this->skelAnime);

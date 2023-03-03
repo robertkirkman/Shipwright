@@ -168,6 +168,8 @@ void ObjHamishi_Destroy(Actor* thisx, PlayState* play2) {
 void ObjHamishi_Update(Actor* thisx, PlayState* play) {
     ObjHamishi* this = (ObjHamishi*)thisx;
     CollisionCheckContext* colChkCtx = &play->colChkCtx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     ObjHamishi_Shake(this);
 
@@ -187,7 +189,7 @@ void ObjHamishi_Update(Actor* thisx, PlayState* play) {
     } else {
         this->collider.base.acFlags &= ~AC_HIT;
 
-        if (this->actor.xzDistToPlayer < 600.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
             CollisionCheck_SetAC(play, colChkCtx, &this->collider.base);
             CollisionCheck_SetOC(play, colChkCtx, &this->collider.base);
         }

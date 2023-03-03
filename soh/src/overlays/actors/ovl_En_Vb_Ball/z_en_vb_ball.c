@@ -166,6 +166,8 @@ void EnVbBall_UpdateBones(EnVbBall* this, PlayState* play) {
 void EnVbBall_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnVbBall* this = (EnVbBall*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     BossFd* bossFd = (BossFd*)this->actor.parent;
     f32 radius;
     f32 pad2;
@@ -193,7 +195,7 @@ void EnVbBall_Update(Actor* thisx, PlayState* play2) {
             if ((this->actor.params == 100) || (this->actor.params == 101)) {
                 Actor_Kill(&this->actor);
                 if (this->actor.params == 100) {
-                    func_80033E88(&this->actor, play, 5, 0xA);
+                    func_80033E88(&this->actor, play, 5, 0xA, playerIndex);
                 }
                 if (this->actor.params == 100) {
                     spawnNum = 2;
@@ -288,8 +290,6 @@ void EnVbBall_Update(Actor* thisx, PlayState* play2) {
             }
         }
         if (this->collider.base.atFlags & AT_HIT) {
-            Player* player = GET_PLAYER(play);
-
             this->collider.base.atFlags &= ~AT_HIT;
             Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
         }

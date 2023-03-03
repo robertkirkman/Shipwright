@@ -111,6 +111,8 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
     s16 resultIdx;
     u8 ignore;
     s32 i;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->leaderSignal != DNT_SIGNAL_NONE) {
         for (i = 0; i < 9; i++) {
@@ -123,7 +125,7 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
         }
         this->leaderSignal = DNT_SIGNAL_NONE;
         this->actionFunc = EnDntDemo_Results;
-    } else if ((this->actor.xzDistToPlayer > 30.0f) || (Player_GetMask(play) == 0)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] > 30.0f) || (Player_GetMask(play) == 0)) {
         this->debugArrowTimer++;
         if (this->subCamera != SUBCAM_FREE) {
             this->subCamera = SUBCAM_FREE;

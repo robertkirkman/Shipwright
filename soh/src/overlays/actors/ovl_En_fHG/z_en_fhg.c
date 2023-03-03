@@ -110,7 +110,7 @@ void EnfHG_SetupIntro(EnfHG* this, PlayState* play) {
 void EnfHG_Intro(EnfHG* this, PlayState* play) {
     static Vec3f audioVec = { 0.0f, 0.0f, 50.0f };
     s32 pad64;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     BossGanondrof* bossGnd = (BossGanondrof*)this->actor.parent;
     s32 pad58;
     s32 pad54;

@@ -246,7 +246,7 @@ void EnOwl_Destroy(Actor* thisx, PlayState* play) {
  * Rotates this to the player instance
  */
 void EnOwl_LookAtLink(EnOwl* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->actor.shape.rot.y = this->actor.world.rot.y =
         Math_Vec3f_Yaw(&this->actor.world.pos, &player->actor.world.pos);
@@ -277,9 +277,11 @@ s32 EnOwl_CheckInitTalk(EnOwl* this, PlayState* play, u16 textId, f32 targetDist
         this->cameraIdx = OnePointCutscene_Init(play, 8700, timer, &this->actor, MAIN_CAM);
         return true;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = textId;
         distCheck = (flags & 2) ? 200.0f : 1000.0f;
-        if (this->actor.xzDistToPlayer < targetDist) {
+        if (this->actor.xzDistToPlayer[playerIndex] < targetDist) {
             this->actor.flags |= ACTOR_FLAG_16;
             func_8002F1C4(&this->actor, play, targetDist, distCheck, 0);
         }
@@ -291,8 +293,10 @@ s32 func_80ACA558(EnOwl* this, PlayState* play, u16 textId) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         return true;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = textId;
-        if (this->actor.xzDistToPlayer < 120.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
             func_8002F1C4(&this->actor, play, 350.0f, 1000.0f, 0);
         }
         return false;
@@ -855,9 +859,11 @@ void func_80ACBAB8(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACBC0C(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.flags |= ACTOR_FLAG_5;
 
-    if (this->actor.xzDistToPlayer > 6000.0f && !(this->actionFlags & 0x80)) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 6000.0f && !(this->actionFlags & 0x80)) {
         Actor_Kill(&this->actor);
     }
 
@@ -939,6 +945,8 @@ void func_80ACBF50(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACC00C(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 owlType;
     s32 temp_v0;
     s32 temp_v0_2;
@@ -946,7 +954,7 @@ void func_80ACC00C(EnOwl* this, PlayState* play) {
     Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_400, 2, 0x384, 0x258);
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
-    if (this->actor.xzDistToPlayer < 50.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
         if (!Play_InCsMode(play)) {
             owlType = (this->actor.params & 0xFC0) >> 6;
             osSyncPrintf(VT_FGCOL(CYAN));

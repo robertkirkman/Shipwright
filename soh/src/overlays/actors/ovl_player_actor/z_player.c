@@ -1287,9 +1287,7 @@ s32 func_80832224(Player* this) {
     this->unk_6AD = 0;
 }
 
-s32 func_8083224C(PlayState* play) {
-    Player* this = GET_PLAYER(play);
-
+s32 func_8083224C(Player* this, PlayState* play) {
     return CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_8);
 }
 
@@ -3245,7 +3243,7 @@ void func_80836BEC(Player* this, PlayState* play) {
         sp1C = 1;
     }
 
-    cond = func_8083224C(play);
+    cond = func_8083224C(this, play);
     if (cond || (this->unk_66C != 0) || (this->stateFlags1 & (PLAYER_STATE1_12 | PLAYER_STATE1_25))) {
         if (!cond) {
             if (!(this->stateFlags1 & PLAYER_STATE1_25) &&
@@ -3255,7 +3253,7 @@ void func_80836BEC(Player* this, PlayState* play) {
                 if (this->actor.category == ACTORCAT_PLAYER) {
                     actorToTarget = play->actorCtx.targetCtx.arrowPointedActor;
                 } else {
-                    actorToTarget = &GET_PLAYER(play)->actor;
+                    actorToTarget = &this->actor;
                 }
 
                 holdTarget = (gSaveContext.zTargetSetting != 0) || (this->actor.category != ACTORCAT_PLAYER);
@@ -3289,7 +3287,7 @@ void func_80836BEC(Player* this, PlayState* play) {
 
             if (this->unk_664 != NULL) {
                 if ((this->actor.category == ACTORCAT_PLAYER) && (this->unk_664 != this->unk_684) &&
-                    func_8002F0C8(this->unk_664, this, sp1C)) {
+                    func_8002F0C8(this->unk_664, play, this, sp1C)) {
                     func_8008EDF0(this);
                     this->stateFlags1 |= PLAYER_STATE1_30;
                 } else if (this->unk_664 != NULL) {
@@ -4652,12 +4650,13 @@ void func_8083A0F4(PlayState* play, Player* this) {
                 anim = &gPlayerAnim_link_silver_carry;
             } else if (((interactActorId == ACTOR_EN_BOMBF) || (interactActorId == ACTOR_EN_KUSA)) &&
                        (Player_GetStrength() <= PLAYER_STR_NONE)) {
+                u16 playerIndex = Player_GetIndex(this, play);
                 func_80835C58(play, this, func_80846408, 0);
                 this->actor.world.pos.x =
-                    (Math_SinS(interactRangeActor->yawTowardsPlayer) * 20.0f) + interactRangeActor->world.pos.x;
+                    (Math_SinS(interactRangeActor->yawTowardsPlayer[playerIndex]) * 20.0f) + interactRangeActor->world.pos.x;
                 this->actor.world.pos.z =
-                    (Math_CosS(interactRangeActor->yawTowardsPlayer) * 20.0f) + interactRangeActor->world.pos.z;
-                this->currentYaw = this->actor.shape.rot.y = interactRangeActor->yawTowardsPlayer + 0x8000;
+                    (Math_CosS(interactRangeActor->yawTowardsPlayer[playerIndex]) * 20.0f) + interactRangeActor->world.pos.z;
+                this->currentYaw = this->actor.shape.rot.y = interactRangeActor->yawTowardsPlayer[playerIndex] + 0x8000;
                 anim = &gPlayerAnim_link_normal_nocarry_free;
             } else {
                 func_80835C58(play, this, func_80846050, 0);
@@ -8656,11 +8655,12 @@ void func_80844708(Player* this, PlayState* play) {
             }
         } else {
             if (this->linearVelocity >= 7.0f) {
+                u16 playerIndex = Player_GetIndex(this, play);
                 if (((this->actor.bgCheckFlags & 0x200) && (D_8085360C < 0x2000)) ||
                     ((this->cylinder.base.ocFlags1 & OC1_HIT) &&
                      (cylinderOc = this->cylinder.base.oc,
                       ((cylinderOc->id == ACTOR_EN_WOOD02) &&
-                       (ABS((s16)(this->actor.world.rot.y - cylinderOc->yawTowardsPlayer)) > 0x6000))))) {
+                       (ABS((s16)(this->actor.world.rot.y - cylinderOc->yawTowardsPlayer[playerIndex])) > 0x6000))))) {
 
                     if (cylinderOc != NULL) {
                         cylinderOc->home.rot.y = 1;
@@ -10288,7 +10288,8 @@ void Player_UpdateCamAndSeqModes(PlayState* play, Player* this) {
 
         if (play->actorCtx.targetCtx.bgmEnemy != NULL && !CVarGetInteger("gEnemyBGMDisable", 0)) {
             seqMode = SEQ_MODE_ENEMY;
-            Audio_SetBgmEnemyVolume(sqrtf(play->actorCtx.targetCtx.bgmEnemy->xyzDistToPlayerSq));
+            u16 playerIndex = Player_GetIndex(this, play);
+            Audio_SetBgmEnemyVolume(sqrtf(play->actorCtx.targetCtx.bgmEnemy->xyzDistToPlayerSq[playerIndex]));
         }
 
         if (play->sceneNum != SCENE_TURIBORI) {
@@ -10943,9 +10944,9 @@ static Vec3f D_80854838 = { 0.0f, 0.0f, -30.0f };
 // magi multiplayer: get player index from ACTORCAT_PLAYER
 u16 Player_GetIndex(Player* this, PlayState* play) {
     u16 i = 0;
-    Actor* player = (Actor*)GET_PLAYER(play);
+    Actor* player = &GET_PLAYER(play)->actor;
     while (player != NULL) {
-        if ((Actor*)this == player) break;
+        if (&this->actor == player) break;
         i++;
         player = player->next;
     }
@@ -10955,12 +10956,30 @@ u16 Player_GetIndex(Player* this, PlayState* play) {
 // magi multiplayer: get player from index in ACTORCAT_PLAYER
 Player* Player_FromIndex(u16 index, PlayState* play) {
     u16 i = 0;
-    Actor* player = (Actor*)GET_PLAYER(play);
+    Actor* player = &GET_PLAYER(play)->actor;
     while (player != NULL && i < index) {
         i++;
         player = player->next;
     }
     return player;
+}
+
+// magi multiplayer: get nearest Player to Actor
+Player* Player_NearestToActor(Actor* actor, PlayState* play) {
+    Actor* player = &GET_PLAYER(play)->actor;
+    Actor* nearestPlayer = player;
+    u32 i = 0;
+    f32 minDist = 0;
+    while (player != NULL) {
+        f32 xyzDistanceFromPlayer = actor->xyzDistToPlayerSq[i];
+        if (xyzDistanceFromPlayer < minDist || i == 0) {
+            minDist = xyzDistanceFromPlayer;
+            nearestPlayer = player;
+        }
+        i++;
+        player = player->next;
+    }
+    return nearestPlayer;
 }
 
 void Player_Update(Actor* thisx, PlayState* play) {
@@ -12214,7 +12233,7 @@ void func_8084CC98(Player* this, PlayState* play) {
     }
 
     if (this->unk_850 == 1) {
-        if ((D_808535E0 != 0) || func_8083224C(play)) {
+        if ((D_808535E0 != 0) || func_8083224C(this, play)) {
             func_80832264(play, this, &gPlayerAnim_link_uma_wait_3);
         } else if (LinkAnimation_Update(play, &this->skelAnime)) {
             this->unk_850 = 99;
@@ -12249,7 +12268,7 @@ void func_8084CC98(Player* this, PlayState* play) {
     this->currentYaw = this->actor.shape.rot.y = rideActor->actor.shape.rot.y;
 
     if ((this->csMode != 0) ||
-        (!func_8083224C(play) && ((rideActor->actor.speedXZ != 0.0f) || !func_8083B644(this, play)) &&
+        (!func_8083224C(this, play) && ((rideActor->actor.speedXZ != 0.0f) || !func_8083B644(this, play)) &&
          !func_8083C1DC(this, play))) {
         if (D_808535E0 == 0) {
             if (this->unk_84F != 0) {
@@ -12391,7 +12410,7 @@ void func_8084D610(Player* this, PlayState* play) {
     func_80832CB0(play, this, &gPlayerAnim_link_swimer_swim_wait);
     func_8084B000(this);
 
-    if (!func_8083224C(play) && !func_80837348(play, this, D_80854444, 1) &&
+    if (!func_8083224C(this, play) && !func_80837348(play, this, D_80854444, 1) &&
         !func_8083D12C(play, this, sControlInput)) {
         if (this->unk_6AD != 1) {
             this->unk_6AD = 0;
@@ -15123,7 +15142,8 @@ s32 Player_InflictDamageModified(PlayState* play, s32 damage, u8 modified) {
 
 // Start talking with the given actor
 void func_80853148(PlayState* play, Actor* actor) {
-    Player* this = GET_PLAYER(play);
+    Player* this = Player_NearestToActor(actor, play);
+    u16 playerIndex = Player_GetIndex(this, play);
     s32 pad;
 
     if ((this->targetActor != NULL) || (actor == this->naviActor) ||
@@ -15161,7 +15181,7 @@ void func_80853148(PlayState* play, Actor* actor) {
                 func_8083A2F8(play, this);
 
                 if (!func_8008E9C4(this)) {
-                    if ((actor != this->naviActor) && (actor->xzDistToPlayer < 40.0f)) {
+                    if ((actor != this->naviActor) && (actor->xzDistToPlayer[playerIndex] < 40.0f)) {
                         func_808322D0(play, this, &gPlayerAnim_link_normal_backspace);
                     } else {
                         func_80832284(play, this, func_80833338(this));
@@ -15170,7 +15190,7 @@ void func_80853148(PlayState* play, Actor* actor) {
             } else {
                 func_80836898(play, this, func_8083A2F8);
                 func_808322D0(play, this,
-                              (actor->xzDistToPlayer < 40.0f) ? &gPlayerAnim_link_normal_backspace
+                              (actor->xzDistToPlayer[playerIndex] < 40.0f) ? &gPlayerAnim_link_normal_backspace
                                                               : &gPlayerAnim_link_normal_talk_free);
             }
 

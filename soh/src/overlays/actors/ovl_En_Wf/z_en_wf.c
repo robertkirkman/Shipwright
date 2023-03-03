@@ -26,10 +26,10 @@ void EnWf_SetupSearchForPlayer(EnWf* this);
 void EnWf_SearchForPlayer(EnWf* this, PlayState* play);
 void EnWf_SetupRunAroundPlayer(EnWf* this);
 void EnWf_RunAroundPlayer(EnWf* this, PlayState* play);
-void EnWf_SetupSlash(EnWf* this);
+void EnWf_SetupSlash(EnWf* this, PlayState* play);
 void EnWf_Slash(EnWf* this, PlayState* play);
 void EnWf_RecoilFromBlockedSlash(EnWf* this, PlayState* play);
-void EnWf_SetupBackflipAway(EnWf* this);
+void EnWf_SetupBackflipAway(EnWf* this, PlayState* play);
 void EnWf_BackflipAway(EnWf* this, PlayState* play);
 void EnWf_Stunned(EnWf* this, PlayState* play);
 void EnWf_Damaged(EnWf* this, PlayState* play);
@@ -39,7 +39,7 @@ void EnWf_SetupBlocking(EnWf* this);
 void EnWf_Blocking(EnWf* this, PlayState* play);
 void EnWf_SetupSidestep(EnWf* this, PlayState* play);
 void EnWf_Sidestep(EnWf* this, PlayState* play);
-void EnWf_SetupDie(EnWf* this);
+void EnWf_SetupDie(EnWf* this, PlayState* play);
 void EnWf_Die(EnWf* this, PlayState* play);
 s32 EnWf_DodgeRanged(PlayState* play, EnWf* this);
 
@@ -282,7 +282,8 @@ void EnWf_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s16 wallYawDiff;
     s16 playerYawDiff;
@@ -290,7 +291,7 @@ s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
 
     wallYawDiff = this->actor.wallYaw - this->actor.shape.rot.y;
     wallYawDiff = ABS(wallYawDiff);
-    playerYawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    playerYawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     playerYawDiff = ABS(playerYawDiff);
 
     if (func_800354B4(play, &this->actor, 100.0f, 0x2710, 0x2EE0, this->actor.shape.rot.y)) {
@@ -306,19 +307,19 @@ s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
     }
 
     if (func_800354B4(play, &this->actor, 100.0f, 0x5DC0, 0x2AA8, this->actor.shape.rot.y)) {
-        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
-        if ((this->actor.bgCheckFlags & 8) && (ABS(wallYawDiff) < 0x2EE0) && (this->actor.xzDistToPlayer < 120.0f)) {
+        if ((this->actor.bgCheckFlags & 8) && (ABS(wallYawDiff) < 0x2EE0) && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
             EnWf_SetupSomersaultAndAttack(this);
             return true;
         } else if (player->meleeWeaponAnimation == 0x11) {
             EnWf_SetupBlocking(this);
             return true;
-        } else if ((this->actor.xzDistToPlayer < 80.0f) && (play->gameplayFrames % 2) != 0) {
+        } else if ((this->actor.xzDistToPlayer[playerIndex] < 80.0f) && (play->gameplayFrames % 2) != 0) {
             EnWf_SetupBlocking(this);
             return true;
         } else {
-            EnWf_SetupBackflipAway(this);
+            EnWf_SetupBackflipAway(this, play);
             return true;
         }
     }
@@ -326,7 +327,7 @@ s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
     explosive = Actor_FindNearby(play, &this->actor, -1, ACTORCAT_EXPLOSIVE, 80.0f);
 
     if (explosive != NULL) {
-        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
         if (((this->actor.bgCheckFlags & 8) && (wallYawDiff < 0x2EE0)) || (explosive->id == ACTOR_EN_BOM_CHU)) {
             if ((explosive->id == ACTOR_EN_BOM_CHU) && (Actor_WorldDistXYZToActor(&this->actor, explosive) < 80.0f) &&
@@ -338,7 +339,7 @@ s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
                 return true;
             }
         } else {
-            EnWf_SetupBackflipAway(this);
+            EnWf_SetupBackflipAway(this, play);
             return true;
         }
     }
@@ -353,9 +354,9 @@ s32 EnWf_ChangeAction(PlayState* play, EnWf* this, s16 mustChoose) {
 
         playerFacingAngleDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
-        if ((this->actor.xzDistToPlayer <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
+        if ((this->actor.xzDistToPlayer[playerIndex] <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
             (((play->gameplayFrames % 8) != 0) || (ABS(playerFacingAngleDiff) < 0x38E0))) {
-            EnWf_SetupSlash(this);
+            EnWf_SetupSlash(this, play);
             return true;
         }
 
@@ -378,10 +379,12 @@ void EnWf_SetupWaitToAppear(EnWf* this) {
 }
 
 void EnWf_WaitToAppear(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->actionTimer >= 6) {
         this->actor.world.pos.y = this->actor.home.pos.y - 5.0f;
 
-        if (this->actor.xzDistToPlayer < 240.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 240.0f) {
             this->actionTimer = 5;
             this->actor.flags |= ACTOR_FLAG_0;
 
@@ -419,15 +422,15 @@ void EnWf_SetupWait(EnWf* this) {
 }
 
 void EnWf_Wait(EnWf* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s16 angle;
 
-    player = GET_PLAYER(play);
     SkelAnime_Update(&this->skelAnime);
 
     if (this->unk_2E2 != 0) {
-        angle = (this->actor.yawTowardsPlayer - this->actor.shape.rot.y) - this->unk_4D4.y;
+        angle = (this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) - this->unk_4D4.y;
 
         if (ABS(angle) > 0x2000) {
             this->unk_2E2--;
@@ -437,7 +440,7 @@ void EnWf_Wait(EnWf* this, PlayState* play) {
         this->unk_2E2 = 0;
     }
 
-    angle = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    angle = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     angle = ABS(angle);
 
     if (!EnWf_DodgeRanged(play, this)) {
@@ -458,14 +461,14 @@ void EnWf_Wait(EnWf* this, PlayState* play) {
         angle = player->actor.shape.rot.y - this->actor.shape.rot.y;
         angle = ABS(angle);
 
-        if ((this->actor.xzDistToPlayer < 80.0f) && (player->swordState != 0) && (angle >= 0x1F40)) {
-            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        if ((this->actor.xzDistToPlayer[playerIndex] < 80.0f) && (player->swordState != 0) && (angle >= 0x1F40)) {
+            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
             EnWf_SetupRunAroundPlayer(this);
         } else {
             this->actionTimer--;
 
             if (this->actionTimer == 0) {
-                if (Actor_IsFacingPlayer(&this->actor, 0x1555)) {
+                if (Actor_IsFacingPlayer(&this->actor, 0x1555, player, play)) {
                     if (Rand_ZeroOne() > 0.3f) {
                         EnWf_SetupRunAtPlayer(this, play);
                     } else {
@@ -496,20 +499,21 @@ void EnWf_RunAtPlayer(EnWf* this, PlayState* play) {
     s32 pad;
     f32 baseRange = 0.0f;
     s16 playerFacingAngleDiff;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 playSpeed;
 
     if (!EnWf_DodgeRanged(play, this)) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0x2EE, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x2EE, 0);
         this->actor.world.rot.y = this->actor.shape.rot.y;
 
         if (Actor_OtherIsTargeted(play, &this->actor)) {
             baseRange = 150.0f;
         }
 
-        if (this->actor.xzDistToPlayer <= (50.0f + baseRange)) {
+        if (this->actor.xzDistToPlayer[playerIndex] <= (50.0f + baseRange)) {
             Math_SmoothStepToF(&this->actor.speedXZ, -8.0f, 1.0f, 1.5f, 0.0f);
-        } else if ((65.0f + baseRange) < this->actor.xzDistToPlayer) {
+        } else if ((65.0f + baseRange) < this->actor.xzDistToPlayer[playerIndex]) {
             Math_SmoothStepToF(&this->actor.speedXZ, 8.0f, 1.0f, 1.5f, 0.0f);
         } else {
             Math_SmoothStepToF(&this->actor.speedXZ, 0.0f, 1.0f, 6.65f, 0.0f);
@@ -519,9 +523,9 @@ void EnWf_RunAtPlayer(EnWf* this, PlayState* play) {
         playerFacingAngleDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
         playerFacingAngleDiff = ABS(playerFacingAngleDiff);
 
-        if ((this->actor.xzDistToPlayer < (150.0f + baseRange)) && (player->swordState != 0) &&
+        if ((this->actor.xzDistToPlayer[playerIndex] < (150.0f + baseRange)) && (player->swordState != 0) &&
             (playerFacingAngleDiff >= 8000)) {
-            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
             if (Rand_ZeroOne() > 0.7f) {
                 EnWf_SetupRunAroundPlayer(this);
@@ -534,20 +538,20 @@ void EnWf_RunAtPlayer(EnWf* this, PlayState* play) {
         sp58 = this->skelAnime.curFrame - ABS(this->skelAnime.playSpeed);
         playSpeed = (f32)ABS(this->skelAnime.playSpeed);
 
-        if (!Actor_IsFacingPlayer(&this->actor, 0x11C7)) {
+        if (!Actor_IsFacingPlayer(&this->actor, 0x11C7, player, play)) {
             if (Rand_ZeroOne() > 0.5f) {
                 EnWf_SetupRunAroundPlayer(this);
             } else {
                 EnWf_SetupWait(this);
             }
-        } else if (this->actor.xzDistToPlayer < (90.0f + baseRange)) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < (90.0f + baseRange)) {
             s16 temp_v1 = player->actor.shape.rot.y - this->actor.shape.rot.y;
 
             if (!Actor_OtherIsTargeted(play, &this->actor) &&
-                ((Rand_ZeroOne() > 0.03f) || ((this->actor.xzDistToPlayer <= 80.0f) && (ABS(temp_v1) < 0x38E0)))) {
-                EnWf_SetupSlash(this);
+                ((Rand_ZeroOne() > 0.03f) || ((this->actor.xzDistToPlayer[playerIndex] <= 80.0f) && (ABS(temp_v1) < 0x38E0)))) {
+                EnWf_SetupSlash(this, play);
             } else if (Actor_OtherIsTargeted(play, &this->actor) && (Rand_ZeroOne() > 0.5f)) {
-                EnWf_SetupBackflipAway(this);
+                EnWf_SetupBackflipAway(this, play);
             } else {
                 EnWf_SetupRunAroundPlayer(this);
             }
@@ -572,12 +576,14 @@ void EnWf_SetupSearchForPlayer(EnWf* this) {
 }
 
 void EnWf_SearchForPlayer(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     s16 phi_v1;
     f32 phi_f2;
 
     if (!EnWf_DodgeRanged(play, this) && !EnWf_ChangeAction(play, this, false)) {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         phi_v1 = (yawDiff > 0) ? (yawDiff * 0.25f) + 2000.0f : (yawDiff * 0.25f) - 2000.0f;
         this->actor.shape.rot.y += phi_v1;
         this->actor.world.rot.y = this->actor.shape.rot.y;
@@ -593,7 +599,7 @@ void EnWf_SearchForPlayer(EnWf* this, PlayState* play) {
         this->skelAnime.playSpeed = -phi_f2;
         SkelAnime_Update(&this->skelAnime);
 
-        if (Actor_IsFacingPlayer(&this->actor, 0x1555)) {
+        if (Actor_IsFacingPlayer(&this->actor, 0x1555, player, play)) {
             if (Rand_ZeroOne() > 0.8f) {
                 EnWf_SetupRunAroundPlayer(this);
             } else {
@@ -636,9 +642,10 @@ void EnWf_RunAroundPlayer(EnWf* this, PlayState* play) {
     s32 animPrevFrame;
     s32 animFrameSpeedDiff;
     s32 animSpeed;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer + this->runAngle, 1, 4000, 1);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] + this->runAngle, 1, 4000, 1);
 
     if (!EnWf_DodgeRanged(play, this) && !EnWf_ChangeAction(play, this, false)) {
         this->actor.world.rot.y = this->actor.shape.rot.y;
@@ -648,7 +655,7 @@ void EnWf_RunAroundPlayer(EnWf* this, PlayState* play) {
         if ((this->actor.bgCheckFlags & 8) ||
             !Actor_TestFloorInDirection(&this->actor, play, this->actor.speedXZ, this->actor.shape.rot.y)) {
             angle2 = (this->actor.bgCheckFlags & 8)
-                         ? (this->actor.wallYaw - this->actor.yawTowardsPlayer) - this->runAngle
+                         ? (this->actor.wallYaw - this->actor.yawTowardsPlayer[playerIndex]) - this->runAngle
                          : 0;
 
             // This is probably meant to reverse direction if the edge of a floor is encountered, but does nothing
@@ -662,9 +669,9 @@ void EnWf_RunAroundPlayer(EnWf* this, PlayState* play) {
             baseRange = 150.0f;
         }
 
-        if (this->actor.xzDistToPlayer <= (60.0f + baseRange)) {
+        if (this->actor.xzDistToPlayer[playerIndex] <= (60.0f + baseRange)) {
             Math_SmoothStepToF(&this->runSpeed, -4.0f, 1.0f, 1.5f, 0.0f);
-        } else if ((80.0f + baseRange) < this->actor.xzDistToPlayer) {
+        } else if ((80.0f + baseRange) < this->actor.xzDistToPlayer[playerIndex]) {
             Math_SmoothStepToF(&this->runSpeed, 4.0f, 1.0f, 1.5f, 0.0f);
         } else {
             Math_SmoothStepToF(&this->runSpeed, 0.0f, 1.0f, 6.65f, 0.0f);
@@ -698,14 +705,14 @@ void EnWf_RunAroundPlayer(EnWf* this, PlayState* play) {
         }
 
         if ((Math_CosS(angle1 - this->actor.shape.rot.y) < -0.85f) && !Actor_OtherIsTargeted(play, &this->actor) &&
-            (this->actor.xzDistToPlayer <= 80.0f)) {
-            EnWf_SetupSlash(this);
+            (this->actor.xzDistToPlayer[playerIndex] <= 80.0f)) {
+            EnWf_SetupSlash(this, play);
         } else {
             this->actionTimer--;
 
             if (this->actionTimer == 0) {
                 if (Actor_OtherIsTargeted(play, &this->actor) && (Rand_ZeroOne() > 0.5f)) {
-                    EnWf_SetupBackflipAway(this);
+                    EnWf_SetupBackflipAway(this, play);
                 } else {
                     EnWf_SetupWait(this);
                     this->actionTimer = (Rand_ZeroOne() * 3.0f) + 1.0f;
@@ -715,10 +722,12 @@ void EnWf_RunAroundPlayer(EnWf* this, PlayState* play) {
     }
 }
 
-void EnWf_SetupSlash(EnWf* this) {
+void EnWf_SetupSlash(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_PlayOnce(&this->skelAnime, &gWolfosSlashingAnim);
     this->colliderSpheres.base.atFlags &= ~AT_BOUNCED;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     this->action = WOLFOS_ACTION_SLASH;
     this->unk_2FA = 0; // Set and not used
     this->actionTimer = 7;
@@ -729,9 +738,10 @@ void EnWf_SetupSlash(EnWf* this) {
 }
 
 void EnWf_Slash(EnWf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 shapeAngleDiff = player->actor.shape.rot.y - this->actor.shape.rot.y;
-    s16 yawAngleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 yawAngleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     s32 curFrame = this->skelAnime.curFrame;
 
     shapeAngleDiff = ABS(shapeAngleDiff);
@@ -749,30 +759,30 @@ void EnWf_Slash(EnWf* this, PlayState* play) {
     }
 
     if (((curFrame == 15) && !Actor_IsTargeted(play, &this->actor) &&
-         (!Actor_IsFacingPlayer(&this->actor, 0x2000) || (this->actor.xzDistToPlayer >= 100.0f))) ||
+         (!Actor_IsFacingPlayer(&this->actor, 0x2000, player, play) || (this->actor.xzDistToPlayer[playerIndex] >= 100.0f))) ||
         SkelAnime_Update(&this->skelAnime)) {
         if ((curFrame != 15) && (this->actionTimer != 0)) {
             this->actor.shape.rot.y += (s16)(3276.0f * (1.5f + (this->actionTimer - 4) * 0.4f));
             Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, 15.0f, 1, 2.0f, 50, 50, true);
             this->actionTimer--;
-        } else if (!Actor_IsFacingPlayer(&this->actor, 0x1554) && (curFrame != 15)) {
+        } else if (!Actor_IsFacingPlayer(&this->actor, 0x1554, player, play) && (curFrame != 15)) {
             EnWf_SetupWait(this);
             this->actionTimer = (Rand_ZeroOne() * 5.0f) + 5.0f;
 
             if (yawAngleDiff > 13000) {
                 this->unk_2E2 = 7;
             }
-        } else if ((Rand_ZeroOne() > 0.7f) || (this->actor.xzDistToPlayer >= 120.0f)) {
+        } else if ((Rand_ZeroOne() > 0.7f) || (this->actor.xzDistToPlayer[playerIndex] >= 120.0f)) {
             EnWf_SetupWait(this);
             this->actionTimer = (Rand_ZeroOne() * 5.0f) + 5.0f;
         } else {
-            this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+            this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
             if (Rand_ZeroOne() > 0.7f) {
                 EnWf_SetupSidestep(this, play);
             } else if (shapeAngleDiff <= 10000) {
                 if (yawAngleDiff > 16000) {
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                     EnWf_SetupRunAroundPlayer(this);
                 } else {
                     EnWf_ChangeAction(play, this, true);
@@ -799,15 +809,16 @@ void EnWf_SetupRecoilFromBlockedSlash(EnWf* this) {
 }
 
 void EnWf_RecoilFromBlockedSlash(EnWf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 angle1 = player->actor.shape.rot.y - this->actor.shape.rot.y;
-    s16 angle2 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 angle2 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     angle1 = ABS(angle1);
     angle2 = ABS(angle2);
 
     if (SkelAnime_Update(&this->skelAnime)) {
-        if (!Actor_IsFacingPlayer(&this->actor, 0x1554)) {
+        if (!Actor_IsFacingPlayer(&this->actor, 0x1554, player, play)) {
             EnWf_SetupWait(this);
             this->actionTimer = (Rand_ZeroOne() * 5.0f) + 5.0f;
 
@@ -815,17 +826,17 @@ void EnWf_RecoilFromBlockedSlash(EnWf* this, PlayState* play) {
                 this->unk_2E2 = 30;
             }
         } else {
-            if ((Rand_ZeroOne() > 0.7f) || (this->actor.xzDistToPlayer >= 120.0f)) {
+            if ((Rand_ZeroOne() > 0.7f) || (this->actor.xzDistToPlayer[playerIndex] >= 120.0f)) {
                 EnWf_SetupWait(this);
                 this->actionTimer = (Rand_ZeroOne() * 5.0f) + 5.0f;
             } else {
-                this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
                 if (Rand_ZeroOne() > 0.7f) {
                     EnWf_SetupSidestep(this, play);
                 } else if (angle1 <= 0x2710) {
                     if (angle2 > 0x3E80) {
-                        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                         EnWf_SetupRunAroundPlayer(this);
                     } else {
                         EnWf_ChangeAction(play, this, true);
@@ -838,10 +849,12 @@ void EnWf_RecoilFromBlockedSlash(EnWf* this, PlayState* play) {
     }
 }
 
-void EnWf_SetupBackflipAway(EnWf* this) {
+void EnWf_SetupBackflipAway(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_MorphToPlayOnce(&this->skelAnime, &gWolfosBackflippingAnim, -3.0f);
     this->actor.speedXZ = -6.0f;
-    this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     this->actionTimer = 0;
     this->unk_300 = true;
     this->action = WOLFOS_ACTION_BACKFLIP_AWAY;
@@ -850,9 +863,11 @@ void EnWf_SetupBackflipAway(EnWf* this) {
 }
 
 void EnWf_BackflipAway(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
-        if (!Actor_OtherIsTargeted(play, &this->actor) && (this->actor.xzDistToPlayer < 170.0f) &&
-            (this->actor.xzDistToPlayer > 140.0f) && (Rand_ZeroOne() < 0.2f)) {
+        if (!Actor_OtherIsTargeted(play, &this->actor) && (this->actor.xzDistToPlayer[playerIndex] < 170.0f) &&
+            (this->actor.xzDistToPlayer[playerIndex] > 140.0f) && (Rand_ZeroOne() < 0.2f)) {
             EnWf_SetupRunAtPlayer(this, play);
         } else if ((play->gameplayFrames % 2) != 0) {
             EnWf_SetupSidestep(this, play);
@@ -891,14 +906,14 @@ void EnWf_Stunned(EnWf* this, PlayState* play) {
 
     if ((this->actor.colorFilterTimer == 0) && (this->actor.bgCheckFlags & 1)) {
         if (this->actor.colChkInfo.health == 0) {
-            EnWf_SetupDie(this);
+            EnWf_SetupDie(this, play);
         } else {
             EnWf_ChangeAction(play, this, true);
         }
     }
 }
 
-void EnWf_SetupDamaged(EnWf* this) {
+void EnWf_SetupDamaged(EnWf* this, u16 playerIndex) {
     Animation_MorphToPlayOnce(&this->skelAnime, &gWolfosDamagedAnim, -4.0f);
 
     if (this->actor.bgCheckFlags & 1) {
@@ -909,13 +924,15 @@ void EnWf_SetupDamaged(EnWf* this) {
     }
 
     this->unk_2E2 = 0;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_WOLFOS_DAMAGE);
     this->action = WOLFOS_ACTION_DAMAGED;
     EnWf_SetupAction(this, EnWf_Damaged);
 }
 
 void EnWf_Damaged(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 angleToWall;
 
     if (this->actor.bgCheckFlags & 2) {
@@ -930,25 +947,25 @@ void EnWf_Damaged(EnWf* this, PlayState* play) {
         this->unk_300 = false;
     }
 
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 4500, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 4500, 0);
 
     if (!EnWf_ChangeAction(play, this, false) && SkelAnime_Update(&this->skelAnime)) {
         if (this->actor.bgCheckFlags & 1) {
             angleToWall = this->actor.wallYaw - this->actor.shape.rot.y;
             angleToWall = ABS(angleToWall);
 
-            if ((this->actor.bgCheckFlags & 8) && (ABS(angleToWall) < 12000) && (this->actor.xzDistToPlayer < 120.0f)) {
+            if ((this->actor.bgCheckFlags & 8) && (ABS(angleToWall) < 12000) && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
                 EnWf_SetupSomersaultAndAttack(this);
             } else if (!EnWf_DodgeRanged(play, this)) {
-                if ((this->actor.xzDistToPlayer <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
+                if ((this->actor.xzDistToPlayer[playerIndex] <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
                     ((play->gameplayFrames % 8) != 0)) {
-                    EnWf_SetupSlash(this);
+                    EnWf_SetupSlash(this, play);
                 } else if (Rand_ZeroOne() > 0.5f) {
                     EnWf_SetupWait(this);
                     this->actionTimer = (Rand_ZeroOne() * 5.0f) + 5.0f;
                     this->unk_2E2 = 30;
                 } else {
-                    EnWf_SetupBackflipAway(this);
+                    EnWf_SetupBackflipAway(this, play);
                 }
             }
         }
@@ -970,7 +987,9 @@ void EnWf_SetupSomersaultAndAttack(EnWf* this) {
 }
 
 void EnWf_SomersaultAndAttack(EnWf* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 4000, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 4000, 1);
 
     if (this->actor.velocity.y >= 5.0f) {
         //! @bug unk_4C8 and unk_4BC are used but not set (presumably intended to be feet positions like other actors)
@@ -979,13 +998,13 @@ void EnWf_SomersaultAndAttack(EnWf* this, PlayState* play) {
     }
 
     if (SkelAnime_Update(&this->skelAnime) && (this->actor.bgCheckFlags & (1 | 2))) {
-        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.shape.rot.x = 0;
         this->actor.speedXZ = this->actor.velocity.y = 0.0f;
         this->actor.world.pos.y = this->actor.floorHeight;
 
         if (!Actor_OtherIsTargeted(play, &this->actor)) {
-            EnWf_SetupSlash(this);
+            EnWf_SetupSlash(this, play);
         } else {
             EnWf_SetupWait(this);
         }
@@ -1008,7 +1027,8 @@ void EnWf_SetupBlocking(EnWf* this) {
 }
 
 void EnWf_Blocking(EnWf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     if (this->actionTimer != 0) {
@@ -1018,17 +1038,17 @@ void EnWf_Blocking(EnWf* this, PlayState* play) {
     }
 
     if (SkelAnime_Update(&this->skelAnime)) {
-        s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-        if ((ABS(yawDiff) <= 0x4000) && (this->actor.xzDistToPlayer < 60.0f) &&
-            (ABS(this->actor.yDistToPlayer) < 50.0f)) {
+        if ((ABS(yawDiff) <= 0x4000) && (this->actor.xzDistToPlayer[playerIndex] < 60.0f) &&
+            (ABS(this->actor.yDistToPlayer[playerIndex]) < 50.0f)) {
             if (func_800354B4(play, &this->actor, 100.0f, 10000, 0x4000, this->actor.shape.rot.y)) {
                 if (player->meleeWeaponAnimation == 0x11) {
                     EnWf_SetupBlocking(this);
                 } else if ((play->gameplayFrames % 2) != 0) {
                     EnWf_SetupBlocking(this);
                 } else {
-                    EnWf_SetupBackflipAway(this);
+                    EnWf_SetupBackflipAway(this, play);
                 }
 
             } else {
@@ -1036,7 +1056,7 @@ void EnWf_Blocking(EnWf* this, PlayState* play) {
 
                 if (!Actor_OtherIsTargeted(play, &this->actor) &&
                     (((play->gameplayFrames % 2) != 0) || (ABS(angleFacingLink) < 0x38E0))) {
-                    EnWf_SetupSlash(this);
+                    EnWf_SetupSlash(this, play);
                 } else {
                     EnWf_SetupRunAroundPlayer(this);
                 }
@@ -1051,7 +1071,7 @@ void EnWf_Blocking(EnWf* this, PlayState* play) {
             } else if ((play->gameplayFrames % 2) != 0) {
                 EnWf_SetupBlocking(this);
             } else {
-                EnWf_SetupBackflipAway(this);
+                EnWf_SetupBackflipAway(this, play);
             }
         }
     }
@@ -1059,17 +1079,17 @@ void EnWf_Blocking(EnWf* this, PlayState* play) {
 
 void EnWf_SetupSidestep(EnWf* this, PlayState* play) {
     s16 angle;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 lastFrame = Animation_GetLastFrame(&gWolfosRunningAnim);
 
     Animation_Change(&this->skelAnime, &gWolfosRunningAnim, 1.0f, 0.0f, lastFrame, ANIMMODE_LOOP_INTERP, -4.0f);
 
-    player = GET_PLAYER(play);
     angle = player->actor.shape.rot.y + this->runAngle;
 
-    if (Math_SinS(angle - this->actor.yawTowardsPlayer) > 0.0f) {
+    if (Math_SinS(angle - this->actor.yawTowardsPlayer[playerIndex]) > 0.0f) {
         this->runAngle = 16000;
-    } else if (Math_SinS(angle - this->actor.yawTowardsPlayer) < 0.0f) {
+    } else if (Math_SinS(angle - this->actor.yawTowardsPlayer[playerIndex]) < 0.0f) {
         this->runAngle = -16000;
     } else if (Rand_ZeroOne() > 0.5f) {
         this->runAngle = 16000;
@@ -1089,19 +1109,20 @@ void EnWf_SetupSidestep(EnWf* this, PlayState* play) {
 
 void EnWf_Sidestep(EnWf* this, PlayState* play) {
     s16 angleDiff1;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 animPrevFrame;
     s32 animFrameSpeedDiff;
     s32 animSpeed;
     f32 baseRange = 0.0f;
 
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer + this->runAngle, 1, 3000, 1);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] + this->runAngle, 1, 3000, 1);
 
     // Actor_TestFloorInDirection is useless here (see comment below)
     if ((this->actor.bgCheckFlags & 8) ||
         !Actor_TestFloorInDirection(&this->actor, play, this->actor.speedXZ, this->actor.shape.rot.y)) {
         s16 angle =
-            (this->actor.bgCheckFlags & 8) ? (this->actor.wallYaw - this->actor.yawTowardsPlayer) - this->runAngle : 0;
+            (this->actor.bgCheckFlags & 8) ? (this->actor.wallYaw - this->actor.yawTowardsPlayer[playerIndex]) - this->runAngle : 0;
 
         // This is probably meant to reverse direction if the edge of a floor is encountered, but does nothing
         // unless bgCheckFlags & 8 anyway, since angle = 0 otherwise
@@ -1116,9 +1137,9 @@ void EnWf_Sidestep(EnWf* this, PlayState* play) {
         baseRange = 150.0f;
     }
 
-    if (this->actor.xzDistToPlayer <= (60.0f + baseRange)) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= (60.0f + baseRange)) {
         Math_SmoothStepToF(&this->runSpeed, -4.0f, 1.0f, 1.5f, 0.0f);
-    } else if ((80.0f + baseRange) < this->actor.xzDistToPlayer) {
+    } else if ((80.0f + baseRange) < this->actor.xzDistToPlayer[playerIndex]) {
         Math_SmoothStepToF(&this->runSpeed, 4.0f, 1.0f, 1.5f, 0.0f);
     } else {
         Math_SmoothStepToF(&this->runSpeed, 0.0f, 1.0f, 6.65f, 0.0f);
@@ -1146,21 +1167,21 @@ void EnWf_Sidestep(EnWf* this, PlayState* play) {
         this->actionTimer--;
 
         if (this->actionTimer == 0) {
-            angleDiff1 = player->actor.shape.rot.y - this->actor.yawTowardsPlayer;
+            angleDiff1 = player->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex];
             angleDiff1 = ABS(angleDiff1);
 
             if (angleDiff1 >= 0x3A98) {
                 EnWf_SetupWait(this);
                 this->actionTimer = (Rand_ZeroOne() * 3.0f) + 1.0f;
             } else {
-                Player* player2 = GET_PLAYER(play);
-                s16 angleDiff2 = player2->actor.shape.rot.y - this->actor.yawTowardsPlayer;
+                Player* player2 = Player_NearestToActor(&this->actor, play);
+                s16 angleDiff2 = player2->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex];
 
                 this->actor.world.rot.y = this->actor.shape.rot.y;
 
-                if ((this->actor.xzDistToPlayer <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
+                if ((this->actor.xzDistToPlayer[playerIndex] <= 80.0f) && !Actor_OtherIsTargeted(play, &this->actor) &&
                     (((play->gameplayFrames % 4) == 0) || (ABS(angleDiff2) < 0x38E0))) {
-                    EnWf_SetupSlash(this);
+                    EnWf_SetupSlash(this, play);
                 } else {
                     EnWf_SetupRunAtPlayer(this, play);
                 }
@@ -1179,9 +1200,11 @@ void EnWf_Sidestep(EnWf* this, PlayState* play) {
     }
 }
 
-void EnWf_SetupDie(EnWf* this) {
+void EnWf_SetupDie(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_MorphToPlayOnce(&this->skelAnime, &gWolfosRearingUpFallingOverAnim, -4.0f);
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
     if (this->actor.bgCheckFlags & 1) {
         this->unk_300 = false;
@@ -1238,11 +1261,13 @@ void EnWf_Die(EnWf* this, PlayState* play) {
 }
 
 void func_80B36F40(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((this->action == WOLFOS_ACTION_WAIT) && (this->unk_2E2 != 0)) {
         this->unk_4D4.y = Math_SinS(this->unk_2E2 * 4200) * 8920.0f;
     } else if (this->action != WOLFOS_ACTION_STUNNED) {
         if (this->action != WOLFOS_ACTION_SLASH) {
-            Math_SmoothStepToS(&this->unk_4D4.y, this->actor.yawTowardsPlayer - this->actor.shape.rot.y, 1, 1500, 0);
+            Math_SmoothStepToS(&this->unk_4D4.y, this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y, 1, 1500, 0);
             this->unk_4D4.y = CLAMP(this->unk_4D4.y, -0x3127, 0x3127);
         } else {
             this->unk_4D4.y = 0;
@@ -1251,6 +1276,8 @@ void func_80B36F40(EnWf* this, PlayState* play) {
 }
 
 void EnWf_UpdateDamage(EnWf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->colliderSpheres.base.acFlags & AC_BOUNCED) {
         this->colliderSpheres.base.acFlags &= ~(AC_HIT | AC_BOUNCED);
         this->colliderCylinderBody.base.acFlags &= ~AC_HIT;
@@ -1258,7 +1285,7 @@ void EnWf_UpdateDamage(EnWf* this, PlayState* play) {
     } else if ((this->colliderCylinderBody.base.acFlags & AC_HIT) ||
                (this->colliderCylinderTail.base.acFlags & AC_HIT)) {
         if (this->action >= WOLFOS_ACTION_WAIT) {
-            s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+            s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
             if ((!(this->colliderCylinderBody.base.acFlags & AC_HIT) &&
                  (this->colliderCylinderTail.base.acFlags & AC_HIT)) ||
@@ -1289,10 +1316,10 @@ void EnWf_UpdateDamage(EnWf* this, PlayState* play) {
                     }
 
                     if (Actor_ApplyDamage(&this->actor) == 0) {
-                        EnWf_SetupDie(this);
+                        EnWf_SetupDie(this, play);
                         Enemy_StartFinishingBlow(play, &this->actor);
                     } else {
-                        EnWf_SetupDamaged(this);
+                        EnWf_SetupDamaged(this, playerIndex);
                     }
                 }
             }
@@ -1488,7 +1515,7 @@ s32 EnWf_DodgeRanged(PlayState* play, EnWf* this) {
                 EnWf_SetupSidestep(this, play);
                 this->actor.speedXZ *= 2.0f;
             } else if (ABS(angleToFacing) < 0x5FFF) {
-                EnWf_SetupBackflipAway(this);
+                EnWf_SetupBackflipAway(this, play);
             }
         }
         return true;

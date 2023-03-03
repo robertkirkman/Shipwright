@@ -329,18 +329,20 @@ void ObjMure_SetChildToFollowPlayer(ObjMure* this, s32 idx1) {
 
 // Fish, Bugs
 void ObjMure_GroupBehavior0(ObjMure* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->unk_1A4 <= 0) {
         if (this->unk_1A6) {
             this->unk_1A6 = false;
             ObjMure_SetFollowTargets(this, (Rand_ZeroOne() * 0.5f) + 0.1f);
-            if (this->actor.xzDistToPlayer < 60.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
                 this->unk_1A4 = (s16)(Rand_ZeroOne() * 5.5f) + 4;
             } else {
                 this->unk_1A4 = (s16)(Rand_ZeroOne() * 40.5f) + 4;
             }
         } else {
             this->unk_1A6 = true;
-            if (this->actor.xzDistToPlayer < 60.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
                 this->unk_1A4 = (s16)(Rand_ZeroOne() * 10.5f) + 4;
                 ObjMure_SetFollowTargets(this, (Rand_ZeroOne() * 0.2f) + 0.8f);
             } else {
@@ -349,7 +351,7 @@ void ObjMure_GroupBehavior0(ObjMure* this, PlayState* play) {
             }
         }
     }
-    if (this->actor.xzDistToPlayer < 120.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
         this->unk_1A8++;
     } else {
         this->unk_1A8 = 0;
@@ -363,6 +365,8 @@ void ObjMure_GroupBehavior0(ObjMure* this, PlayState* play) {
 
 // Butterflies
 void ObjMure_GroupBehavior1(ObjMure* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 maxChildren;
     s32 i;
 
@@ -370,7 +374,7 @@ void ObjMure_GroupBehavior1(ObjMure* this, PlayState* play) {
         if (this->unk_1A6) {
             this->unk_1A6 = false;
             ObjMure_SetFollowTargets(this, Rand_ZeroOne() * 0.2f);
-            if (this->actor.xzDistToPlayer < 60.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
                 this->unk_1A4 = (s16)(Rand_ZeroOne() * 5.5f) + 4;
             } else {
                 this->unk_1A4 = (s16)(Rand_ZeroOne() * 40.5f) + 4;

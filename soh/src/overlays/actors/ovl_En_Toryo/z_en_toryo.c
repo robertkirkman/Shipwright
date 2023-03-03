@@ -142,7 +142,7 @@ void EnToryo_Destroy(Actor* thisx, PlayState* play) {
 
 s32 func_80B203D8(EnToryo* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 ret = 1;
 
     switch (Message_GetState(&play->msgCtx)) {
@@ -215,7 +215,6 @@ s32 func_80B203D8(EnToryo* this, PlayState* play) {
 
 s32 func_80B205CC(EnToryo* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
     s32 ret = 5;
 
     switch (Message_GetState(&play->msgCtx)) {
@@ -285,7 +284,7 @@ s32 func_80B206A0(EnToryo* this, PlayState* play) {
 }
 
 void func_80B20768(EnToryo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 sp32;
     s16 sp30;
 
@@ -329,7 +328,7 @@ void func_80B20768(EnToryo* this, PlayState* play) {
 
     if (this->unk_1E4 == 0) {
         if (Actor_ProcessTalkRequest(&this->actor, play)) {
-            this->unk_1E0 = func_8002F368(play);
+            this->unk_1E0 = func_8002F368(play, player);
             if (this->unk_1E0 != 0) {
                 player->actor.textId = func_80B20634(this, play);
                 this->actor.textId = player->actor.textId;
@@ -359,7 +358,8 @@ void func_80B20914(EnToryo* this, PlayState* play) {
 void EnToryo_Update(Actor* thisx, PlayState* play) {
     EnToryo* this = (EnToryo*)thisx;
     ColliderCylinder* collider = &this->collider;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 rot;
 
     Collider_UpdateCylinder(thisx, collider);
@@ -377,7 +377,7 @@ void EnToryo_Update(Actor* thisx, PlayState* play) {
             return;
         }
 
-        rot = thisx->yawTowardsPlayer - thisx->shape.rot.y;
+        rot = thisx->yawTowardsPlayer[playerIndex] - thisx->shape.rot.y;
         if ((rot < 14563.0f) && (rot > -14563.0f)) {
             Npc_TrackPoint(thisx, &this->interactInfo, 0, NPC_TRACKING_HEAD_AND_TORSO);
         } else {

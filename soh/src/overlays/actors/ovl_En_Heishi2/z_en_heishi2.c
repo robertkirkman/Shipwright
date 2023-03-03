@@ -390,7 +390,8 @@ void func_80A5399C(EnHeishi2* this, PlayState* play) {
 }
 
 void func_80A53AD4(EnHeishi2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 exchangeItemId;
     s16 yawDiffTemp;
     s16 yawDiff;
@@ -403,7 +404,7 @@ void func_80A53AD4(EnHeishi2* this, PlayState* play) {
     }
     this->unk_300 = TEXT_STATE_DONE;
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        exchangeItemId = func_8002F368(play);
+        exchangeItemId = func_8002F368(play, player);
         if (exchangeItemId == EXCH_ITEM_LETTER_ZELDA) {
             func_80078884(NA_SE_SY_CORRECT_CHIME);
             player->actor.textId = 0x2010;
@@ -413,9 +414,9 @@ void func_80A53AD4(EnHeishi2* this, PlayState* play) {
             player->actor.textId = 0x200F;
         }
     } else {
-        yawDiffTemp = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiffTemp = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         yawDiff = ABS(yawDiffTemp);
-        if (!(120.0f < this->actor.xzDistToPlayer) && (yawDiff < 0x4300)) {
+        if (!(120.0f < this->actor.xzDistToPlayer[playerIndex]) && (yawDiff < 0x4300)) {
             func_8002F298(&this->actor, play, 100.0f, EXCH_ITEM_LETTER_ZELDA);
         }
     }
@@ -651,13 +652,15 @@ void func_80A5455C(EnHeishi2* this, PlayState* play) {
     EnBom* bomb;
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         func_8002DF54(play, NULL, 7);
         Message_CloseTextbox(play);
 
         pos.x = Rand_CenteredFloat(20.0f) + this->unk_274.x;
         pos.y = Rand_CenteredFloat(20.0f) + (this->unk_274.y - 40.0f);
         pos.z = Rand_CenteredFloat(20.0f) + (this->unk_274.z - 20.0f);
-        rotY = Rand_CenteredFloat(7000.0f) + this->actor.yawTowardsPlayer;
+        rotY = Rand_CenteredFloat(7000.0f) + this->actor.yawTowardsPlayer[playerIndex];
         bomb = (EnBom*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_BOM, pos.x, pos.y, pos.z, 0, rotY, 0, 0, true);
         if (bomb != NULL) {
             bomb->actor.speedXZ = Rand_CenteredFloat(5.0f) + 10.0f;
@@ -680,6 +683,8 @@ void func_80A546DC(EnHeishi2* this, PlayState* play) {
 }
 
 void func_80A5475C(EnHeishi2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     SkelAnime_Update(&this->skelAnime);
@@ -734,8 +739,8 @@ void func_80A5475C(EnHeishi2* this, PlayState* play) {
     }
 
     if (((this->type != 2) && (this->type != 5)) ||
-        ((yawDiff = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)),
-          !(this->actor.xzDistToPlayer > 120.0f)) &&
+        ((yawDiff = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)),
+          !(this->actor.xzDistToPlayer[playerIndex] > 120.0f)) &&
          (yawDiff < 0x4300))) {
         func_8002F2F4(&this->actor, play);
     }

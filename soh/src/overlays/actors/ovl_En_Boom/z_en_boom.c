@@ -108,7 +108,7 @@ void EnBoom_Destroy(Actor* thisx, PlayState* play) {
 
 void EnBoom_Fly(EnBoom* this, PlayState* play) {
     Actor* target;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 collided;
     s16 yawTarget;
     s16 yawDiff;
@@ -122,7 +122,6 @@ void EnBoom_Fly(EnBoom* this, PlayState* play) {
     Vec3f hitPoint;
     s32 pad2;
 
-    player = GET_PLAYER(play);
     target = this->moveTo;
 
     // If the boomerang is moving toward a targeted actor, handle setting the proper x and y angle to fly toward it.
@@ -241,7 +240,7 @@ void EnBoom_Fly(EnBoom* this, PlayState* play) {
 
 void EnBoom_Update(Actor* thisx, PlayState* play) {
     EnBoom* this = (EnBoom*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (!(player->stateFlags1 & 0x20000000)) {
         this->actionFunc(this, play);

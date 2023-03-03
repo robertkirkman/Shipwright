@@ -73,7 +73,7 @@ static AnimationFrameCountInfo sAnimationInfo[] = {
 };
 
 u16 func_80AA2AA0(PlayState* play, Actor* thisx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s16* timer1ValuePtr; // weirdness with this necessary to match
 
     if (!(gSaveContext.infTable[11] & 0x100)) {
@@ -180,7 +180,7 @@ s16 func_80AA2BD4(PlayState* play, Actor* thisx) {
 }
 
 void func_80AA2E54(EnMa3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode;
 
     if ((this->interactInfo.talkState == NPC_TALK_STATE_IDLE) && (this->skelAnime.animation == &gMalonAdultSingAnim)) {

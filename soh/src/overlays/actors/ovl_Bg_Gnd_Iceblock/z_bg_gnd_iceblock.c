@@ -233,7 +233,7 @@ void BgGndIceblock_SetNextPosition(BgGndIceblock* this) {
 }
 
 void BgGndIceblock_Idle(BgGndIceblock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -249,7 +249,7 @@ void BgGndIceblock_Idle(BgGndIceblock* this, PlayState* play) {
 }
 
 void BgGndIceblock_Reset(BgGndIceblock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* thisx = &this->dyna.actor;
 
     if (this->dyna.unk_150 != 0.0f) {

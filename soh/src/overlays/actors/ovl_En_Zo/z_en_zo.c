@@ -509,7 +509,7 @@ void EnZo_Blink(EnZo* this) {
 }
 
 void EnZo_Dialog(EnZo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     if (this->actionFunc == EnZo_Standing) {
@@ -526,7 +526,7 @@ void EnZo_Dialog(EnZo* this, PlayState* play) {
 }
 
 s32 EnZo_PlayerInProximity(EnZo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f surfacePos;
     f32 yDist;
     f32 hDist;
@@ -618,6 +618,8 @@ void EnZo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnZo_Standing(EnZo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 angle;
 
     func_80034F54(play, this->unk_656, this->unk_67E, 20);
@@ -627,7 +629,7 @@ void EnZo_Standing(EnZo* this, PlayState* play) {
         return;
     }
 
-    angle = ABS((s16)((f32)this->actor.yawTowardsPlayer - (f32)this->actor.shape.rot.y));
+    angle = ABS((s16)((f32)this->actor.yawTowardsPlayer[playerIndex] - (f32)this->actor.shape.rot.y));
     if (angle < 0x4718) {
         if (EnZo_PlayerInProximity(this, play)) {
             this->trackingMode = NPC_TRACKING_HEAD_AND_TORSO;

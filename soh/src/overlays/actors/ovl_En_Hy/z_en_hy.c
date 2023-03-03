@@ -410,13 +410,15 @@ s32 EnHy_IsOsAnimeObjectLoaded(EnHy* this, PlayState* play) {
 }
 
 void func_80A6F7CC(EnHy* this, PlayState* play, s32 getItemId) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unkGetItemId = getItemId;
-    func_8002F434(&this->actor, play, getItemId, this->actor.xzDistToPlayer + 1.0f,
-                  fabsf(this->actor.yDistToPlayer) + 1.0f);
+    func_8002F434(&this->actor, play, getItemId, this->actor.xzDistToPlayer[playerIndex] + 1.0f,
+                  fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
 }
 
 u16 func_80A6F810(PlayState* play, Actor* thisx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     EnHy* this = (EnHy*)thisx;
     u16 textId = Text_GetFaceReaction(play, (this->actor.params & 0x7F) + 37);
 
@@ -554,6 +556,8 @@ u16 func_80A6F810(PlayState* play, Actor* thisx) {
 }
 
 s16 func_80A70058(PlayState* play, Actor* thisx) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnHy* this = (EnHy*)thisx;
     s16 beggarItems[] = { ITEM_BLUE_FIRE, ITEM_FISH, ITEM_BUG, ITEM_FAIRY };
     s16 beggarRewards[] = { 150, 100, 50, 25 };
@@ -596,7 +600,7 @@ s16 func_80A70058(PlayState* play, Actor* thisx) {
                 case 0x70F3:
                     Rupees_ChangeBy(beggarRewards[this->actor.textId - 0x70F0]);
                     Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENHY_ANIM_17);
-                    Player_UpdateBottleHeld(play, GET_PLAYER(play), ITEM_BOTTLE, PLAYER_IA_BOTTLE);
+                    Player_UpdateBottleHeld(play, player, ITEM_BOTTLE, PLAYER_IA_BOTTLE);
                     break;
                 case 0x7016:
                     gSaveContext.infTable[12] |= 1;
@@ -668,7 +672,7 @@ s16 func_80A70058(PlayState* play, Actor* thisx) {
                             this->getItemEntry = Randomizer_GetItemFromKnownCheck(RC_MARKET_LOST_DOG, GI_HEART_PIECE);
                             // The follownig line and last arguments of GiveItemEntryFromActor are copied from func_80A6F7CC
                             this->unkGetItemId = this->getItemEntry.getItemId;
-                            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer + 1.0f, fabsf(this->actor.yDistToPlayer) + 1.0f);
+                            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer[playerIndex] + 1.0f, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
                         }
                     }
                     this->actionFunc = func_80A714C4;
@@ -731,12 +735,12 @@ void EnHy_UpdateCollider(EnHy* this, PlayState* play) {
 }
 
 void func_80A70834(EnHy* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((this->actor.params & 0x7F) == ENHY_TYPE_BOJ_5) {
         if (!Inventory_HasSpecificBottle(ITEM_BLUE_FIRE) && !Inventory_HasSpecificBottle(ITEM_BUG) &&
             !Inventory_HasSpecificBottle(ITEM_FISH)) {
-            switch (func_8002F368(play)) {
+            switch (func_8002F368(play, player)) {
                 case EXCH_ITEM_POE:
                 case EXCH_ITEM_BIG_POE:
                 case EXCH_ITEM_LETTER_RUTO:
@@ -749,7 +753,7 @@ void func_80A70834(EnHy* this, PlayState* play) {
                     break;
             }
         } else {
-            switch (func_8002F368(play)) {
+            switch (func_8002F368(play, player)) {
                 case EXCH_ITEM_BLUE_FIRE:
                     this->actor.textId = 0x70F0;
                     break;
@@ -772,7 +776,7 @@ void func_80A70834(EnHy* this, PlayState* play) {
 }
 
 void func_80A70978(EnHy* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode;
 
     switch (this->actor.params & 0x7F) {
@@ -1019,7 +1023,9 @@ void EnHy_DoNothing(EnHy* this, PlayState* play) {
 }
 
 void func_80A712C0(EnHy* this, PlayState* play) {
-    if ((this->actor.xzDistToPlayer <= 100.0f) && (this->path != NULL)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if ((this->actor.xzDistToPlayer[playerIndex] <= 100.0f) && (this->path != NULL)) {
         Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENHY_ANIM_7);
         this->actor.speedXZ = 0.4f;
         this->actionFunc = func_80A7134C;
@@ -1066,10 +1072,12 @@ void func_80A714C4(EnHy* this, PlayState* play) {
     if (Actor_HasParent(&this->actor, play)) {
         this->actionFunc = func_80A71530;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (!gSaveContext.n64ddFlag || this->getItemEntry.getItemId == GI_NONE) {
-            func_8002F434(&this->actor, play, this->unkGetItemId, this->actor.xzDistToPlayer + 1.0f, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            func_8002F434(&this->actor, play, this->unkGetItemId, this->actor.xzDistToPlayer[playerIndex] + 1.0f, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         } else {
-            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer + 1.0f, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer[playerIndex] + 1.0f, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         }
     }
 }

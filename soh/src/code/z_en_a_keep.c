@@ -209,10 +209,12 @@ void EnAObj_SetupWaitTalk(EnAObj* this, s16 type) {
 }
 
 void EnAObj_WaitTalk(EnAObj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 relYawTowardsPlayer;
 
     if (this->dyna.actor.textId != 0) {
-        relYawTowardsPlayer = this->dyna.actor.yawTowardsPlayer - this->dyna.actor.shape.rot.y;
+        relYawTowardsPlayer = this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.shape.rot.y;
         if (ABS(relYawTowardsPlayer) < 0x2800 ||
             (this->dyna.actor.params == A_OBJ_SIGNPOST_ARROW && ABS(relYawTowardsPlayer) > 0x5800)) {
             if (Actor_ProcessTalkRequest(&this->dyna.actor, play)) {
@@ -233,18 +235,20 @@ void EnAObj_SetupBlockRot(EnAObj* this, s16 type) {
 }
 
 void EnAObj_BlockRot(EnAObj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->rotateState == 0) {
         if (this->dyna.unk_160 != 0) {
             this->rotateState++;
             this->rotateForTimer = 20;
 
-            if ((s16)(this->dyna.actor.yawTowardsPlayer + 0x4000) < 0) {
+            if ((s16)(this->dyna.actor.yawTowardsPlayer[playerIndex] + 0x4000) < 0) {
                 this->rotSpeedX = -0x3E8;
             } else {
                 this->rotSpeedX = 0x3E8;
             }
 
-            if (this->dyna.actor.yawTowardsPlayer < 0) {
+            if (this->dyna.actor.yawTowardsPlayer[playerIndex] < 0) {
                 this->rotSpeedY = -this->rotSpeedX;
             } else {
                 this->rotSpeedY = this->rotSpeedX;

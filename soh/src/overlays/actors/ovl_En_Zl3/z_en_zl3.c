@@ -161,15 +161,17 @@ void func_80B536C4(EnZl3* this) {
 }
 
 void func_80B53764(EnZl3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) - 16.0f;
     Npc_TrackPoint(&this->actor, &this->interactInfo, kREG(17) + 0xC, NPC_TRACKING_HEAD_AND_TORSO);
 }
 
-s32 func_80B537E8(EnZl3* this) {
-    s16 yawTowardsPlayer = this->actor.yawTowardsPlayer;
+s32 func_80B537E8(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
     s16* rotY = &this->actor.world.rot.y;
     s16* unk_3D0 = &this->unk_3D0;
     s16 retVal;
@@ -181,8 +183,10 @@ s32 func_80B537E8(EnZl3* this) {
     return retVal;
 }
 
-void func_80B538B0(EnZl3* this) {
-    s16 yawTowardsPlayer = this->actor.yawTowardsPlayer;
+void func_80B538B0(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 yawTowardsPlayer = this->actor.yawTowardsPlayer[playerIndex];
     s16* rotY = &this->actor.world.rot.y;
 
     if (ABS((s16)(yawTowardsPlayer - *rotY)) >= 0x1556) {
@@ -190,7 +194,7 @@ void func_80B538B0(EnZl3* this) {
     }
 
     if (D_80B5A468 != 0) {
-        if (!func_80B537E8(this)) {
+        if (!func_80B537E8(this, play)) {
             D_80B5A468 = 0;
         }
     } else {
@@ -1050,7 +1054,7 @@ void func_80B559C4(EnZl3* this) {
 
 void func_80B55A58(EnZl3* this, PlayState* play) {
     if (play->activeCamera == MAIN_CAM) {
-        func_80B537E8(this);
+        func_80B537E8(this, play);
     }
 }
 
@@ -1114,9 +1118,11 @@ void func_80B55CCC(EnZl3* this, s32 arg1) {
 }
 
 void func_80B55D00(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->action = 13;
-    } else if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) {
+    } else if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) {
         this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_3;
         this->actor.flags |= ACTOR_FLAG_0;
         this->actor.textId = 0x70D5;
@@ -1170,9 +1176,11 @@ void func_80B55F38(EnZl3* this, s32 arg1) {
 }
 
 void func_80B55F6C(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->action = 0x12;
-    } else if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) {
+    } else if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) {
         BossGanon2* bossGanon2 = func_80B53488(this, play);
 
         if ((bossGanon2 != NULL) && (bossGanon2->unk_324 <= (10.0f / 81.0f))) {
@@ -1231,9 +1239,11 @@ void func_80B561E0(EnZl3* this, s32 arg1) {
 }
 
 void func_80B56214(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->action = 21;
-    } else if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) {
+    } else if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) {
         BossGanon2* bossGanon2 = func_80B53488(this, play);
 
         if (bossGanon2 != NULL) {
@@ -1421,7 +1431,7 @@ void func_80B5682C(EnZl3* this, PlayState* play) {
 
 void func_80B568B4(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
     EnZl3_UpdateEyes(this);
@@ -1449,7 +1459,7 @@ void func_80B5697C(EnZl3* this, PlayState* play) {
 void func_80B569E4(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
     func_80B533FC(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B5366C(this, play);
     EnZl3_UpdateEyes(this);
     func_80B55F38(this, EnZl3_UpdateSkelAnime(this));
@@ -1462,7 +1472,7 @@ void func_80B56A68(EnZl3* this, PlayState* play) {
 
     func_80B54DE0(this, play);
     func_80B533FC(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B5366C(this, play);
     EnZl3_UpdateEyes(this);
     something = EnZl3_UpdateSkelAnime(this);
@@ -1473,7 +1483,7 @@ void func_80B56A68(EnZl3* this, PlayState* play) {
 void func_80B56AE0(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
     func_80B533FC(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B5366C(this, play);
     EnZl3_UpdateEyes(this);
     func_80B55F38(this, EnZl3_UpdateSkelAnime(this));
@@ -1690,7 +1700,9 @@ s32 func_80B57324(EnZl3* this, PlayState* play) {
 }
 
 void func_80B57350(EnZl3* this, PlayState* play) {
-    s16 temp_v0 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 temp_v0 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(temp_v0) <= 0x4300) {
         this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_3;
@@ -1707,7 +1719,7 @@ s32 func_80B573C8(EnZl3* this, PlayState* play) {
 }
 
 s32 func_80B573FC(EnZl3* this, PlayState* play, f32 arg2) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 playerX = player->actor.world.pos.x;
     f32 playerZ = player->actor.world.pos.z;
     f32 thisX = this->actor.world.pos.x;
@@ -1723,7 +1735,7 @@ s32 func_80B57458(EnZl3* this, PlayState* play) {
     Vec3f* thisPos = &this->actor.world.pos;
     f32 thisX = thisPos->x;
     f32 thisZ = thisPos->z;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f* playerPos = &player->actor.world.pos;
     s32 pad;
     f32 playerX = playerPos->x;
@@ -1815,9 +1827,8 @@ void func_80B57754(EnZl3* this, PlayState* play) {
     }
 }
 
-void func_80B577BC(PlayState* play, Vec3f* vec) {
+void func_80B577BC(PlayState* play, Player* player, Vec3f* vec) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
     Vec3f* playerPos = &player->actor.world.pos;
     f32 posX = vec->x;
     f32 posY = vec->y;
@@ -1827,9 +1838,9 @@ void func_80B577BC(PlayState* play, Vec3f* vec) {
                 (Math_FAtan2F(playerPos->x - posX, playerPos->z - posZ) * (0x8000 / M_PI)), 0, 5, true);
 }
 
-void func_80B57858(PlayState* play) {
-    func_80B577BC(play, &D_80B5A498);
-    func_80B577BC(play, &D_80B5A4A4);
+void func_80B57858(PlayState* play, Player* player) {
+    func_80B577BC(play, player, &D_80B5A498);
+    func_80B577BC(play, player, &D_80B5A4A4);
 }
 
 s32 func_80B57890(EnZl3* this, PlayState* play) {
@@ -1969,15 +1980,16 @@ s32 func_80B57D80(EnZl3* this, PlayState* play) {
     s32 pad;
     s16* sp32 = &this->actor.shape.rot.y;
     NpcInteractInfo* interactInfo = &this->interactInfo;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 unk_314 = this->unk_314;
     s16 temp_v0 = func_80B57104(this, unk_314);
     s32 pad2;
     s16 phi_v1;
 
     interactInfo->trackPos.y = player->actor.world.pos.y;
-    interactInfo->trackPos.x = (Math_SinS(temp_v0) * this->actor.xzDistToPlayer) + this->actor.world.pos.x;
-    interactInfo->trackPos.z = (Math_CosS(temp_v0) * this->actor.xzDistToPlayer) + this->actor.world.pos.z;
+    interactInfo->trackPos.x = (Math_SinS(temp_v0) * this->actor.xzDistToPlayer[playerIndex]) + this->actor.world.pos.x;
+    interactInfo->trackPos.z = (Math_CosS(temp_v0) * this->actor.xzDistToPlayer[playerIndex]) + this->actor.world.pos.z;
     interactInfo->yOffset = kREG(16) - 16.0f;
     Npc_TrackPoint(&this->actor, interactInfo, kREG(17) + 0xC, NPC_TRACKING_FULL_BODY);
 
@@ -2027,20 +2039,20 @@ s32 func_80B57F84(EnZl3* this, PlayState* play) {
 
 void func_80B58014(EnZl3* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 invincibilityTimer = player->invincibilityTimer;
 
     if (func_80B57324(this, play)) {
         func_80B54E14(this, &gZelda2Anime2Anim_003FF8, 0, -11.0f, 0);
         this->action = 29;
-        func_80B538B0(this);
+        func_80B538B0(this, play);
     } else if (func_80B57C8C(this) && func_80B57F84(this, play)) {
         OnePointCutscene_Init(play, 4000, -99, &this->actor, MAIN_CAM);
         this->unk_3D0 = 0;
     } else if (func_80B576C8(this, play) && func_80B575B0(this, play) && !Play_InCsMode(play)) {
         this->action = 0x1F;
         this->unk_3CC = 0.0f;
-        func_80B537E8(this);
+        func_80B537E8(this, play);
         this->unk_3D8 = 1;
         OnePointCutscene_Init(play, 4010, -99, &this->actor, MAIN_CAM);
     } else if (!func_80B57C8C(this) && !func_80B576C8(this, play) && func_80B57564(this, play)) {
@@ -2052,11 +2064,11 @@ void func_80B58014(EnZl3* this, PlayState* play) {
     } else if ((invincibilityTimer > 0) || (player->fallDistance >= 0x33)) {
         func_80B54E14(this, &gZelda2Anime2Anim_007664, 0, -11.0f, 0);
         this->action = 30;
-        func_80B537E8(this);
+        func_80B537E8(this, play);
         func_80B56DC8(this);
     } else {
         func_80B57350(this, play);
-        func_80B538B0(this);
+        func_80B538B0(this, play);
     }
 }
 
@@ -2069,7 +2081,7 @@ void func_80B58214(EnZl3* this, PlayState* play) {
 }
 
 void func_80B58268(EnZl3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 invincibilityTimer = player->invincibilityTimer;
 
     if ((invincibilityTimer <= 0) && (player->fallDistance <= 50)) {
@@ -2080,6 +2092,8 @@ void func_80B58268(EnZl3* this, PlayState* play) {
 }
 
 void func_80B582C8(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32* unk_3CC = &this->unk_3CC;
     s32 pad;
 
@@ -2093,9 +2107,9 @@ void func_80B582C8(EnZl3* this, PlayState* play) {
         func_80B54E14(this, &gZelda2Anime2Anim_003FF8, 0, -12.0f, 0);
     } else if (*unk_3CC == kREG(16) + 30.0f) {
         *unk_3CC += 1.0f;
-        func_80B57858(play);
+        func_80B57858(play, player);
     } else if (*unk_3CC == kREG(17) + 40.0f) {
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(play->cameraPtrs[playerIndex]);
         *unk_3CC += 1.0f;
     } else if (*unk_3CC >= ((kREG(17) + 40.0f) + 1.0f)) {
         this->action = 32;
@@ -2107,7 +2121,7 @@ void func_80B582C8(EnZl3* this, PlayState* play) {
 
 void func_80B584B4(EnZl3* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 invincibilityTimer = player->invincibilityTimer;
     Actor* nearbyEnTest = Actor_FindNearby(play, &this->actor, -1, ACTORCAT_ENEMY, 8000.0f);
 
@@ -2197,7 +2211,7 @@ s32 func_80B58938(EnZl3* this, PlayState* play) {
 
 s32 func_80B5899C(EnZl3* this, PlayState* play) {
     if ((this->actor.bgCheckFlags & 1)) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         s8 invincibilityTimer = player->invincibilityTimer;
 
         if ((invincibilityTimer > 0) || (player->fallDistance >= 0x33)) {
@@ -2217,7 +2231,7 @@ void func_80B58A1C(EnZl3* this, PlayState* play) {
 }
 
 void func_80B58A50(EnZl3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 invincibilityTimer = player->invincibilityTimer;
 
     if ((invincibilityTimer <= 0) && (player->fallDistance <= 50)) {
@@ -2315,7 +2329,7 @@ void func_80B58E7C(EnZl3* this, PlayState* play) {
 
 void func_80B58EF4(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B538B0(this);
+    func_80B538B0(this, play);
     func_80B53764(this, play);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
@@ -2326,7 +2340,7 @@ void func_80B58EF4(EnZl3* this, PlayState* play) {
 
 void func_80B58F6C(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B536C4(this);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
@@ -2337,7 +2351,7 @@ void func_80B58F6C(EnZl3* this, PlayState* play) {
 
 void func_80B58FDC(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B536C4(this);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
@@ -2348,7 +2362,7 @@ void func_80B58FDC(EnZl3* this, PlayState* play) {
 
 void func_80B5904C(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B536C4(this);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
@@ -2359,7 +2373,7 @@ void func_80B5904C(EnZl3* this, PlayState* play) {
 
 void func_80B590BC(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
-    func_80B537E8(this);
+    func_80B537E8(this, play);
     func_80B536C4(this);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
@@ -2384,7 +2398,7 @@ void func_80B5912C(EnZl3* this, PlayState* play) {
 void func_80B591BC(EnZl3* this, PlayState* play) {
     func_80B54DE0(this, play);
     func_80B536C4(this);
-    func_80B538B0(this);
+    func_80B538B0(this, play);
     func_80B533FC(this, play);
     func_80B5366C(this, play);
     EnZl3_UpdateEyes(this);

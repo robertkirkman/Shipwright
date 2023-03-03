@@ -95,7 +95,9 @@ void func_80B1778C(EnTakaraMan* this, PlayState* play) {
             this->actionFunc = func_80B17B14;
         }
     } else {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         if (play->roomCtx.curRoom.num == 6 && !this->unk_21A) {
             this->actor.textId = 0x6E; //Real Gambler
             this->unk_21A = 1;

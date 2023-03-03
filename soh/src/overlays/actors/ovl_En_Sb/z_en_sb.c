@@ -207,34 +207,40 @@ void EnSb_SetupCooldown(EnSb* this, s32 changeSpeed) {
 }
 
 void EnSb_WaitClosed(EnSb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     // always face toward link
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, 0x7D0, 0x0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0x7D0, 0x0);
 
-    if ((this->actor.xzDistToPlayer <= 160.0f) && (this->actor.xzDistToPlayer > 40.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] <= 160.0f) && (this->actor.xzDistToPlayer[playerIndex] > 40.0f)) {
         EnSb_SetupOpen(this);
     }
 }
 
 void EnSb_Open(EnSb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 currentFrame = this->skelAnime.curFrame;
 
     if (Animation_GetLastFrame(&object_sb_Anim_000194) <= currentFrame) {
         this->timer = 15;
         EnSb_SetupWaitOpen(this);
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, 0x7D0, 0x0);
-        if ((this->actor.xzDistToPlayer > 160.0f) || (this->actor.xzDistToPlayer <= 40.0f)) {
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0x7D0, 0x0);
+        if ((this->actor.xzDistToPlayer[playerIndex] > 160.0f) || (this->actor.xzDistToPlayer[playerIndex] <= 40.0f)) {
             EnSb_SetupWaitClosed(this);
         }
     }
 }
 
 void EnSb_WaitOpen(EnSb* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 timer = this->timer;
 
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, 0x7D0, 0x0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0x7D0, 0x0);
 
-    if ((this->actor.xzDistToPlayer > 160.0f) || (this->actor.xzDistToPlayer <= 40.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] > 160.0f) || (this->actor.xzDistToPlayer[playerIndex] <= 40.0f)) {
         EnSb_SetupWaitClosed(this);
     }
 
@@ -242,7 +248,7 @@ void EnSb_WaitOpen(EnSb* this, PlayState* play) {
         this->timer = timer - 1;
     } else {
         this->timer = 0;
-        this->attackYaw = this->actor.yawTowardsPlayer;
+        this->attackYaw = this->actor.yawTowardsPlayer[playerIndex];
         this->actionFunc = EnSb_TurnAround;
     }
 }
@@ -379,6 +385,8 @@ s32 EnSb_UpdateDamage(EnSb* this, PlayState* play) {
 
     // hurt box collided, take damage if appropriate
     if ((this->collider.base.acFlags & AC_HIT)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         hitByWindArrow = false;
         tookDamage = false;
         this->collider.base.acFlags &= ~AC_HIT;
@@ -389,7 +397,7 @@ s32 EnSb_UpdateDamage(EnSb* this, PlayState* play) {
             case 15: // explosions, arrow, hammer, ice arrow, light arrow, spirit arrow, shadow arrow
                 if (EnSb_IsVulnerable(this)) {
                     hitY = this->collider.info.bumper.hitPos.y - this->actor.world.pos.y;
-                    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+                    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
                     if ((hitY < 30.0f) && (hitY > 10.0f) && (yawDiff >= -0x1FFF) && (yawDiff < 0x2000)) {
                         Actor_ApplyDamage(&this->actor);
                         Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0x2000, 0x50);
@@ -407,7 +415,7 @@ s32 EnSb_UpdateDamage(EnSb* this, PlayState* play) {
             case 13: // all sword damage
                 if (EnSb_IsVulnerable(this)) {
                     hitY = this->collider.info.bumper.hitPos.y - this->actor.world.pos.y;
-                    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+                    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
                     if ((hitY < 30.0f) && (hitY > 10.0f) && (yawDiff >= -0x1FFF) && (yawDiff < 0x2000)) {
                         Actor_ApplyDamage(&this->actor);
                         Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0x2000, 0x50);

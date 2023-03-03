@@ -250,6 +250,8 @@ void func_809BCF68(EnBigokuta* this, PlayState* play) {
 }
 
 void func_809BD1C8(EnBigokuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     Vec3f effectPos;
 
@@ -263,7 +265,7 @@ void func_809BD1C8(EnBigokuta* this, PlayState* play) {
 
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_DAIOCTA_LAND_WATER);
     Audio_PlayActorSound2(&this->actor, NA_SE_EN_GOLON_LAND_BIG);
-    func_80033E88(&this->actor, play, 0xA, 8);
+    func_80033E88(&this->actor, play, 0xA, 8, playerIndex);
 }
 
 void func_809BD2E4(EnBigokuta* this) {
@@ -362,7 +364,7 @@ void func_809BD658(EnBigokuta* this) {
     this->actionFunc = func_809BE26C;
 }
 
-void func_809BD6B8(EnBigokuta* this) {
+void func_809BD6B8(EnBigokuta* this, u16 playerIndex) {
     if (!this->unk_195) {
         if (Rand_ZeroOne() < 0.5f) {
             this->unk_196 = 24;
@@ -370,7 +372,7 @@ void func_809BD6B8(EnBigokuta* this) {
             this->unk_196 = 28;
         }
     } else {
-        if (ABS(this->actor.shape.rot.y - this->actor.yawTowardsPlayer) >= 0x4000) {
+        if (ABS(this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex]) >= 0x4000) {
             this->unk_196 = 4;
         } else {
             this->unk_196 = 0;
@@ -391,7 +393,8 @@ void func_809BD768(EnBigokuta* this) {
 }
 
 void func_809BD7F0(EnBigokuta* this, PlayState* play) {
-    this->actor.world.rot.y = Actor_WorldYawTowardPoint(&GET_PLAYER(play)->actor, &this->actor.home.pos);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    this->actor.world.rot.y = Actor_WorldYawTowardPoint(&player->actor, &this->actor.home.pos);
     this->actor.shape.rot.y = this->actor.world.rot.y + (this->unk_194 * 0x4000);
     func_809BCE3C(this);
     this->actionFunc = func_809BE518;
@@ -476,7 +479,8 @@ void func_809BDB90(EnBigokuta* this, PlayState* play) {
 }
 
 void func_809BDC08(EnBigokuta* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 phi_v0;
     s16 pad;
     s16 phi_v1;
@@ -500,19 +504,19 @@ void func_809BDC08(EnBigokuta* this, PlayState* play) {
 
     phi_v1 = (Actor_WorldDistXZToPoint(&player->actor, &this->actor.home.pos) - 180.0f) * (8.0f / 15);
     func_8002DBD0(&this->actor, &sp28, &player->actor.world.pos);
-    if (fabsf(sp28.x) > 263.0f || ((sp28.z > 0.0f) && !Actor_IsFacingPlayer(&this->actor, 0x1B00) &&
-                                   !Player_IsFacingActor(&this->actor, 0x2000, play))) {
+    if (fabsf(sp28.x) > 263.0f || ((sp28.z > 0.0f) && !Actor_IsFacingPlayer(&this->actor, 0x1B00, player, play) &&
+                                   !Player_IsFacingActor(&this->actor, 0x2000, player, play))) {
         phi_v1 -= 0x80;
         if (this->unk_196 != 0) {
             this->unk_196--;
         }
     }
 
-    if ((this->actor.xzDistToPlayer < 250.0f) && !Actor_IsFacingPlayer(&this->actor, 0x6000)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 250.0f) && !Actor_IsFacingPlayer(&this->actor, 0x6000, player, play)) {
         if (this->unk_198 != 0) {
             this->unk_198--;
         }
-        if (this->actor.xzDistToPlayer < 180.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 180.0f) {
             phi_v1 += 0x20;
         }
     } else {
@@ -531,7 +535,7 @@ void func_809BDC08(EnBigokuta* this, PlayState* play) {
     } else if (this->unk_196 == 0) {
         func_809BD4A4(this);
     } else if (this->unk_195) {
-        phi_v0 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        phi_v0 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         if (phi_v0 < 0) {
             phi_v0 = -phi_v0;
         }
@@ -572,7 +576,8 @@ void func_809BDFC8(EnBigokuta* this, PlayState* play) {
 }
 
 void func_809BE058(EnBigokuta* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 speedXZ;
 
     if (this->unk_196 != 0) {
@@ -593,7 +598,7 @@ void func_809BE058(EnBigokuta* this, PlayState* play) {
         player->actor.world.pos.z -= speedXZ * Math_CosS(this->actor.shape.rot.y);
     }
     if (this->unk_196 == 0) {
-        func_809BD6B8(this);
+        func_809BD6B8(this, playerIndex);
     }
 }
 
@@ -720,10 +725,12 @@ void func_809BE798(EnBigokuta* this, PlayState* play) {
 
     if ((this->cylinder[0].base.atFlags & AT_HIT) || (this->cylinder[1].base.atFlags & AT_HIT) ||
         (this->collider.base.atFlags & AT_HIT)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->cylinder[0].base.atFlags &= ~AT_HIT;
         this->cylinder[1].base.atFlags &= ~AT_HIT;
         this->collider.base.atFlags &= ~AT_HIT;
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y;
         if (yawDiff > 0x4000) {
             effectRot = 0x4000;
         } else if (yawDiff > 0) {
@@ -747,6 +754,7 @@ void func_809BE798(EnBigokuta* this, PlayState* play) {
 }
 
 void EnBigokuta_UpdateDamage(EnBigokuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->collider.base.acFlags &= ~AC_HIT;
         if (this->actor.colChkInfo.damageEffect != 0 || this->actor.colChkInfo.damage != 0) {
@@ -756,7 +764,7 @@ void EnBigokuta_UpdateDamage(EnBigokuta* this, PlayState* play) {
                 }
             } else if (this->actor.colChkInfo.damageEffect == 0xF) {
                 func_809BD47C(this);
-            } else if (!Actor_IsFacingPlayer(&this->actor, 0x4000)) {
+            } else if (!Actor_IsFacingPlayer(&this->actor, 0x4000, player, play)) {
                 if (Actor_ApplyDamage(&this->actor) == 0) { // Dead
                     Audio_PlayActorSound2(&this->actor, NA_SE_EN_DAIOCTA_DEAD);
                     Enemy_StartFinishingBlow(play, &this->actor);

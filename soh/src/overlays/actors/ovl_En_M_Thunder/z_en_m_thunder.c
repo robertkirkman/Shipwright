@@ -63,7 +63,7 @@ void func_80A9EFE0(EnMThunder* this, EnMThunderActionFunc actionFunc) {
 void EnMThunder_Init(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnMThunder* this = (EnMThunder*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // init
 
     Collider_InitCylinder(play, &this->collider);
     Collider_SetCylinder(play, &this->collider, &this->actor, &D_80AA0420);
@@ -129,7 +129,7 @@ void func_80A9F314(PlayState* play, f32 arg1) {
 }
 
 void func_80A9F350(EnMThunder* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->stateFlags2 & 0x20000) {
         if (player->meleeWeaponAnimation >= 0x18) {
@@ -149,7 +149,7 @@ void func_80A9F350(EnMThunder* this, PlayState* play) {
 }
 
 void func_80A9F408(EnMThunder* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* child = this->actor.child;
 
     this->unk_1B8 = player->unk_858;
@@ -270,7 +270,7 @@ void func_80A9F938(EnMThunder* this, PlayState* play) {
 }
 
 void func_80A9F9B4(EnMThunder* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Math_StepToF(&this->unk_1AC, 0.0f, 1 / 16.0f)) {
         Actor_Kill(&this->actor);
@@ -319,7 +319,7 @@ void EnMThunder_Draw(Actor* thisx, PlayState* play2) {
     static f32 D_80AA046C[] = { 0.1f, 0.15f, 0.2f, 0.25f, 0.3f, 0.25f, 0.2f, 0.15f };
     PlayState* play = play2;
     EnMThunder* this = (EnMThunder*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 phi_f14;
     s32 phi_t1;
 

@@ -111,7 +111,7 @@ void BgGndFiremeiro_Shake(BgGndFiremeiro* this, PlayState* play) {
 }
 
 void BgGndFiremeiro_Rise(BgGndFiremeiro* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* thisx = &this->dyna.actor;
 
     if ((player->currentBoots != PLAYER_BOOTS_HOVER) && func_8004356C(&this->dyna)) { // Player standing on it

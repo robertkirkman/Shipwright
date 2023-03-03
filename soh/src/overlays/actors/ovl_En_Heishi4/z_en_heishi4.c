@@ -370,7 +370,7 @@ void EnHeishi4_MarketSneak(EnHeishi4* this, PlayState* play) {
 void EnHeishi4_Update(Actor* thisx, PlayState* play) {
     EnHeishi4* this = (EnHeishi4*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     thisx->world.pos.x = this->pos.x;
     thisx->world.pos.y = this->pos.y;

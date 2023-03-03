@@ -313,9 +313,11 @@ void EnSw_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80B0C9F0(EnSw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 phi_v1 = false;
 
-    if (this->actor.xyzDistToPlayerSq < SQ(400.0f) && ((this->actor.params & 0xE000) >> 0xD) == 0 &&
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(400.0f) && ((this->actor.params & 0xE000) >> 0xD) == 0 &&
         play->actorCtx.unk_02 != 0) {
 
         this->actor.colChkInfo.damage = this->actor.colChkInfo.health;
@@ -692,14 +694,14 @@ s16 func_80B0DE34(EnSw* this, Vec3f* arg1) {
 }
 
 s32 func_80B0DEA8(EnSw* this, PlayState* play, s32 arg2) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     CollisionPoly* sp58;
     s32 sp54;
     Vec3f sp48;
 
     if (!(player->stateFlags1 & 0x200000) && arg2) {
         return false;
-    } else if (func_8002DDF4(play) && arg2) {
+    } else if (func_8002DDF4(play, player) && arg2) {
         return false;
     } else if (ABS(func_80B0DE34(this, &player->actor.world.pos) - this->actor.shape.rot.z) >= 0x1FC2) {
         return false;
@@ -836,7 +838,7 @@ void func_80B0E5E0(EnSw* this, PlayState* play) {
 }
 
 void func_80B0E728(EnSw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     if (DECR(this->unk_442) != 0) {
@@ -862,7 +864,7 @@ void func_80B0E728(EnSw* this, PlayState* play) {
                 this->unk_440 = 4;
             }
 
-            if (!(Math_Vec3f_DistXYZ(&this->actor.world.pos, &this->unk_448) > 13.0f) || func_8002DDF4(play)) {
+            if (!(Math_Vec3f_DistXYZ(&this->actor.world.pos, &this->unk_448) > 13.0f) || func_8002DDF4(play, player)) {
                 this->actionFunc = func_80B0E90C;
             }
         }

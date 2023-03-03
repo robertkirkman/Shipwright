@@ -174,7 +174,7 @@ void EffDust_UpdateFunc_8099DD74(EffDust* this, PlayState* play) {
 
 void EffDust_UpdateFunc_8099DFC0(EffDust* this, PlayState* play) {
     s16 theta;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* parent = this->actor.parent;
     f32* distanceTraveled = this->distanceTraveled;
     s32 i;
@@ -318,7 +318,7 @@ void EffDust_DrawFunc_8099E784(Actor* thisx, PlayState* play2) {
     Vec3f* initialPositions;
     s32 i;
     f32 aux;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     OPEN_DISPS(gfxCtx);
 

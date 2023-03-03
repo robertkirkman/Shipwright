@@ -110,7 +110,8 @@ void func_80B3A10C(EnWonderTalk2* this, PlayState* play) {
 }
 
 void func_80B3A15C(EnWonderTalk2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->unk_158++;
     if ((this->switchFlag >= 0) && Flags_GetSwitch(play, this->switchFlag)) {
@@ -127,9 +128,9 @@ void func_80B3A15C(EnWonderTalk2* this, PlayState* play) {
 
         this->actionFunc = func_80B3A10C;
     } else {
-        s16 yawDiff = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.world.rot.y));
+        s16 yawDiff = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y));
 
-        if (!((this->actor.xzDistToPlayer > 40.0f + this->triggerRange) ||
+        if (!((this->actor.xzDistToPlayer[playerIndex] > 40.0f + this->triggerRange) ||
               (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) > 100.0f) || (yawDiff >= 0x4000))) {
             if (this->unk_158 >= 2) {
                 osSyncPrintf("\n\n");
@@ -202,9 +203,8 @@ void func_80B3A3D4(EnWonderTalk2* this, PlayState* play) {
 }
 
 void func_80B3A4F8(EnWonderTalk2* this, PlayState* play) {
-    Player* player;
-
-    player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unk_158++;
     if (this->switchFlag >= 0 && Flags_GetSwitch(play, this->switchFlag)) {
         if (!this->unk_15A) {
@@ -214,9 +214,9 @@ void func_80B3A4F8(EnWonderTalk2* this, PlayState* play) {
     } else if ((this->talkMode != 4) || !this->unk_15A) {
         if (BREG(2) != 0) {
             // "distance"
-            osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ きょり %f\n" VT_RST, this->actor.xzDistToPlayer);
+            osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ きょり %f\n" VT_RST, this->actor.xzDistToPlayer[playerIndex]);
         }
-        if (((this->actor.xzDistToPlayer < (40.0f + this->triggerRange)) &&
+        if (((this->actor.xzDistToPlayer[playerIndex] < (40.0f + this->triggerRange)) &&
              (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 100.0f)) &&
             !Play_InCsMode(play)) {
             if (this->unk_158 >= 2) {

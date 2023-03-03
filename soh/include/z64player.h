@@ -490,8 +490,6 @@ typedef struct {
 #define PLAYER_STATE3_RESTORE_NAYRUS_LOVE (1 << 6) // Set by ocarina effects actors when destroyed to signal Nayru's Love may be restored (see `ACTOROVL_ALLOC_ABSOLUTE`)
 #define PLAYER_STATE3_7 (1 << 7)
 
-#define PLAYER_COUNT 4 // magi multiplayer
-
 typedef void (*PlayerFunc674)(struct Player*, struct PlayState*);
 typedef s32 (*PlayerFunc82C)(struct Player*, struct PlayState*);
 typedef void (*PlayerFuncA74)(struct PlayState*, struct Player*);

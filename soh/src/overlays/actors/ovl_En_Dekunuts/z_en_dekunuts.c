@@ -237,6 +237,8 @@ void EnDekunuts_SetupDie(EnDekunuts* this) {
 }
 
 void EnDekunuts_Wait(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 hasSlowPlaybackSpeed = false;
 
     if (this->skelAnime.playSpeed < 0.5f) {
@@ -252,44 +254,48 @@ void EnDekunuts_Wait(EnDekunuts* this, PlayState* play) {
     }
 
     this->collider.dim.height = ((CLAMP(this->skelAnime.curFrame, 9.0f, 12.0f) - 9.0f) * 9.0f) + 5.0f;
-    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer < 120.0f)) {
+    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
         EnDekunuts_SetupBurrow(this);
     } else if (SkelAnime_Update(&this->skelAnime)) {
-        if (this->actor.xzDistToPlayer < 120.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
             EnDekunuts_SetupBurrow(this);
-        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer > 320.0f)) {
+        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer[playerIndex] > 320.0f)) {
             EnDekunuts_SetupLookAround(this);
         } else {
             EnDekunuts_SetupStand(this);
         }
     }
     if (hasSlowPlaybackSpeed &&
-        ((this->actor.xzDistToPlayer > 160.0f) && (fabsf(this->actor.yDistToPlayer) < 120.0f)) &&
-        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer < 480.0f))) {
+        ((this->actor.xzDistToPlayer[playerIndex] > 160.0f) && (fabsf(this->actor.yDistToPlayer[playerIndex]) < 120.0f)) &&
+        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer[playerIndex] < 480.0f))) {
         this->skelAnime.playSpeed = 1.0f;
     }
 }
 
 void EnDekunuts_LookAround(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && (this->animFlagAndTimer != 0)) {
         this->animFlagAndTimer--;
     }
-    if ((this->actor.xzDistToPlayer < 120.0f) || (this->animFlagAndTimer == 0)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 120.0f) || (this->animFlagAndTimer == 0)) {
         EnDekunuts_SetupBurrow(this);
     }
 }
 
 void EnDekunuts_Stand(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && (this->animFlagAndTimer != 0)) {
         this->animFlagAndTimer--;
     }
     if (!(this->animFlagAndTimer & 0x1000)) {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     }
     if (this->animFlagAndTimer == 0x1000) {
-        if ((this->actor.xzDistToPlayer > 480.0f) || (this->actor.xzDistToPlayer < 120.0f)) {
+        if ((this->actor.xzDistToPlayer[playerIndex] > 480.0f) || (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
             EnDekunuts_SetupBurrow(this);
         } else {
             EnDekunuts_SetupThrowNut(this);
@@ -300,9 +306,11 @@ void EnDekunuts_Stand(EnDekunuts* this, PlayState* play) {
 }
 
 void EnDekunuts_ThrowNut(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f spawnPos;
 
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     if (SkelAnime_Update(&this->skelAnime)) {
         EnDekunuts_SetupStand(this);
     } else if (Animation_OnFrame(&this->skelAnime, 6.0f)) {
@@ -335,15 +343,19 @@ void EnDekunuts_Burrow(EnDekunuts* this, PlayState* play) {
 }
 
 void EnDekunuts_BeginRun(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
-        this->runDirection = this->actor.yawTowardsPlayer + 0x8000;
+        this->runDirection = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         this->runAwayCount = 3;
         EnDekunuts_SetupRun(this);
     }
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
 }
 
 void EnDekunuts_Run(EnDekunuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 diffRotInit;
     s16 diffRot;
     f32 phi_f0;
@@ -367,15 +379,15 @@ void EnDekunuts_Run(EnDekunuts* this, PlayState* play) {
             this->runDirection = this->actor.wallYaw;
         } else if (this->runAwayCount == 0) {
             diffRotInit = Actor_WorldYawTowardPoint(&this->actor, &this->actor.home.pos);
-            diffRot = diffRotInit - this->actor.yawTowardsPlayer;
+            diffRot = diffRotInit - this->actor.yawTowardsPlayer[playerIndex];
             if (ABS(diffRot) > 0x2000) {
                 this->runDirection = diffRotInit;
             } else {
                 phi_f0 = (diffRot >= 0.0f) ? 1.0f : -1.0f;
-                this->runDirection = (phi_f0 * -0x2000) + this->actor.yawTowardsPlayer;
+                this->runDirection = (phi_f0 * -0x2000) + this->actor.yawTowardsPlayer[playerIndex];
             }
         } else {
-            this->runDirection = this->actor.yawTowardsPlayer + 0x8000;
+            this->runDirection = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         }
     }
 

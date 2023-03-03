@@ -82,10 +82,9 @@ void BgHidanFirewall_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 BgHidanFirewall_CheckProximity(BgHidanFirewall* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f distance;
 
-    player = GET_PLAYER(play);
     func_8002DBD0(&this->actor, &distance, &player->actor.world.pos);
 
     if (fabsf(distance.x) < 100.0f && fabsf(distance.z) < 120.0f) {
@@ -127,8 +126,9 @@ void BgHidanFirewall_Erupt(BgHidanFirewall* this, PlayState* play) {
 
 void BgHidanFirewall_Collide(BgHidanFirewall* this, PlayState* play) {
     s16 phi_a3;
-
-    if (Actor_IsFacingPlayer(&this->actor, 0x4000)) {
+    Player * player = Player_NearestToActor(&this->actor, play);
+    
+    if (Actor_IsFacingPlayer(&this->actor, 0x4000, player, play)) {
         phi_a3 = this->actor.shape.rot.y;
     } else {
         phi_a3 = this->actor.shape.rot.y + 0x8000;
@@ -138,13 +138,11 @@ void BgHidanFirewall_Collide(BgHidanFirewall* this, PlayState* play) {
 }
 
 void BgHidanFirewall_ColliderFollowPlayer(BgHidanFirewall* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp30;
     f32 temp_ret;
     f32 sp28;
     f32 phi_f0;
-
-    player = GET_PLAYER(play);
 
     func_8002DBD0(&this->actor, &sp30, &player->actor.world.pos);
     if (sp30.x < -70.0f) {

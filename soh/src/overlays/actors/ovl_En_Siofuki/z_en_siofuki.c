@@ -113,7 +113,7 @@ void func_80AFBDC8(EnSiofuki* this, PlayState* play) {
 }
 
 void func_80AFBE8C(EnSiofuki* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 dX;
     f32 dY;
     f32 dZ;

@@ -458,7 +458,7 @@ void func_80ADE9BC(EnPoh* this) {
 }
 
 void EnPoh_MoveTowardsPlayerHeight(EnPoh* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Math_StepToF(&this->actor.world.pos.y, player->actor.world.pos.y, 1.0f);
     this->actor.world.pos.y += 2.5f * Math_SinS(this->unk_195 * 0x800);
@@ -478,12 +478,14 @@ void func_80ADEA5C(EnPoh* this) {
 }
 
 void func_80ADEAC4(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && this->unk_198 != 0) {
         this->unk_198--;
     }
     EnPoh_MoveTowardsPlayerHeight(this, play);
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         func_80ADE1BC(this);
     } else if (this->unk_198 == 0) {
         EnPoh_SetupIdle(this);
@@ -494,6 +496,8 @@ void func_80ADEAC4(EnPoh* this, PlayState* play) {
 }
 
 void EnPoh_Idle(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     Math_StepToF(&this->actor.speedXZ, 1.0f, 0.2f);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && this->unk_198 != 0) {
@@ -501,7 +505,7 @@ void EnPoh_Idle(EnPoh* this, PlayState* play) {
     }
     func_80ADEA5C(this);
     EnPoh_MoveTowardsPlayerHeight(this, play);
-    if (this->actor.xzDistToPlayer < 200.0f && this->unk_198 < 19) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f && this->unk_198 < 19) {
         func_80ADE1BC(this);
     } else if (this->unk_198 == 0) {
         if (Rand_ZeroOne() < 0.1f) {
@@ -516,27 +520,27 @@ void EnPoh_Idle(EnPoh* this, PlayState* play) {
 }
 
 void func_80ADEC9C(EnPoh* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 facingDiff;
 
-    player = GET_PLAYER(play);
     SkelAnime_Update(&this->skelAnime);
     if (this->unk_198 != 0) {
         this->unk_198--;
     }
-    facingDiff = this->actor.yawTowardsPlayer - player->actor.shape.rot.y;
+    facingDiff = this->actor.yawTowardsPlayer[playerIndex] - player->actor.shape.rot.y;
     if (facingDiff >= 0x3001) {
-        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer + 0x3000, 0x71C);
+        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x3000, 0x71C);
     } else if (facingDiff < -0x3000) {
-        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer - 0x3000, 0x71C);
+        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] - 0x3000, 0x71C);
     } else {
-        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0x71C);
+        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x71C);
     }
     EnPoh_MoveTowardsPlayerHeight(this, play);
-    if (this->actor.xzDistToPlayer > 280.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 280.0f) {
         EnPoh_SetupIdle(this);
-    } else if (this->unk_198 == 0 && this->actor.xzDistToPlayer < 140.0f &&
-               !Player_IsFacingActor(&this->actor, 0x2AAA, play)) {
+    } else if (this->unk_198 == 0 && this->actor.xzDistToPlayer[playerIndex] < 140.0f &&
+               !Player_IsFacingActor(&this->actor, 0x2AAA, player, play)) {
         EnPoh_SetupAttack(this);
     }
     if (this->lightColor.a == 255) {
@@ -545,6 +549,8 @@ void func_80ADEC9C(EnPoh* this, PlayState* play) {
 }
 
 void EnPoh_Attack(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f)) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_PO_KANTERA);
@@ -554,7 +560,7 @@ void EnPoh_Attack(EnPoh* this, PlayState* play) {
     }
     EnPoh_MoveTowardsPlayerHeight(this, play);
     if (this->unk_198 >= 10) {
-        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0xE38);
+        Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xE38);
     } else if (this->unk_198 == 9) {
         this->actor.speedXZ = 5.0f;
         this->skelAnime.playSpeed = 2.0f;
@@ -576,6 +582,8 @@ void func_80ADEECC(EnPoh* this, PlayState* play) {
 }
 
 void func_80ADEF38(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
         this->lightColor.a = 255;
         this->visibilityTimer = Rand_S16Offset(700, 300);
@@ -584,7 +592,7 @@ void func_80ADEF38(EnPoh* this, PlayState* play) {
     } else if (this->skelAnime.curFrame > 10.0f) {
         this->lightColor.a = ((this->skelAnime.curFrame - 10.0f) * 0.05f) * 255.0f;
     }
-    if (this->skelAnime.playSpeed < 0.5f && this->actor.xzDistToPlayer < 280.0f) {
+    if (this->skelAnime.playSpeed < 0.5f && this->actor.xzDistToPlayer[playerIndex] < 280.0f) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_PO_APPEAR);
         this->skelAnime.playSpeed = 1.0f;
     }
@@ -668,11 +676,13 @@ void func_80ADF574(EnPoh* this, PlayState* play) {
 }
 
 void func_80ADF5E0(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Math_ScaledStepToS(&this->actor.world.rot.y, this->unk_19C, 1820) != 0) {
         EnPoh_SetupIdle(this);
     }
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         func_80ADE1BC(this);
     }
     EnPoh_MoveTowardsPlayerHeight(this, play);
@@ -704,15 +714,17 @@ void EnPoh_Appear(EnPoh* this, PlayState* play) {
 }
 
 void func_80ADF894(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 multiplier;
 
     SkelAnime_Update(&this->skelAnime);
     multiplier = Math_SinS(this->unk_195 * 0x800) * 3.0f;
     this->actor.world.pos.x -= multiplier * Math_CosS(this->actor.shape.rot.y);
     this->actor.world.pos.z += multiplier * Math_SinS(this->actor.shape.rot.y);
-    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer + 0x8000, 0x71C);
+    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x8000, 0x71C);
     EnPoh_MoveTowardsPlayerHeight(this, play);
-    if (this->unk_198 == 0 || this->actor.xzDistToPlayer > 250.0f) {
+    if (this->unk_198 == 0 || this->actor.xzDistToPlayer[playerIndex] > 250.0f) {
         this->actor.world.rot.y = this->actor.shape.rot.y;
         EnPoh_SetupIdle(this);
     }

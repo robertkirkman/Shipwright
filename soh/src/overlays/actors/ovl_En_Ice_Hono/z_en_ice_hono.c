@@ -187,13 +187,14 @@ void EnIceHono_Destroy(Actor* thisx, PlayState* play) {
 }
 
 u32 EnIceHono_InBottleRange(EnIceHono* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->actor.xzDistToPlayer < 60.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
         Vec3f tempPos;
-        tempPos.x = Math_SinS(this->actor.yawTowardsPlayer + 0x8000) * 40.0f + player->actor.world.pos.x;
+        tempPos.x = Math_SinS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 40.0f + player->actor.world.pos.x;
         tempPos.y = player->actor.world.pos.y;
-        tempPos.z = Math_CosS(this->actor.yawTowardsPlayer + 0x8000) * 40.0f + player->actor.world.pos.z;
+        tempPos.z = Math_CosS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 40.0f + player->actor.world.pos.z;
 
         //! @bug: this check is superfluous: it is automatically satisfied if the coarse check is satisfied. It may have
         //! been intended to check the actor is in front of Player, but yawTowardsPlayer does not depend on Player's
@@ -212,6 +213,8 @@ void EnIceHono_SetupActionCapturableFlame(EnIceHono* this) {
 }
 
 void EnIceHono_CapturableFlame(EnIceHono* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_HasParent(&this->actor, play)) {
         this->actor.parent = NULL;
     } else if (EnIceHono_InBottleRange(this, play)) {
@@ -219,7 +222,7 @@ void EnIceHono_CapturableFlame(EnIceHono* this, PlayState* play) {
         func_8002F434(&this->actor, play, GI_MAX, 60.0f, 100.0f);
     }
 
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
     }
     func_8002F8F0(&this->actor, NA_SE_EV_FIRE_PILLAR_S - SFX_FLAG);

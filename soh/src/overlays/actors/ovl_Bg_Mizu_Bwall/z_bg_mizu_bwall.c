@@ -466,6 +466,8 @@ void BgMizuBwall_SpawnDebris(BgMizuBwall* this, PlayState* play) {
 }
 
 void BgMizuBwall_Idle(BgMizuBwall* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     BgMizuBwall_SetAlpha(this, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->collider.base.acFlags &= ~AC_HIT;
@@ -477,7 +479,7 @@ void BgMizuBwall_Idle(BgMizuBwall* this, PlayState* play) {
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_WALL_BROKEN);
         Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         this->actionFunc = BgMizuBwall_Break;
-    } else if (this->dyna.actor.xzDistToPlayer < 600.0f) {
+    } else if (this->dyna.actor.xzDistToPlayer[playerIndex] < 600.0f) {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }
 }

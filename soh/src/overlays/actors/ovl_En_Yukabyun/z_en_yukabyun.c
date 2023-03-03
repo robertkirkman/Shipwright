@@ -90,7 +90,9 @@ void func_80B43AD4(EnYukabyun* this, PlayState* play) {
     this->unk_150 += 0xA0;
     this->actor.shape.rot.y += this->unk_150;
     if (this->unk_150 >= 0x2000) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.speedXZ = 10.0f;
         this->actionfunc = func_80B43B6C;
     }
@@ -99,8 +101,10 @@ void func_80B43AD4(EnYukabyun* this, PlayState* play) {
 }
 
 void func_80B43B6C(EnYukabyun* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.shape.rot.y += this->unk_150;
-    if (this->actor.xzDistToPlayer > 5000.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 5000.0f) {
         Actor_Kill(&this->actor);
         return;
     }

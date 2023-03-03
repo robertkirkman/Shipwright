@@ -212,7 +212,7 @@ s32 func_80AADA70(void) {
 
 s32 func_80AADAA0(EnMm* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 sp1C = 1;
 
     switch (Message_GetState(&play->msgCtx)) {
@@ -259,7 +259,7 @@ s32 func_80AADAA0(EnMm* this, PlayState* play) {
 }
 
 s32 EnMm_GetTextId(EnMm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 textId;
 
     textId = Text_GetFaceReaction(play, 0x1C);
@@ -278,7 +278,8 @@ s32 EnMm_GetTextId(EnMm* this, PlayState* play) {
 }
 
 void func_80AADCD0(EnMm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 yawDiff;
     s16 sp26;
     s16 sp24;
@@ -300,7 +301,7 @@ void func_80AADCD0(EnMm* this, PlayState* play) {
             }
         } else {
             Actor_GetScreenPos(play, &this->actor, &sp26, &sp24);
-            yawDiff = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y));
+            yawDiff = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y));
 
             if ((sp26 >= 0) && (sp26 <= 0x140) && (sp24 >= 0) && (sp24 <= 0xF0) && (yawDiff <= 17152.0f) &&
                 (this->unk_1E0 != 3) && func_8002F2CC(&this->actor, play, 100.0f)) {
@@ -465,7 +466,9 @@ void func_80AAE294(EnMm* this, PlayState* play) {
             }
 
             if (this->collider.base.ocFlags2 & OC2_HIT_PLAYER) {
-                func_8002F71C(play, &this->actor, 3.0f, this->actor.yawTowardsPlayer, 4.0f);
+                Player* player = Player_NearestToActor(&this->actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                func_8002F71C(play, &this->actor, 3.0f, this->actor.yawTowardsPlayer[playerIndex], 4.0f);
             }
         }
     }

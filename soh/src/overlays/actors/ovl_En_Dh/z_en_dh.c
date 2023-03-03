@@ -199,6 +199,8 @@ void EnDh_SetupWait(EnDh* this) {
 }
 
 void EnDh_Wait(EnDh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((s32)this->skelAnime.curFrame == 5) {
         func_800F5ACC(NA_BGM_MINI_BOSS);
     }
@@ -209,7 +211,7 @@ void EnDh_Wait(EnDh* this, PlayState* play) {
         switch (this->actionState) {
             case 0:
                 this->actor.flags |= ACTOR_FLAG_0;
-                this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+                this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                 this->actor.flags &= ~ACTOR_FLAG_7;
                 this->actionState++;
                 this->drawDirtWave++;
@@ -231,7 +233,7 @@ void EnDh_Wait(EnDh* this, PlayState* play) {
                 EnDh_SetupWalk(this);
                 break;
         }
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0x7D0, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x7D0, 0);
         SkelAnime_Update(&this->skelAnime);
         if (this->actor.params != ENDH_START_ATTACK_BOMB) {
             func_8008EEAC(play, &this->actor);
@@ -249,7 +251,9 @@ void EnDh_SetupWalk(EnDh* this) {
 }
 
 void EnDh_Walk(EnDh* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
     SkelAnime_Update(&this->skelAnime);
     if (((s32)this->skelAnime.curFrame % 8) == 0) {
@@ -258,9 +262,9 @@ void EnDh_Walk(EnDh* this, PlayState* play) {
     if ((play->gameplayFrames & 0x5F) == 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_DEADHAND_LAUGH);
     }
-    if (this->actor.xzDistToPlayer <= 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 100.0f) {
         this->actor.speedXZ = 0.0f;
-        if (Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360)) {
+        if (Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360, player, play)) {
             EnDh_SetupAttack(this);
         }
     } else if (--this->timer == 0) {
@@ -277,12 +281,14 @@ void EnDh_SetupRetreat(EnDh* this, PlayState* play) {
 }
 
 void EnDh_Retreat(EnDh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->timer--;
     if (this->timer == 0) {
         this->retreat = false;
         EnDh_SetupBurrow(this);
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, (s16)(this->actor.yawTowardsPlayer + 0x8000), 1, 0xBB8, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, (s16)(this->actor.yawTowardsPlayer[playerIndex] + 0x8000), 1, 0xBB8, 0);
     }
     this->actor.world.rot.y = this->actor.shape.rot.y;
     SkelAnime_Update(&this->skelAnime);
@@ -297,11 +303,13 @@ void EnDh_SetupAttack(EnDh* this) {
 }
 
 void EnDh_Attack(EnDh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     if (SkelAnime_Update(&this->skelAnime)) {
         this->actionState++;
-    } else if ((this->actor.xzDistToPlayer > 100.0f) || !Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] > 100.0f) || !Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360, player, play)) {
         Animation_Change(&this->skelAnime, &object_dh_Anim_004658, -1.0f, this->skelAnime.curFrame, 0.0f, ANIMMODE_ONCE,
                          -4.0f);
         this->actionState = 4;
@@ -314,7 +322,7 @@ void EnDh_Attack(EnDh* this, PlayState* play) {
             this->actionState++;
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_DEADHAND_BITE);
         case 0:
-            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0x5DC, 0);
+            Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x5DC, 0);
             break;
         case 2:
             if (this->skelAnime.curFrame >= 4.0f) {
@@ -335,7 +343,7 @@ void EnDh_Attack(EnDh* this, PlayState* play) {
             }
             break;
         case 3:
-            if ((this->actor.xzDistToPlayer <= 100.0f) && (Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360))) {
+            if ((this->actor.xzDistToPlayer[playerIndex] <= 100.0f) && (Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360, player, play))) {
                 Animation_Change(&this->skelAnime, &object_dh_Anim_004658, 1.0f, 20.0f,
                                  Animation_GetLastFrame(&object_dh_Anim_004658), ANIMMODE_ONCE, -6.0f);
                 this->actionState = 0;
@@ -410,15 +418,17 @@ void EnDh_SetupDamage(EnDh* this) {
 }
 
 void EnDh_Damage(EnDh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->actor.speedXZ < 0.0f) {
         this->actor.speedXZ += 0.15f;
     }
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     if (SkelAnime_Update(&this->skelAnime)) {
         this->actor.world.rot.y = this->actor.shape.rot.y;
         if (this->retreat) {
             EnDh_SetupRetreat(this, play);
-        } else if ((this->actor.xzDistToPlayer <= 105.0f) && Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360)) {
+        } else if ((this->actor.xzDistToPlayer[playerIndex] <= 105.0f) && Actor_IsFacingPlayer(&this->actor, 60 * 0x10000 / 360, player, play)) {
             f32 frames = Animation_GetLastFrame(&object_dh_Anim_004658);
 
             EnDh_SetupAttack(this);
@@ -471,7 +481,7 @@ void EnDh_Death(EnDh* this, PlayState* play) {
 
 void EnDh_CollisionCheck(EnDh* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 lastHealth;
 
     if ((this->collider2.base.acFlags & AC_HIT) && !this->retreat) {
@@ -503,7 +513,7 @@ void EnDh_CollisionCheck(EnDh* this, PlayState* play) {
 void EnDh_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnDh* this = (EnDh*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad40;
 
     EnDh_CollisionCheck(this, play);

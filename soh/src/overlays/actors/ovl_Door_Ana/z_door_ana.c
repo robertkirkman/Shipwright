@@ -95,11 +95,13 @@ void DoorAna_Destroy(Actor* thisx, PlayState* play) {
 
 // update routine for grottos that are currently "hidden"/unopened
 void DoorAna_WaitClosed(DoorAna* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u32 openGrotto = false;
 
     if (!(this->actor.params & 0x200)) {
         // opening with song of storms
-        if (this->actor.xyzDistToPlayerSq < 40000.0f && Flags_GetEnv(play, 5)) {
+        if (this->actor.xyzDistToPlayerSq[playerIndex] < 40000.0f && Flags_GetEnv(play, 5)) {
             openGrotto = true;
             this->actor.flags &= ~ACTOR_FLAG_4;
         }
@@ -124,10 +126,10 @@ void DoorAna_WaitClosed(DoorAna* this, PlayState* play) {
 
 // update routine for grottos that are open
 void DoorAna_WaitOpen(DoorAna* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 destinationIdx;
 
-    player = GET_PLAYER(play);
     if (Math_StepToF(&this->actor.scale.x, 0.01f, 0.001f)) {
         if ((this->actor.targetMode != 0) && (play->sceneLoadFlag == 0) && (player->stateFlags1 & 0x80000000) &&
             (player->unk_84F == 0)) {
@@ -149,8 +151,8 @@ void DoorAna_WaitOpen(DoorAna* this, PlayState* play) {
             DoorAna_SetupAction(this, DoorAna_GrabPlayer);
         } else {
             if (!Player_InCsMode(play) && !(player->stateFlags1 & 0x8800000) &&
-                this->actor.xzDistToPlayer <= 15.0f && -50.0f <= this->actor.yDistToPlayer &&
-                this->actor.yDistToPlayer <= 15.0f) {
+                this->actor.xzDistToPlayer[playerIndex] <= 15.0f && -50.0f <= this->actor.yDistToPlayer[playerIndex] &&
+                this->actor.yDistToPlayer[playerIndex] <= 15.0f) {
                 player->stateFlags1 |= 0x80000000;
                 this->actor.targetMode = 1;
             } else {
@@ -163,21 +165,23 @@ void DoorAna_WaitOpen(DoorAna* this, PlayState* play) {
 
 // update function for after the player has triggered the grotto
 void DoorAna_GrabPlayer(DoorAna* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->actor.yDistToPlayer <= 0.0f && 15.0f < this->actor.xzDistToPlayer) {
-        player = GET_PLAYER(play);
-        player->actor.world.pos.x = Math_SinS(this->actor.yawTowardsPlayer) * 15.0f + this->actor.world.pos.x;
-        player->actor.world.pos.z = Math_CosS(this->actor.yawTowardsPlayer) * 15.0f + this->actor.world.pos.z;
+    if (this->actor.yDistToPlayer[playerIndex] <= 0.0f && 15.0f < this->actor.xzDistToPlayer[playerIndex]) {
+        player->actor.world.pos.x = Math_SinS(this->actor.yawTowardsPlayer[playerIndex]) * 15.0f + this->actor.world.pos.x;
+        player->actor.world.pos.z = Math_CosS(this->actor.yawTowardsPlayer[playerIndex]) * 15.0f + this->actor.world.pos.z;
     }
 }
 
 void DoorAna_Update(Actor* thisx, PlayState* play) {
     DoorAna* this = (DoorAna*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->actionFunc(this, play);
     // changes the grottos facing angle based on camera angle
-    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000;
+    this->actor.shape.rot.y = Camera_GetCamDirYaw(play->cameraPtrs[playerIndex]) + 0x8000;
 }
 
 void DoorAna_Draw(Actor* thisx, PlayState* play) {

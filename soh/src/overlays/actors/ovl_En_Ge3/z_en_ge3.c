@@ -93,11 +93,13 @@ void EnGe3_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnGe3_TurnToFacePlayer(EnGe3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(angleDiff) <= 0x4000) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 6, 4000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 6, 4000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         func_80038290(play, &this->actor, &this->headRot, &this->unk_306, this->actor.focus.pos);
     } else {
@@ -107,14 +109,16 @@ void EnGe3_TurnToFacePlayer(EnGe3* this, PlayState* play) {
             Math_SmoothStepToS(&this->headRot.y, 0x2000, 6, 6200, 0x100);
         }
 
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 12, 1000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 12, 1000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
     }
 }
 
 void EnGe3_LookAtPlayer(EnGe3* this, PlayState* play) {
-    if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x2300) &&
-        (this->actor.xzDistToPlayer < 100.0f)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x2300) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         func_80038290(play, &this->actor, &this->headRot, &this->unk_306, this->actor.focus.pos);
     } else {
         Math_SmoothStepToS(&this->headRot.x, 0, 6, 6200, 100);
@@ -210,6 +214,8 @@ void EnGe3_MoveAndBlink(EnGe3* this, PlayState* play) {
 
 void EnGe3_UpdateWhenNotTalking(Actor* thisx, PlayState* play) {
     EnGe3* this = (EnGe3*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     EnGe3_UpdateCollision(this, play);
     this->actionFunc(this, play);
@@ -219,7 +225,7 @@ void EnGe3_UpdateWhenNotTalking(Actor* thisx, PlayState* play) {
         this->actor.update = EnGe3_Update;
     } else {
         this->actor.textId = 0x6005;
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             func_8002F2CC(&this->actor, play, 100.0f);
         }
     }

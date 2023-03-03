@@ -101,7 +101,7 @@ void EnSyatekiItm_Destroy(Actor* thisx, PlayState* play) {
 
 void EnSyatekiItm_Idle(EnSyatekiItm* this, PlayState* play) {
     s32 i;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->signal == ENSYATEKI_START) {
         player->actor.world.pos.x = -12.0f;
@@ -129,7 +129,7 @@ void EnSyatekiItm_Idle(EnSyatekiItm* this, PlayState* play) {
 void EnSyatekiItm_StartRound(EnSyatekiItm* this, PlayState* play) {
     s32 i;
     s32 j;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->unkTimer == 0) {
         if (LINK_IS_ADULT && !(CVarGetInteger("gCustomizeShootingGallery", 0) && CVarGetInteger("gConstantAdultGallery", 0))) {
@@ -168,7 +168,7 @@ void EnSyatekiItm_StartRound(EnSyatekiItm* this, PlayState* play) {
 }
 
 void EnSyatekiItm_SpawnTargets(EnSyatekiItm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     s32 i;
     s32 roundIdx;
@@ -276,7 +276,7 @@ void EnSyatekiItm_SpawnTargets(EnSyatekiItm* this, PlayState* play) {
 }
 
 void EnSyatekiItm_CheckTargets(EnSyatekiItm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 i;
     s16 j;
 
@@ -311,7 +311,7 @@ void EnSyatekiItm_CleanupGame(EnSyatekiItm* this, PlayState* play) {
 }
 
 void EnSyatekiItm_EndGame(EnSyatekiItm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     player->actor.freezeTimer = 10;
     if (this->signal == ENSYATEKI_RESULTS) {

@@ -173,7 +173,7 @@ void BgSpot08Iceblock_Roll(BgSpot08Iceblock* this, PlayState* play) {
     s32 rollDataIndex;
     MtxF mtx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     switch (this->dyna.actor.params & 0xFF) {
         case 0x11: // Medium nonrotating

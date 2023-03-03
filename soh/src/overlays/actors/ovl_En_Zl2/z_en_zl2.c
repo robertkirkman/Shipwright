@@ -543,7 +543,7 @@ void EnZl2_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot,
         }
 
         {
-            Player* player = GET_PLAYER(play);
+            Player* player = Player_NearestToActor(&this->actor, play);
             Matrix_Push();
             if (player->rightHandType == 0xFF) {
                 Matrix_Put(&player->shieldMf);
@@ -628,7 +628,7 @@ void EnZl2_GiveLightArrows(EnZl2* this, PlayState* play) {
     f32 posZ;
 
     if (this->unk_244 == 0) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         posX = player->actor.world.pos.x;
         posY = player->actor.world.pos.y + 80.0f;
         posZ = player->actor.world.pos.z;
@@ -1180,7 +1180,7 @@ void func_80B513A8(EnZl2* this, PlayState* play) {
     f32 posZ;
 
     if (this->unk_250 == 0) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         posX = player->actor.world.pos.x;
         posY = player->actor.world.pos.y;
         posZ = player->actor.world.pos.z;

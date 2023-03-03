@@ -79,18 +79,21 @@ void EnBlkobj_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnBlkobj_Wait(EnBlkobj* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->dyna.actor.xzDistToPlayer < 120.0f) {
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] < 120.0f) {
         EnBlkobj_SetupAction(this, EnBlkobj_SpawnDarkLink);
     }
     player->stateFlags2 |= 0x04000000;
 }
 
 void EnBlkobj_SpawnDarkLink(EnBlkobj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (!(this->dyna.actor.flags & ACTOR_FLAG_6)) {
         Actor_Spawn(&play->actorCtx, play, ACTOR_EN_TORCH2, this->dyna.actor.world.pos.x,
-                    this->dyna.actor.world.pos.y, this->dyna.actor.world.pos.z, 0, this->dyna.actor.yawTowardsPlayer, 0,
+                    this->dyna.actor.world.pos.y, this->dyna.actor.world.pos.z, 0, this->dyna.actor.yawTowardsPlayer[playerIndex], 0,
                     0, true);
         EnBlkobj_SetupAction(this, EnBlkobj_DarkLinkFight);
     }

@@ -455,7 +455,7 @@ void EnDaikuKakariko_Run(EnDaikuKakariko* this, PlayState* play) {
 void EnDaikuKakariko_Update(Actor* thisx, PlayState* play) {
     EnDaikuKakariko* this = (EnDaikuKakariko*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad2;
 
     if (this->currentAnimIndex == 3) {

@@ -71,7 +71,7 @@ static AnimationInfo sAnimationInfo[] = {
 };
 
 u16 EnKz_GetTextNoMaskChild(PlayState* play, EnKz* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((gSaveContext.n64ddFlag && Flags_GetRandomizerInf(RAND_INF_DUNGEONS_DONE_JABU_JABUS_BELLY)) ||
         (!gSaveContext.n64ddFlag && CHECK_QUEST_ITEM(QUEST_ZORA_SAPPHIRE))) {
@@ -89,7 +89,7 @@ u16 EnKz_GetTextNoMaskChild(PlayState* play, EnKz* this) {
 }
 
 u16 EnKz_GetTextNoMaskAdult(PlayState* play, EnKz* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     // this works because both ITEM_NONE and later trade items are > ITEM_FROG
     if (INV_CONTENT(ITEM_TRADE_ADULT) >= ITEM_FROG) {
@@ -197,7 +197,8 @@ void EnKz_UpdateEyes(EnKz* this) {
 
 s32 func_80A9C95C(PlayState* play, EnKz* this, s16* talkState, f32 unkf, NpcGetTextIdFunc getTextId,
                   NpcUpdateTalkStateFunc updateTalkState) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 sp32;
     s16 sp30;
     f32 xzDistToPlayer;
@@ -215,7 +216,7 @@ s32 func_80A9C95C(PlayState* play, EnKz* this, s16* talkState, f32 unkf, NpcGetT
 
     yaw = Math_Vec3f_Yaw(&this->actor.home.pos, &player->actor.world.pos);
     yaw -= this->actor.shape.rot.y;
-    if ((fabsf(yaw) > 1638.0f) || (this->actor.xzDistToPlayer < 265.0f)) {
+    if ((fabsf(yaw) > 1638.0f) || (this->actor.xzDistToPlayer[playerIndex] < 265.0f)) {
         this->actor.flags &= ~ACTOR_FLAG_0;
         return 0;
     }
@@ -227,24 +228,24 @@ s32 func_80A9C95C(PlayState* play, EnKz* this, s16* talkState, f32 unkf, NpcGetT
         return 0;
     }
 
-    xzDistToPlayer = this->actor.xzDistToPlayer;
-    this->actor.xzDistToPlayer = Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos);
+    xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
+    this->actor.xzDistToPlayer[playerIndex] = Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos);
     if (func_8002F2CC(&this->actor, play, unkf) == 0) {
-        this->actor.xzDistToPlayer = xzDistToPlayer;
+        this->actor.xzDistToPlayer[playerIndex] = xzDistToPlayer;
         return 0;
     }
-    this->actor.xzDistToPlayer = xzDistToPlayer;
+    this->actor.xzDistToPlayer[playerIndex] = xzDistToPlayer;
     this->actor.textId = getTextId(play, &this->actor);
 
     return 0;
 }
 
 void func_80A9CB18(EnKz* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (func_80A9C95C(play, this, &this->interactInfo.talkState, 340.0f, EnKz_GetText, func_80A9C6C0)) {
         if (((gSaveContext.n64ddFlag && LINK_IS_CHILD) || this->actor.textId == 0x401A) && !(gSaveContext.eventChkInf[3] & 8)) {
-            if (func_8002F368(play) == EXCH_ITEM_LETTER_RUTO) {
+            if (func_8002F368(play, player) == EXCH_ITEM_LETTER_RUTO) {
                 this->actor.textId = 0x401B;
                 this->sfxPlayed = false;
             } else {
@@ -256,7 +257,7 @@ void func_80A9CB18(EnKz* this, PlayState* play) {
 
         if (LINK_IS_ADULT) {
             if ((INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_PRESCRIPTION) &&
-                (func_8002F368(play) == EXCH_ITEM_PRESCRIPTION)) {
+                (func_8002F368(play, player) == EXCH_ITEM_PRESCRIPTION)) {
                 if (!gSaveContext.n64ddFlag || !Flags_GetTreasure(play, 0x1F)) {
                     this->actor.textId = 0x4014;
                     this->sfxPlayed = false;
@@ -468,6 +469,8 @@ void EnKz_SetupGetItem(EnKz* this, PlayState* play) {
         this->interactInfo.talkState = NPC_TALK_STATE_TALKING;
         this->actionFunc = EnKz_StartTimer;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (gSaveContext.n64ddFlag) {
             if (this->isTrading) {
                 getItemEntry = Randomizer_GetItemFromKnownCheck(RC_ZD_TRADE_PRESCRIPTION, GI_FROG);
@@ -481,8 +484,8 @@ void EnKz_SetupGetItem(EnKz* this, PlayState* play) {
         } else {
             getItemId = this->isTrading ? GI_FROG : GI_TUNIC_ZORA;
         }
-        yRange = fabsf(this->actor.yDistToPlayer) + 1.0f;
-        xzRange = this->actor.xzDistToPlayer + 1.0f;
+        yRange = fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f;
+        xzRange = this->actor.xzDistToPlayer[playerIndex] + 1.0f;
         if (!gSaveContext.n64ddFlag || getItemEntry.getItemId == GI_NONE) {
             func_8002F434(&this->actor, play, getItemId, xzRange, yRange);
         } else {

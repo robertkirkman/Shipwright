@@ -137,7 +137,7 @@ void func_80B4AE18(EnZl1* this) {
 }
 
 void func_80B4AF18(EnZl1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     func_80038290(play, &this->actor, &this->unk_200, &this->unk_206, this->actor.focus.pos);
@@ -157,7 +157,8 @@ void func_80B4AF18(EnZl1* this, PlayState* play) {
 }
 
 void func_80B4B010(EnZl1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad2;
     s32 pad3;
     s32 pad;
@@ -188,7 +189,7 @@ void func_80B4B010(EnZl1* this, PlayState* play) {
         this->actionFunc = func_80B4B240;
         Audio_PlayFanfare(NA_BGM_APPEAR);
     } else {
-        rotDiff = ABS(this->actor.yawTowardsPlayer - this->actor.shape.rot.y);
+        rotDiff = ABS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y);
         if ((rotDiff < 0x238E) && !(player->actor.world.pos.y < this->actor.world.pos.y)) {
             func_8002F2F4(&this->actor, play);
         }
@@ -202,7 +203,7 @@ void func_80B4B240(EnZl1* this, PlayState* play) {
     Vec3f sp58 = { -434.0f, 84.0f, 0.0f };
     u8 sp54[] = { 0x00, 0x00, 0x02 };
     s32 pad2;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     AnimationHeader* animHeaderSeg;
     MessageContext* msgCtx = &play->msgCtx;
     f32 frameCount;
@@ -418,7 +419,7 @@ void func_80B4B8B4(EnZl1* this, PlayState* play) {
 void func_80B4BBC4(EnZl1* this, PlayState* play) {
     s32 pad;
     f32 frameCount = Animation_GetLastFrame(&gChildZelda1Anim_00438);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Animation_Change(&this->skelAnime, &gChildZelda1Anim_00438, 1.0f, 0.0f, frameCount, ANIMMODE_LOOP, 0.0f);
     func_8002DF54(play, &this->actor, 1);
@@ -490,7 +491,7 @@ void func_80B4BC78(EnZl1* this, PlayState* play) {
 void func_80B4BF2C(EnZl1* this, PlayState* play) {
     s32 pad;
     MessageContext* msgCtx = &play->msgCtx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     switch (this->unk_1E2) {
         case 0:

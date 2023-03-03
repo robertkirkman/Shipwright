@@ -185,6 +185,7 @@ void EnHonotrap_InitEye(Actor* thisx, PlayState* play) {
 }
 
 void EnHonotrap_InitFlame(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad;
     EnHonotrap* this = (EnHonotrap*)thisx;
 
@@ -196,7 +197,7 @@ void EnHonotrap_InitFlame(Actor* thisx, PlayState* play) {
     CollisionCheck_SetInfo(&this->actor.colChkInfo, NULL, &sColChkInfoInit);
     ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 30.0f);
     this->actor.shape.shadowAlpha = 128;
-    this->targetPos = GET_PLAYER(play)->actor.world.pos;
+    this->targetPos = player->actor.world.pos;
     this->targetPos.y += 10.0f;
     this->flameScroll = Rand_ZeroOne() * 511.0f;
     EnHonotrap_SetupFlame(this);
@@ -235,12 +236,14 @@ void EnHonotrap_SetupEyeIdle(EnHonotrap* this) {
 }
 
 void EnHonotrap_EyeIdle(EnHonotrap* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->actor.child != NULL) {
         this->timer = 200;
-    } else if ((this->timer <= 0) && (this->actor.xzDistToPlayer < 750.0f) && (0.0f > this->actor.yDistToPlayer) &&
-               (this->actor.yDistToPlayer > -700.0f) &&
-               (-0x4000 < (this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) &&
-               ((this->actor.yawTowardsPlayer - this->actor.shape.rot.y) < 0x4000)) {
+    } else if ((this->timer <= 0) && (this->actor.xzDistToPlayer[playerIndex] < 750.0f) && (0.0f > this->actor.yDistToPlayer[playerIndex]) &&
+               (this->actor.yDistToPlayer[playerIndex] > -700.0f) &&
+               (-0x4000 < (this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) &&
+               ((this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) < 0x4000)) {
         EnHonotrap_SetupEyeOpen(this);
     }
 }
@@ -319,9 +322,11 @@ void EnHonotrap_SetupFlameDrop(EnHonotrap* this) {
 }
 
 void EnHonotrap_FlameDrop(EnHonotrap* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((this->collider.cyl.base.atFlags & AT_HIT) || (this->timer <= 0)) {
         if ((this->collider.cyl.base.atFlags & AT_HIT) && !(this->collider.cyl.base.atFlags & AT_BOUNCED)) {
-            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer, 0.0f);
+            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer[playerIndex], 0.0f);
         }
         this->actor.velocity.x = this->actor.velocity.y = this->actor.velocity.z = 0.0f;
         EnHonotrap_SetupFlameVanish(this);
@@ -370,7 +375,7 @@ void EnHonotrap_FlameMove(EnHonotrap* this, PlayState* play) {
     Actor_UpdateBgCheckInfo(play, &this->actor, 7.0f, 10.0f, 0.0f, 0x1D);
 
     if (this->collider.tris.base.atFlags & AT_BOUNCED) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         Vec3f shieldNorm;
         Vec3f tempVel;
         Vec3f shieldVec;
@@ -408,11 +413,13 @@ void EnHonotrap_SetupFlameChase(EnHonotrap* this) {
 }
 
 void EnHonotrap_FlameChase(EnHonotrap* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
-    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0x300);
+    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x300);
     Math_StepToF(&this->actor.speedXZ, 3.0f, 0.1f);
-    this->actor.gravity = (-this->actor.yDistToPlayer < 10.0f) ? 0.08f : -0.08f;
+    this->actor.gravity = (-this->actor.yDistToPlayer[playerIndex] < 10.0f) ? 0.08f : -0.08f;
     func_8002D868(&this->actor);
     if (this->actor.velocity.y > 1.0f) {
         this->actor.velocity.y = 1.0f;
@@ -421,7 +428,6 @@ void EnHonotrap_FlameChase(EnHonotrap* this, PlayState* play) {
     func_8002D7EC(&this->actor);
     Actor_UpdateBgCheckInfo(play, &this->actor, 7.0f, 10.0f, 0.0f, 0x1D);
     if (this->collider.cyl.base.atFlags & AT_BOUNCED) {
-        Player* player = GET_PLAYER(play);
         Vec3s shieldRot;
 
         Matrix_MtxFToYXZRotS(&player->shieldMf, &shieldRot, false);

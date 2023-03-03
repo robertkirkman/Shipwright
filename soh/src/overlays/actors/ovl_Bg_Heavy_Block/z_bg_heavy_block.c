@@ -163,6 +163,8 @@ void BgHeavyBlock_Destroy(Actor* thisx, PlayState* play) {
 
 void BgHeavyBlock_MovePiece(BgHeavyBlock* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     thisx->velocity.y += thisx->gravity;
 
@@ -190,7 +192,7 @@ void BgHeavyBlock_MovePiece(BgHeavyBlock* this, PlayState* play) {
             thisx->velocity.z = Rand_CenteredFloat(8.0f);
             BgHeavyBlock_SetPieceRandRot(this, 1.0f);
             Audio_PlayActorSound2(thisx, NA_SE_EV_ROCK_BROKEN);
-            func_800AA000(thisx->xzDistToPlayer, 0x96, 0xA, 8);
+            func_800AA000(thisx->xzDistToPlayer[playerIndex], 0x96, 0xA, 8);
         }
     }
 
@@ -343,7 +345,7 @@ void BgHeavyBlock_Wait(BgHeavyBlock* this, PlayState* play) {
 }
 
 void BgHeavyBlock_LiftedUp(BgHeavyBlock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
     f32 cosYaw;
     f32 zOffset;
@@ -494,7 +496,7 @@ void BgHeavyBlock_Draw(Actor* thisx, PlayState* play) {
     static Vec3f D_80884ED4 = { 0.0f, 400.0f, 0.0f };
     BgHeavyBlock* this = (BgHeavyBlock*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     OPEN_DISPS(play->state.gfxCtx);
 

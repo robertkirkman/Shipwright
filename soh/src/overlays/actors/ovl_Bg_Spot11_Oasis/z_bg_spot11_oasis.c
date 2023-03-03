@@ -55,8 +55,8 @@ void func_808B27F0(PlayState* play, s16 waterSurface) {
     waterBox->ySurface = waterSurface;
 }
 
-s32 func_808B280C(PlayState* play) {
-    Player* player = GET_PLAYER(play);
+s32 func_808B280C(BgSpot11Oasis* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp58;
     Vec3f sp4C;
     Vec3f sp40;
@@ -95,7 +95,7 @@ void func_808B2970(BgSpot11Oasis* this) {
 }
 
 void func_808B2980(BgSpot11Oasis* this, PlayState* play) {
-    if (Flags_GetEnv(play, 5) && func_808B280C(play)) {
+    if (Flags_GetEnv(play, 5) && func_808B280C(this, play)) {
         OnePointCutscene_Init(play, 4150, -99, &this->actor, MAIN_CAM);
         func_808B29E0(this);
     }

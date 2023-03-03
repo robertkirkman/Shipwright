@@ -3120,7 +3120,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
 
             func_80B70ED4(this, input);
 
-            if (this->actor.xzDistToPlayer < (250.0f * sp118)) {
+            if (this->actor.xzDistToPlayer[0] < (250.0f * sp118)) {
                 this->unk_15A = this->unk_158 = 0;
                 this->unk_1A4 = 1000;
                 this->unk_1A2 = 200;
@@ -3141,7 +3141,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
             }
             func_80B70ED4(this, input);
 
-            if (this->actor.xzDistToPlayer < (250.0f * sp118)) {
+            if (this->actor.xzDistToPlayer[0] < (250.0f * sp118)) {
                 this->unk_15A = this->unk_158 = 0;
                 this->unk_1A4 = 1000;
                 this->unk_1A2 = 200;
@@ -3202,7 +3202,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
             } else {
                 Math_ApproachF(&this->unk_1B0, 4096.0f, 1.0f, 256.0f);
 
-                if ((this->actor.xzDistToPlayer < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
+                if ((this->actor.xzDistToPlayer[0] < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
                     Math_ApproachF(&this->unk_1B0, 8192.0f, 1.0f, 768.0f);
                     Math_ApproachF(&this->actor.speedXZ, 4.2f, 1.0f, 0.75);
                     this->unk_190 = 1.2f;
@@ -3232,7 +3232,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
         case -1:
             Math_ApproachS(&this->unk_166, 0, 0x14, 0x20);
 
-            if ((this->actor.xzDistToPlayer < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
+            if ((this->actor.xzDistToPlayer[0] < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
                 Math_ApproachF(&this->actor.speedXZ, 3.0f, 1.0f, 0.75);
                 this->unk_190 = 1.0f;
                 this->unk_17A[0] = 20;
@@ -3272,7 +3272,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
             break;
 
         case -2:
-            if ((this->actor.xzDistToPlayer < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
+            if ((this->actor.xzDistToPlayer[0] < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
                 this->unk_158 = -1;
                 this->unk_1B4.y = -120.0f;
             } else {
@@ -3312,7 +3312,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
             break;
 
         case -25:
-            if ((this->actor.xzDistToPlayer < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
+            if ((this->actor.xzDistToPlayer[0] < (250.0f * sp118)) || (this->unk_17A[1] != 0)) {
                 this->unk_158 = -1;
                 this->unk_1B4.y = -120.0f;
             } else {
@@ -3449,7 +3449,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
                 this->unk_194 = 2000.0f;
             }
 
-            if (this->actor.xzDistToPlayer < (100.0f * sp118)) {
+            if (this->actor.xzDistToPlayer[0] < (100.0f * sp118)) {
                 this->unk_15A = this->unk_158 = 0;
                 this->unk_1A4 = 1000;
                 this->unk_1A2 = 200;
@@ -3616,7 +3616,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
 
             Math_ApproachS(&this->unk_170, 0x2AF8, 4, 0xBB8);
             sFishingHookedFish = this;
-            Math_ApproachS(&player->actor.shape.rot.y, this->actor.yawTowardsPlayer + 0x8000, 5, 0x500);
+            Math_ApproachS(&player->actor.shape.rot.y, this->actor.yawTowardsPlayer[0] + 0x8000, 5, 0x500);
 
             if (D_80B7E124 == 0) {
                 if ((D_80B7FEA0 < 20) && ((D_80B7E0AE & 3) == 0)) {
@@ -3630,7 +3630,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
                         temp_f0 = 40.0f - ((this->unk_1AC - 30.0f) * 1.333333f);
                         if (temp_f0 > 0.0f) {
                             this->unk_152 = temp_f0;
-                            this->unk_154 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+                            this->unk_154 = this->actor.yawTowardsPlayer[0] - this->actor.shape.rot.y;
                             this->unk_156 = 1;
                         }
                     }
@@ -3692,7 +3692,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
 
                         for (spA2 = 0; spA2 < 100; spA2++) {
                             Matrix_RotateY(Rand_CenteredFloat(3.0f * M_PI / 4.0f) +
-                                               (((this->actor.yawTowardsPlayer + 0x8000) / 32768.0f) * M_PI),
+                                               (((this->actor.yawTowardsPlayer[0] + 0x8000) / 32768.0f) * M_PI),
                                            MTXMODE_NEW);
                             Matrix_MultVec3f(&sp10C, &sp100);
 
@@ -3754,7 +3754,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
                     if (((this->unk_17A[1] & 0xF) == 0) && CHECK_BTN_ALL(input->cur.button, BTN_A) &&
                         (!(this->unk_1AC >= 60.0f) || (D_80B7E080 >= 2000))) {
                         this->unk_152 = (s16)Rand_ZeroFloat(30.0f) + 15;
-                        this->unk_154 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+                        this->unk_154 = this->actor.yawTowardsPlayer[0] - this->actor.shape.rot.y;
                     }
 
                     this->unk_190 = 1.0f;
@@ -3861,7 +3861,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
                 D_80B7E0A6 = 50;
                 D_80B7E11C = 0.5f;
                 this->unk_152 = 0;
-            } else if (this->actor.xzDistToPlayer < (KREG(59) + 50.0f) || getInstantFish() == 1) {
+            } else if (this->actor.xzDistToPlayer[0] < (KREG(59) + 50.0f) || getInstantFish() == 1) {
                 this->unk_158 = 6;
                 this->unk_17A[0] = 100;
                 player->unk_860 = 3;
@@ -4066,7 +4066,7 @@ void Fishing_UpdateFish(Actor* thisx, PlayState* play2) {
                 this->unk_15A = 10;
             } else {
                 func_80B70ED4(this, input);
-                if (this->actor.xzDistToPlayer < (100.0f * sp118)) {
+                if (this->actor.xzDistToPlayer[0] < (100.0f * sp118)) {
                     this->unk_15A = this->unk_158 = 0;
                     this->unk_1A4 = 500;
                     this->unk_1A2 = 200;
@@ -5219,8 +5219,8 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
         this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_5;
     }
 
-    if ((this->actor.xzDistToPlayer < 120.0f) || (Message_GetState(&play->msgCtx) != TEXT_STATE_NONE)) {
-        headRotTarget = this->actor.shape.rot.y - this->actor.yawTowardsPlayer;
+    if ((this->actor.xzDistToPlayer[0] < 120.0f) || (Message_GetState(&play->msgCtx) != TEXT_STATE_NONE)) {
+        headRotTarget = this->actor.shape.rot.y - this->actor.yawTowardsPlayer[0];
     } else {
         headRotTarget = 0;
     }

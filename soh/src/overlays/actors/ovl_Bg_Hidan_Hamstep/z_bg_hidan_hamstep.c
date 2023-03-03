@@ -290,6 +290,8 @@ void func_808887C4(BgHidanHamstep* this, PlayState* play) {
 }
 
 void func_80888860(BgHidanHamstep* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 pad2;
     s32 quakeIndex;
@@ -308,12 +310,12 @@ void func_80888860(BgHidanHamstep* this, PlayState* play) {
 
 
             if (this->unk_244 == 1) {
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+                quakeIndex = Quake_Add(play->cameraPtrs[playerIndex], 3);
                 Quake_SetSpeed(quakeIndex, -15536);
                 Quake_SetQuakeValues(quakeIndex, 0, 0, 500, 0);
                 Quake_SetCountdown(quakeIndex, 20);
                 Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BLOCK_BOUND);
-                func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 255, 20, 150);
+                func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 255, 20, 150);
                 func_80888638(this, play);
                 osSyncPrintf("A(%d)\n", this->dyna.actor.params);
             }

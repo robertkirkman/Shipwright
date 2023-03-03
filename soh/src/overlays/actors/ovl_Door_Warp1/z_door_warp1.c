@@ -101,7 +101,7 @@ void DoorWarp1_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void DoorWarp1_SetupWarp(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->scale = 0;
     this->unk_1AE = -140;
@@ -173,7 +173,7 @@ void DoorWarp1_SetupWarp(DoorWarp1* this, PlayState* play) {
                    gSaveContext.entranceIndex == 0x610 ||  // desert colossus
                    gSaveContext.entranceIndex == 0x580) && // graveyard
                  gSaveContext.sceneSetupIndex < 4) ||
-                (GET_PLAYER(play)->actor.params & 0xF00) != 0x200) {
+                (player->actor.params & 0xF00) != 0x200) {
                 Actor_Kill(&this->actor);
             }
             if (Actor_WorldDistXZToActor(&player->actor, &this->actor) > 100.0f) {
@@ -280,7 +280,7 @@ void DoorWarp1_SetupPurpleCrystal(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_SetPlayerPos(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     player->actor.velocity.y = 0.0f;
     player->actor.world.pos.x = this->actor.world.pos.x;
@@ -322,7 +322,7 @@ void func_80999214(DoorWarp1* this, PlayState* play) {
 }
 
 void func_80999348(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     DoorWarp1_SetPlayerPos(this, play);
 
@@ -341,7 +341,7 @@ void func_80999348(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_FloatPlayer(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     player->actor.gravity = -0.1f;
 }
@@ -392,7 +392,9 @@ void DoorWarp1_AwaitClearFlag(DoorWarp1* this, PlayState* play) {
 
 void func_809995D4(DoorWarp1* this, PlayState* play) {
     if (this->warpTimer == 0) {
-        if (this->actor.xzDistToPlayer < 100.0f) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             this->actor.world.pos.x = -98.0f;
             this->actor.world.pos.y = 827.0f;
             this->actor.world.pos.z = -3228.0f;
@@ -449,10 +451,11 @@ void func_809998A4(DoorWarp1* this, PlayState* play) {
 }
 
 s32 DoorWarp1_PlayerInRange(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 ret = false;
 
-    if (fabsf(this->actor.xzDistToPlayer) < 60.0f) {
+    if (fabsf(this->actor.xzDistToPlayer[playerIndex]) < 60.0f) {
         if ((player->actor.world.pos.y - 20.0f) < this->actor.world.pos.y) {
             if (this->actor.world.pos.y < (player->actor.world.pos.y + 20.0f)) {
                 ret = true;
@@ -506,7 +509,7 @@ void DoorWarp1_ChildWarpIdle(DoorWarp1* this, PlayState* play) {
     Audio_PlayActorSound2(&this->actor, NA_SE_EV_WARP_HOLE - SFX_FLAG);
 
     if (DoorWarp1_PlayerInRange(this, play)) {
-        player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         
         if (gSaveContext.n64ddFlag) {
             GivePlayerRandoReward(this, player, play, 0, 0);
@@ -526,7 +529,7 @@ void DoorWarp1_ChildWarpIdle(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_ChildWarpOut(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->unk_1B2 >= 101) {
         if (player->actor.velocity.y < 10.0f) {
@@ -626,7 +629,7 @@ static s16 sRutoWarpSubCamId;
 void func_80999EE0(DoorWarp1* this, PlayState* play) {
     Vec3f at;
     Vec3f eye;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->rutoWarpState == WARP_BLUE_RUTO_STATE_3) {
         Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
@@ -662,7 +665,7 @@ void func_80999FE4(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_RutoWarpOut(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->unk_1B2 >= 61) {
         if (player->actor.velocity.y < 10.f) {
@@ -733,7 +736,7 @@ void DoorWarp1_AdultWarpIdle(DoorWarp1* this, PlayState* play) {
     Audio_PlayActorSound2(&this->actor, NA_SE_EV_WARP_HOLE - SFX_FLAG);
 
     if (DoorWarp1_PlayerInRange(this, play)) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
 
         if (gSaveContext.n64ddFlag) {
             GivePlayerRandoReward(this, player, play, 0, 1);
@@ -750,7 +753,7 @@ void DoorWarp1_AdultWarpIdle(DoorWarp1* this, PlayState* play) {
 }
 
 void func_8099A508(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->unk_1B2 != 0) {
         this->unk_1B2--;
@@ -765,7 +768,7 @@ void func_8099A508(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_AdultWarpOut(DoorWarp1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 temp_f0_2;
 
     if (this->unk_1B2 != 0) {

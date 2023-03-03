@@ -61,7 +61,7 @@ void DoorGerudo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 f32 func_809946BC(PlayState* play, DoorGerudo* this, f32 arg2, f32 arg3, f32 arg4) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Vec3f playerPos;
     Vec3f sp1C;
 
@@ -78,7 +78,7 @@ f32 func_809946BC(PlayState* play, DoorGerudo* this, f32 arg2, f32 arg3, f32 arg
 }
 
 s32 func_80994750(DoorGerudo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 temp_f0;
     s16 rotYDiff;
 
@@ -107,7 +107,7 @@ void func_8099485C(DoorGerudo* this, PlayState* play) {
         s32 direction = func_80994750(this, play);
 
         if (direction != 0) {
-            Player* player = GET_PLAYER(play);
+            Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
             if (gSaveContext.inventory.dungeonKeys[gSaveContext.mapIndex] <= 0) {
                 player->naviTextId = -0x203;

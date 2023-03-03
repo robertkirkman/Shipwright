@@ -364,21 +364,22 @@ void func_808B561C(BgSpot16Bombstone* this, PlayState* play) {
 }
 
 void func_808B56BC(BgSpot16Bombstone* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 sinValue;
     s16 adjustedYawDiff;
     s32 yawDiff;
     s32 absYawDiff;
 
-    if (this->actor.xzDistToPlayer < 130.0f && this->actor.yDistToPlayer < 160.0f &&
-        this->actor.yDistToPlayer >= -10.0f) {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    if (this->actor.xzDistToPlayer[playerIndex] < 130.0f && this->actor.yDistToPlayer[playerIndex] < 160.0f &&
+        this->actor.yDistToPlayer[playerIndex] >= -10.0f) {
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         absYawDiff = ABS(yawDiff);
 
         adjustedYawDiff = absYawDiff - 0x3FFF;
 
         if (adjustedYawDiff > 0) {
-            sinValue = Math_SinS(adjustedYawDiff) * this->actor.xzDistToPlayer;
+            sinValue = Math_SinS(adjustedYawDiff) * this->actor.xzDistToPlayer[playerIndex];
 
             if (sinValue >= 0.0f) {
                 player->actor.world.pos.x += sinValue * this->sinRotation;
@@ -393,7 +394,7 @@ void func_808B56BC(BgSpot16Bombstone* this, PlayState* play) {
 
 void func_808B57E0(BgSpot16Bombstone* this, PlayState* play) {
     Actor* playerHeldActor;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnBombf* currentBomb;
 
     if (sTimer > 0) {

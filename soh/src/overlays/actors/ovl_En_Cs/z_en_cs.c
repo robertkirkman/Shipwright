@@ -208,7 +208,7 @@ s32 EnCs_GetTalkState(EnCs* this, PlayState* play) {
 }
 
 s32 EnCs_GetTextID(EnCs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 textId = Text_GetFaceReaction(play, 15);
 
     if (gSaveContext.itemGetInf[3] & 0x400) {
@@ -397,7 +397,7 @@ void EnCs_Wait(EnCs* this, PlayState* play) {
 }
 
 void EnCs_Talk(EnCs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (SkelAnime_Update(&this->skelAnime) != 0) {
         EnCs_ChangeAnim(this, this->currentAnimIndex, &this->currentAnimIndex);

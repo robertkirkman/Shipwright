@@ -352,6 +352,8 @@ void EnIshi_SetupWait(EnIshi* this) {
 }
 
 void EnIshi_Wait(EnIshi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static u16 liftSounds[] = { NA_SE_PL_PULL_UP_ROCK, NA_SE_PL_PULL_UP_BIGROCK };
     s32 pad;
     s16 type = this->actor.params & 1;
@@ -370,13 +372,13 @@ void EnIshi_Wait(EnIshi* this, PlayState* play) {
         sFragmentSpawnFuncs[type](this, play);
         sDustSpawnFuncs[type](this, play);
         Actor_Kill(&this->actor);
-    } else if (this->actor.xzDistToPlayer < 600.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
         Collider_UpdateCylinder(&this->actor, &this->collider);
         this->collider.base.acFlags &= ~AC_HIT;
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
-        if (this->actor.xzDistToPlayer < 400.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 400.0f) {
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
-            if (this->actor.xzDistToPlayer < 90.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 90.0f) {
                 // GI_NONE in these cases allows the player to lift the actor
                 if (type == ROCK_LARGE) {
                     func_8002F434(&this->actor, play, GI_NONE, 80.0f, 20.0f);
@@ -438,11 +440,13 @@ void EnIshi_Fly(EnIshi* this, PlayState* play) {
             sDustSpawnFuncs[type](this, play);
         }
         if (type == ROCK_LARGE) {
-            quakeIdx = Quake_Add(GET_ACTIVE_CAM(play), 3);
+            Player* player = Player_NearestToActor(&this->actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
+            quakeIdx = Quake_Add(play->cameraPtrs[playerIndex], 3);
             Quake_SetSpeed(quakeIdx, -0x3CB0);
             Quake_SetQuakeValues(quakeIdx, 3, 0, 0, 0);
             Quake_SetCountdown(quakeIdx, 7);
-            func_800AA000(this->actor.xyzDistToPlayerSq, 0xFF, 0x14, 0x96);
+            func_800AA000(this->actor.xyzDistToPlayerSq[playerIndex], 0xFF, 0x14, 0x96);
         }
         Actor_Kill(&this->actor);
         return;

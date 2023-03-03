@@ -77,7 +77,7 @@ void EnXc_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnXc_CalculateHeadTurn(EnXc* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     this->interactInfo.yOffset = kREG(16) - 3.0f;
@@ -307,7 +307,7 @@ void GivePlayerRandoRewardSheikSong(EnXc* sheik, PlayState* play, RandomizerChec
 
 s32 EnXc_MinuetCS(EnXc* this, PlayState* play) {
     if (this->actor.params == SHEIK_TYPE_MINUET) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         f32 z = player->actor.world.pos.z;
 
         if (z < -2225.0f) {
@@ -343,7 +343,7 @@ s32 EnXc_BoleroCS(EnXc* this, PlayState* play) {
     PosRot* posRot;
 
     if (this->actor.params == SHEIK_TYPE_BOLERO) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         posRot = &player->actor.world;
         if ((posRot->pos.x > -784.0f) && (posRot->pos.x < -584.0f) && (posRot->pos.y > 447.0f) &&
             (posRot->pos.y < 647.0f) && (posRot->pos.z > -446.0f) && (posRot->pos.z < -246.0f) &&
@@ -382,7 +382,7 @@ void EnXc_SetupSerenadeAction(EnXc* this, PlayState* play) {
 
 s32 EnXc_SerenadeCS(EnXc* this, PlayState* play) {
     if (this->actor.params == SHEIK_TYPE_SERENADE) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         s32 stateFlags = player->stateFlags1;
 
         if (((CHECK_OWNED_EQUIP(EQUIP_BOOTS, 1) && !gSaveContext.n64ddFlag) ||
@@ -598,7 +598,7 @@ void func_80B3D48C(EnXc* this, PlayState* play) {
     if (linkAction != NULL) {
         yaw = linkAction->urot.y + 0x8000;
     } else {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         yaw = player->actor.world.rot.y + 0x8000;
     }
 
@@ -732,9 +732,11 @@ void EnXc_SetupWalkAction(EnXc* this) {
     }
 }
 
-void EnXc_SetupHaltAction(EnXc* this) {
+void EnXc_SetupHaltAction(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime* skelAnime = &this->skelAnime;
-    f32 xzDistToPlayer = this->actor.xzDistToPlayer;
+    f32 xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
 
     if (xzDistToPlayer <= (kREG(3) + 95.0f)) {
         f32 frameCount = Animation_GetLastFrame(&gSheikIdleAnim);
@@ -872,8 +874,10 @@ void EnXc_SetupReverseWalkAction(EnXc* this) {
     }
 }
 
-void EnXc_SetupReverseHaltAction(EnXc* this) {
-    f32 xzDistToPlayer = this->actor.xzDistToPlayer;
+void EnXc_SetupReverseHaltAction(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    f32 xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
 
     if (xzDistToPlayer >= kREG(5) + 140.0f) {
         Animation_Change(&this->skelAnime, &gSheikIdleAnim, 1.0f, 0.0f, Animation_GetLastFrame(&gSheikIdleAnim),
@@ -959,7 +963,7 @@ void EnXc_Walk(EnXc* this, PlayState* play) {
     EnXc_BgCheck(this, play);
     EnXc_SetEyePattern(this);
     EnXc_SetWalkingSFX(this, play);
-    EnXc_SetupHaltAction(this);
+    EnXc_SetupHaltAction(this, play);
 }
 
 void EnXc_Stopped(EnXc* this, PlayState* play) {
@@ -1049,7 +1053,7 @@ void EnXc_ActionFunc15(EnXc* this, PlayState* play) {
     EnXc_SetEyePattern(this);
     EnXc_SetWalkingSFX(this, play);
     EnXc_InitFlame(this, play);
-    EnXc_SetupReverseHaltAction(this);
+    EnXc_SetupReverseHaltAction(this, play);
 }
 
 void EnXc_HaltAndWaitToThrowNut(EnXc* this, PlayState* play) {
@@ -1298,8 +1302,10 @@ void func_80B3EFEC(EnXc* this) {
     EnXc_CheckAndSetAction(this, SHEIK_ACTION_39, SHEIK_ACTION_40);
 }
 
-void func_80B3F010(EnXc* this) {
-    f32 xzDistToPlayer = this->actor.xzDistToPlayer;
+void func_80B3F010(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    f32 xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
 
     if (kREG(5) + 140.0f <= xzDistToPlayer) {
         Animation_Change(&this->skelAnime, &gSheikIdleAnim, 1.0f, 0.0f, Animation_GetLastFrame(&gSheikIdleAnim),
@@ -1382,7 +1388,7 @@ void EnXc_ActionFunc40(EnXc* this, PlayState* play) {
     EnXc_BgCheck(this, play);
     EnXc_SetEyePattern(this);
     EnXc_SetWalkingSFX(this, play);
-    func_80B3F010(this);
+    func_80B3F010(this, play);
 }
 
 void EnXc_ActionFunc41(EnXc* this, PlayState* play) {
@@ -1967,8 +1973,10 @@ void func_80B40D74(EnXc* this) {
     EnXc_CheckAndSetAction(this, SHEIK_ACTION_NOCTURNE_REVERSE_ACCEL, SHEIK_ACTION_NOCTURNE_REVERSE_WALK);
 }
 
-void EnXc_SetupReverseHaltInNocturneCS(EnXc* this) {
-    f32 xzDistToPlayer = this->actor.xzDistToPlayer;
+void EnXc_SetupReverseHaltInNocturneCS(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    f32 xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
 
     if (kREG(5) + 140.0f <= xzDistToPlayer) {
         Animation_Change(&this->skelAnime, &gSheikIdleAnim, 1.0f, 0.0f, Animation_GetLastFrame(&gSheikIdleAnim),
@@ -2152,7 +2160,7 @@ void EnXc_ReverseWalkInNocturneCS(EnXc* this, PlayState* play) {
     EnXc_AnimIsFinished(this);
     EnXc_BgCheck(this, play);
     EnXc_SetEyePattern(this);
-    EnXc_SetupReverseHaltInNocturneCS(this);
+    EnXc_SetupReverseHaltInNocturneCS(this, play);
 }
 
 void EnXc_ReverseHaltInNocturneCS(EnXc* this, PlayState* play) {

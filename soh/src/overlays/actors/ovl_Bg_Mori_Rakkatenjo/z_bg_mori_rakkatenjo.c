@@ -86,13 +86,15 @@ void BgMoriRakkatenjo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 BgMoriRakkatenjo_IsLinkUnder(BgMoriRakkatenjo* this, PlayState* play) {
-    Vec3f* pos = &GET_PLAYER(play)->actor.world.pos;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    Vec3f* pos = &player->actor.world.pos;
 
     return (-3300.0f < pos->z) && (pos->z < -1840.0f) && (1791.0f < pos->x) && (pos->x < 2191.0f);
 }
 
 s32 BgMoriRakkatenjo_IsLinkClose(BgMoriRakkatenjo* this, PlayState* play) {
-    Vec3f* pos = &GET_PLAYER(play)->actor.world.pos;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    Vec3f* pos = &player->actor.world.pos;
 
     return (-3360.0f < pos->z) && (pos->z < -1840.0f) && (1791.0f < pos->x) && (pos->x < 2191.0f);
 }
@@ -154,10 +156,12 @@ void BgMoriRakkatenjo_Fall(BgMoriRakkatenjo* this, PlayState* play) {
         if (this->bounceCount >= ARRAY_COUNT(bounceVel)) {
             BgMoriRakkatenjo_SetupRest(this);
         } else {
+            Player* player = Player_NearestToActor(thisx, play);
+            u16 playerIndex = Player_GetIndex(player, play);
             if (this->bounceCount == 0) {
                 this->fallCount++;
                 func_800788CC(NA_SE_EV_STONE_BOUND);
-                func_800AA000(SQ(thisx->yDistToPlayer), 0xFF, 0x14, 0x96);
+                func_800AA000(SQ(thisx->yDistToPlayer[playerIndex]), 0xFF, 0x14, 0x96);
             }
             thisx->world.pos.y =
                 403.0f - (thisx->world.pos.y - 403.0f) * bounceVel[this->bounceCount] / fabsf(thisx->velocity.y);

@@ -138,10 +138,11 @@ s32 func_80A4E3EC(EnGs* this, PlayState* play) {
 }
 
 void func_80A4E470(EnGs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     bREG(15) = 0;
-    if (this->actor.xzDistToPlayer <= 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 100.0f) {
         bREG(15) = 1;
         if (this->unk_19D == 0) {
             player->stateFlags2 |= 0x800000;
@@ -383,7 +384,9 @@ void func_80A4ED34(EnGs* this, PlayState* play) {
         }
 
         Actor_MoveForward(&this->actor);
-        if (this->actor.yDistToPlayer < -12000.0f) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (this->actor.yDistToPlayer[playerIndex] < -12000.0f) {
             Actor_Kill(&this->actor);
         }
     }

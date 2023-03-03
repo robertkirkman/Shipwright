@@ -232,7 +232,7 @@ void func_808B4084(BgSpot15Rrbox* this, PlayState* play) {
 }
 
 void func_808B40AC(BgSpot15Rrbox* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->unk_168 <= 0 && fabsf(this->dyna.unk_150) > 0.001f) {
         if (func_808B3AAC(this, play) && !func_808B4010(this, play)) {
@@ -255,10 +255,10 @@ void func_808B4178(BgSpot15Rrbox* this, PlayState* play) {
 
 void func_808B4194(BgSpot15Rrbox* this, PlayState* play) {
     f32 sign;
-    Player* player = GET_PLAYER(play);
     f32 tempUnk178;
     s32 approxFResult;
     Actor* actor = &this->dyna.actor;
+    Player* player = Player_NearestToActor(actor, play);
 
     this->unk_174 = this->unk_174 + ((CVarGetInteger("gFasterBlockPush", 0) / 2) * 0.5) + 0.5f;
 
@@ -281,7 +281,6 @@ void func_808B4194(BgSpot15Rrbox* this, PlayState* play) {
         this->unk_174 = 0.0f;
         func_808B4380(this, play);
     } else if (approxFResult) {
-        player = GET_PLAYER(play);
         if (func_808B4010(this, play)) {
             Audio_PlayActorSound2(actor, NA_SE_EV_WOOD_BOUND);
         }
@@ -311,8 +310,8 @@ void func_808B4380(BgSpot15Rrbox* this, PlayState* play) {
 
 void func_808B43D0(BgSpot15Rrbox* this, PlayState* play) {
     f32 floorHeight;
-    Player* player = GET_PLAYER(play);
     Actor* actor = &this->dyna.actor;
+    Player* player = Player_NearestToActor(actor, play);
 
     if (fabsf(this->dyna.unk_150) > 0.001f) {
         this->dyna.unk_150 = 0.0f;
@@ -345,7 +344,7 @@ void func_808B44B8(BgSpot15Rrbox* this, PlayState* play) {
 }
 
 void func_808B44CC(BgSpot15Rrbox* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     player->stateFlags2 &= ~0x10;
     this->dyna.unk_150 = 0.0f;

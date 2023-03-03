@@ -91,7 +91,7 @@ void EnGo_SetupAction(EnGo* this, EnGoActionFunc actionFunc) {
 }
 
 u16 EnGo_GetTextID(PlayState* play, Actor* thisx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     switch (thisx->params & 0xF0) {
         case 0x90:
@@ -199,11 +199,13 @@ u16 EnGo_GetTextID(PlayState* play, Actor* thisx) {
 }
 
 s16 EnGo_UpdateTalkState(PlayState* play, Actor* thisx) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 unkState = NPC_TALK_STATE_TALKING;
     f32 xzRange;
-    f32 yRange = fabsf(thisx->yDistToPlayer) + 1.0f;
+    f32 yRange = fabsf(thisx->yDistToPlayer[playerIndex]) + 1.0f;
 
-    xzRange = thisx->xzDistToPlayer + 1.0f;
+    xzRange = thisx->xzDistToPlayer[playerIndex] + 1.0f;
     switch (Message_GetState(&play->msgCtx)) {
         if (play) {}
         case TEXT_STATE_CLOSING:
@@ -397,7 +399,7 @@ f32 EnGo_GetGoronSize(EnGo* this) {
 }
 
 void func_80A3F060(EnGo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 npcTrackingMode;
 
     if (this->actionFunc != EnGo_BiggoronActionFunc && this->actionFunc != EnGo_FireGenericActionFunc &&
@@ -421,9 +423,11 @@ void func_80A3F0E4(EnGo* this) {
 }
 
 s32 EnGo_IsCameraModified(EnGo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 xyzDist;
-    s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
-    Camera* camera = play->cameraPtrs[MAIN_CAM];
+    s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
+    Camera* camera = play->cameraPtrs[playerIndex];
 
     if (fabsf(yawDiff) > 10920.0f) {
         return 0;
@@ -435,7 +439,7 @@ s32 EnGo_IsCameraModified(EnGo* this, PlayState* play) {
         xyzDist *= 4.8f;
     }
 
-    if (fabsf(this->actor.xyzDistToPlayerSq) > xyzDist) {
+    if (fabsf(this->actor.xyzDistToPlayerSq[playerIndex]) > xyzDist) {
         if (camera->setting == CAM_SET_DIRECTED_YAW) {
             Camera_ChangeSetting(camera, CAM_SET_NORMAL0);
         }
@@ -572,7 +576,7 @@ s32 EnGo_IsRollingOnGround(EnGo* this, s16 unkArg1, f32 unkArg2) {
 }
 
 void func_80A3F908(EnGo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 float1;
     s32 isUnkCondition;
 
@@ -597,7 +601,7 @@ void func_80A3F908(EnGo* this, PlayState* play) {
 
         if (((this->actor.params & 0xF0) == 0x90) && (isUnkCondition == true)) {
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_SWORD_BROKEN) {
-                if (func_8002F368(play) == EXCH_ITEM_SWORD_BROKEN) {
+                if (func_8002F368(play, player) == EXCH_ITEM_SWORD_BROKEN) {
                     if (gSaveContext.infTable[11] & 0x10) {
                         this->actor.textId = 0x3055;
                     } else {
@@ -610,7 +614,7 @@ void func_80A3F908(EnGo* this, PlayState* play) {
             }
 
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_EYEDROPS) {
-                if (func_8002F368(play) == EXCH_ITEM_EYEDROPS) {
+                if (func_8002F368(play, player) == EXCH_ITEM_EYEDROPS) {
                     this->actor.textId = 0x3059;
                 } else {
                     this->actor.textId = 0x3058;
@@ -702,19 +706,23 @@ void EnGo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_80A3FEB4(EnGo* this, PlayState* play) {
-    if (!(this->actor.xyzDistToPlayerSq > SQ(1200.0f))) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (!(this->actor.xyzDistToPlayerSq[playerIndex] > SQ(1200.0f))) {
         EnGo_SetupAction(this, EnGo_StopRolling);
     }
 }
 
 void EnGo_StopRolling(EnGo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnBom* bomb;
 
     if (DECR(this->unk_20E) == 0) {
         if (this->collider.base.ocFlags2 & 1) {
             this->collider.base.ocFlags2 &= ~1;
             play->damagePlayer(play, -4);
-            func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer, 6.0f);
+            func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
             this->unk_20E = 0x10;
         }
     }
@@ -990,8 +998,10 @@ void EnGo_GetItem(EnGo* this, PlayState* play) {
             getItemId = GI_TUNIC_GORON;
         }
 
-        yDist = fabsf(this->actor.yDistToPlayer) + 1.0f;
-        xzDist = this->actor.xzDistToPlayer + 1.0f;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        yDist = fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f;
+        xzDist = this->actor.xzDistToPlayer[playerIndex] + 1.0f;
         if (!gSaveContext.n64ddFlag || getItemEntry.getItemId == GI_NONE) {
             func_8002F434(&this->actor, play, getItemId, xzDist, yDist);
         } else {

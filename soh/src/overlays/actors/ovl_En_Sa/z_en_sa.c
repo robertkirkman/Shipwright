@@ -218,8 +218,10 @@ s16 func_80AF56F4(PlayState* play, Actor* thisx) {
 }
 
 void func_80AF57D8(EnSa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (play->sceneNum != SCENE_SPOT05 ||
-        ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) < 0x1555 || this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
+        ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) < 0x1555 || this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         Npc_UpdateTalking(play, &this->actor, &this->interactInfo.talkState, this->collider.dim.radius + 30.0f,
                           func_80AF55E0, func_80AF56F4);
     }
@@ -402,7 +404,7 @@ s32 func_80AF5DFC(EnSa* this, PlayState* play) {
 }
 
 void func_80AF5F34(EnSa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode = NPC_TRACKING_PLAYER_AUTO_TURN;
 
     if (play->sceneNum == SCENE_SPOT04) {
@@ -628,7 +630,7 @@ void GivePlayerRandoRewardSaria(EnSa* saria, PlayState* play, RandomizerCheck ch
 }
 
 void func_80AF683C(EnSa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (!(player->actor.world.pos.z >= -2220.0f) && !Play_InCsMode(play)) {
         if (gSaveContext.n64ddFlag) {

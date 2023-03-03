@@ -205,7 +205,7 @@ void EnBomChu_UpdateFloorPoly(EnBomChu* this, CollisionPoly* floorPoly, PlayStat
 }
 
 void EnBomChu_WaitForRelease(EnBomChu* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->timer != 0) {
         this->timer--;

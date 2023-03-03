@@ -102,14 +102,16 @@ void EnMs_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnMs_Wait(EnMs* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     EnMs_SetOfferText(this, play);
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) { // if talk is initiated
         this->actionFunc = EnMs_Talk;
-    } else if ((this->actor.xzDistToPlayer < 90.0f) && (ABS(yawDiff) < 0x2000)) { // talk range
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < 90.0f) && (ABS(yawDiff) < 0x2000)) { // talk range
         func_8002F2CC(&this->actor, play, 90.0f);
     }
 }

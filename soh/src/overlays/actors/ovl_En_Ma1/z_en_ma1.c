@@ -251,7 +251,8 @@ void EnMa1_ChangeAnim(EnMa1* this, s32 index) {
 }
 
 void func_80AA0AF4(EnMa1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
 
     if ((this->interactInfo.talkState == NPC_TALK_STATE_IDLE) && (this->skelAnime.animation == &gMalonChildSingAnim)) {
@@ -406,7 +407,8 @@ void GivePlayerRandoRewardMalon(EnMa1* malon, PlayState* play, RandomizerCheck c
 }
 
 void func_80AA0F44(EnMa1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         if (this->skelAnime.animation != &gMalonChildIdleAnim) {
@@ -429,7 +431,7 @@ void func_80AA0F44(EnMa1* this, PlayState* play) {
             this->actor.flags |= ACTOR_FLAG_16;
             // when rando'ed, skip to the Item Giving. Otherwise go to the song teaching code.
             this->actionFunc = gSaveContext.n64ddFlag ? func_80AA1150 : func_80AA106C;
-        } else if (this->actor.xzDistToPlayer < 30.0f + (f32)this->collider.dim.radius) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 30.0f + (f32)this->collider.dim.radius) {
             // somehow flags that the player is close to malon so that pulling out the Ocarina
             // triggers the code above this.
             player->stateFlags2 |= 0x800000;
@@ -444,7 +446,8 @@ void func_80AA0F44(EnMa1* this, PlayState* play) {
 }
 
 void func_80AA106C(EnMa1* this, PlayState* play) {
-    GET_PLAYER(play)->stateFlags2 |= 0x800000;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    player->stateFlags2 |= 0x800000;
     if (this->interactInfo.talkState == NPC_TALK_STATE_ACTION) {
         Audio_OcaSetInstrument(2);
         func_8010BD58(play, OCARINA_ACTION_TEACH_EPONA);
@@ -454,7 +457,8 @@ void func_80AA106C(EnMa1* this, PlayState* play) {
 }
 
 void func_80AA10EC(EnMa1* this, PlayState* play) {
-    GET_PLAYER(play)->stateFlags2 |= 0x800000;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    player->stateFlags2 |= 0x800000;
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_SONG_DEMO_DONE) {
         func_8010BD58(play, OCARINA_ACTION_PLAYBACK_EPONA);
         this->actionFunc = func_80AA1150;
@@ -481,7 +485,8 @@ void EnMa1_EndTeachSong(EnMa1* this, PlayState* play) {
 }
 
 void func_80AA1150(EnMa1* this, PlayState* play) {
-    GET_PLAYER(play)->stateFlags2 |= 0x800000;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    player->stateFlags2 |= 0x800000;
 
     // When rando'ed, trigger the "song learned" Ocarina mode.
     if (gSaveContext.n64ddFlag && (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING)) {

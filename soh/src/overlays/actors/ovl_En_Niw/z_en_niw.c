@@ -394,8 +394,10 @@ void func_80AB6100(EnNiw* this, PlayState* play, s32 arg2) {
         if (this->timer6 == 0 || this->actor.bgCheckFlags & 8) {
             this->timer6 = 150;
             if (this->timer8 == 0) {
+                Player* player = Player_NearestToActor(&this->actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
                 this->timer8 = 70;
-                this->unk_2E4 = this->actor.yawTowardsPlayer;
+                this->unk_2E4 = this->actor.yawTowardsPlayer[playerIndex];
             }
         }
     }
@@ -448,9 +450,10 @@ void func_80AB63A8(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB6450(EnNiw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->actor.xzDistToPlayer < 30.0f && fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 5.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 30.0f && fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 5.0f) {
         this->timer6 = 100;
         this->actor.gravity = -2.0f;
         this->actionFunc = func_80AB7290;
@@ -798,8 +801,10 @@ void func_80AB714C(EnNiw* this, PlayState* play) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EV_CHICKEN_CRY_M);
     }
     if (this->timer5 == 0) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->timer7 = 10;
-        this->unk_2E4 = this->actor.yawTowardsPlayer;
+        this->unk_2E4 = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.flags &= ~ACTOR_FLAG_0;
         this->actionFunc = func_80AB7204;
     }
@@ -830,8 +835,6 @@ void func_80AB7290(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB7328(EnNiw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (this->timer6 == 0) {
         this->unk_2AC.x = this->unk_2B8.x = this->actor.world.pos.x;
         this->unk_2AC.y = this->unk_2B8.y = this->actor.world.pos.y;
@@ -844,6 +847,7 @@ void func_80AB7328(EnNiw* this, PlayState* play) {
         }
         this->actionFunc = EnNiw_ResetAction;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
         this->unk_2E4 = Math_FAtan2F(this->actor.world.pos.x - player->actor.world.pos.x,
                                      this->actor.world.pos.z - player->actor.world.pos.z) *
                         (0x8000 / M_PI);
@@ -878,7 +882,8 @@ void func_80AB747C(EnNiw* this, PlayState* play) {
 void EnNiw_Update(Actor* thisx, PlayState* play) {
     s32 pad1;
     EnNiw* this = (EnNiw*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 i;
     s16 featherCount;
     Vec3f zeroVec1 = { 0.0f, 0.0f, 0.0f };
@@ -1051,7 +1056,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
     if (D_80AB85E0 == 0 && this->unk_2A4 <= 0 && thisx->params != 0xD && thisx->params != 0xE && thisx->params != 0xA) {
         this->timer6 = 100;
 
-        if (thisx->xzDistToPlayer > 10.0f) {
+        if (thisx->xzDistToPlayer[playerIndex] > 10.0f) {
             D_80AB85E0 = 1;
             this->timer5 = this->timer4 = this->unk_29E = 0;
             thisx->speedXZ = 0.0f;
@@ -1073,7 +1078,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
 
     dist = 20.0f;
 
-    if (this->unk_2A8 != 0 && thisx->xyzDistToPlayerSq < SQ(dist) && player->invincibilityTimer == 0) {
+    if (this->unk_2A8 != 0 && thisx->xyzDistToPlayerSq[playerIndex] < SQ(dist) && player->invincibilityTimer == 0) {
         func_8002F6D4(play, &this->actor, 2.0f, thisx->world.rot.y, 0.0f, 0x10);
     }
 

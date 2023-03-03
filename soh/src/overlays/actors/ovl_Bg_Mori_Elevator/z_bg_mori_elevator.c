@@ -125,8 +125,9 @@ void BgMoriElevator_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 BgMoriElevator_IsPlayerRiding(BgMoriElevator* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     return ((this->dyna.unk_160 & 2) && !(this->unk_170 & 2) &&
-            ((GET_PLAYER(play)->actor.world.pos.y - this->dyna.actor.world.pos.y) < 80.0f));
+            ((player->actor.world.pos.y - this->dyna.actor.world.pos.y) < 80.0f));
 }
 
 void BgMoriElevator_SetupWaitAfterInit(BgMoriElevator* this) {

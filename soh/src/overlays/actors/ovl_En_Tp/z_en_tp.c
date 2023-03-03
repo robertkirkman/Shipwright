@@ -239,7 +239,8 @@ void EnTp_Head_SetupApproachPlayer(EnTp* this) {
 }
 
 void EnTp_Head_ApproachPlayer(EnTp* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Math_SmoothStepToF(&this->actor.world.pos.y, player->actor.world.pos.y + 30.0f, 1.0f, 0.5f, 0.0f);
     Audio_PlaySoundGeneral(NA_SE_EN_TAIL_FLY - SFX_FLAG, &this->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
@@ -266,7 +267,7 @@ void EnTp_Head_ApproachPlayer(EnTp* this, PlayState* play) {
     this->timer--;
 
     if (this->timer != 0) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 750, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 750, 0);
         this->actor.shape.rot.y = this->actor.world.rot.y;
     } else {
         EnTp_Head_SetupBurrowReturnHome(this);
@@ -377,7 +378,7 @@ void EnTp_Head_SetupTakeOff(EnTp* this) {
  */
 void EnTp_Head_TakeOff(EnTp* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Math_SmoothStepToF(&this->actor.speedXZ, 2.5f, 0.1f, 0.2f, 0.0f);
     Math_SmoothStepToF(&this->actor.world.pos.y, player->actor.world.pos.y + 85.0f + this->horizontalVariation, 1.0f,
@@ -433,12 +434,13 @@ void EnTp_Head_SetupWait(EnTp* this) {
  * Awaken and rise from the ground when Player is closer than 200
  */
 void EnTp_Head_Wait(EnTp* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yaw;
 
     this->unk_15C--;
 
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         if (this->collider.base.atFlags & AT_HIT) {
             this->collider.base.atFlags &= ~AT_HIT;
             if (&player->actor == this->collider.base.at) {
@@ -450,7 +452,7 @@ void EnTp_Head_Wait(EnTp* this, PlayState* play) {
             this->timer--;
 
             Math_SmoothStepToS(&this->actor.shape.rot.x, 0, 1, 500, 0);
-            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 1500, 0);
+            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 1500, 0);
 
             yaw = Math_Vec3f_Yaw(&this->actor.home.pos, &player->actor.world.pos) + 0x4000;
             Math_SmoothStepToF(&this->actor.world.pos.y, this->actor.home.pos.y + 30.0f, 0.3f, 1.0f, 0.3f);
@@ -655,7 +657,7 @@ void EnTp_Update(Actor* thisx, PlayState* play) {
     Vec3f kiraPos;
     Color_RGBA8 kiraPrimColor = { 0, 0, 255, 255 };
     Color_RGBA8 kiraEnvColor = { 0, 0, 0, 0 };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 yawToWall;
 
     if (player->stateFlags1 & 0x4000000) { // Shielding

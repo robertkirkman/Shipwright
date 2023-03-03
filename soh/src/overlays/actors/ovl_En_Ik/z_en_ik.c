@@ -322,17 +322,19 @@ void func_80A7489C(EnIk* this) {
 }
 
 void func_80A7492C(EnIk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 phi_a0 = (this->unk_2FB == 0) ? 0xAAA : 0x3FFC;
-    s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((ABS(yawDiff) <= phi_a0) && (this->actor.xzDistToPlayer < 100.0f) &&
-        (ABS(this->actor.yDistToPlayer) < 150.0f)) {
+    if ((ABS(yawDiff) <= phi_a0) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f) &&
+        (ABS(this->actor.yDistToPlayer[playerIndex]) < 150.0f)) {
         if ((play->gameplayFrames & 1)) {
             func_80A74E2C(this);
         } else {
             func_80A751C8(this);
         }
-    } else if ((ABS(yawDiff) <= 0x4000) && (ABS(this->actor.yDistToPlayer) < 150.0f)) {
+    } else if ((ABS(yawDiff) <= 0x4000) && (ABS(this->actor.yDistToPlayer[playerIndex]) < 150.0f)) {
         func_80A74AAC(this);
     } else {
         func_80A74AAC(this);
@@ -358,6 +360,8 @@ void func_80A74AAC(EnIk* this) {
 }
 
 void func_80A74BA4(EnIk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 temp_t0;
     s16 temp_a1;
     s16 yawDiff;
@@ -378,15 +382,15 @@ void func_80A74BA4(EnIk* this, PlayState* play) {
     }
     temp_a1 = this->actor.wallYaw - this->actor.shape.rot.y;
     if ((this->actor.bgCheckFlags & 8) && (ABS(temp_a1) >= 0x4000)) {
-        temp_a1 = (this->actor.yawTowardsPlayer > 0) ? this->actor.wallYaw - 0x4000 : this->actor.wallYaw + 0x4000;
+        temp_a1 = (this->actor.yawTowardsPlayer[playerIndex] > 0) ? this->actor.wallYaw - 0x4000 : this->actor.wallYaw + 0x4000;
         Math_SmoothStepToS(&this->actor.world.rot.y, temp_a1, 1, phi_a3, 0);
     } else {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, phi_a3, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, phi_a3, 0);
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
-    if ((ABS(yawDiff) <= temp_t0) && (this->actor.xzDistToPlayer < 100.0f)) {
-        if (ABS(this->actor.yDistToPlayer) < 150.0f) {
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
+    if ((ABS(yawDiff) <= temp_t0) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
+        if (ABS(this->actor.yDistToPlayer[playerIndex]) < 150.0f) {
             if ((play->gameplayFrames & 1)) {
                 func_80A74E2C(this);
             } else {
@@ -398,7 +402,7 @@ void func_80A74BA4(EnIk* this, PlayState* play) {
         func_80A751C8(this);
         this->unk_2FC = 1;
     } else {
-        temp_t0 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        temp_t0 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         if (ABS(temp_t0) > 0x4000) {
             this->unk_300--;
             if (this->unk_300 == 0) {
@@ -426,6 +430,8 @@ void func_80A74E2C(EnIk* this) {
 }
 
 void func_80A74EBC(EnIk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f sp2C;
 
     if (this->skelAnime.curFrame == 15.0f) {
@@ -435,10 +441,8 @@ void func_80A74EBC(EnIk* this, PlayState* play) {
         sp2C.z = this->actor.world.pos.z + Math_CosS(this->actor.shape.rot.y + 0x6A4) * 70.0f;
         sp2C.y = this->actor.world.pos.y;
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_IRONNACK_HIT_GND);
-        for (u32 i = 0; i < PLAYER_COUNT; i++) {
-            Camera_AddQuake(&play->mainCameras[0], 2, 0x19, 5);
-        }
-        func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+        Camera_AddQuake(&play->mainCameras[playerIndex], 2, 0x19, 5);
+        func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
         CollisionCheck_SpawnShieldParticles(play, &sp2C);
     }
 
@@ -446,7 +450,7 @@ void func_80A74EBC(EnIk* this, PlayState* play) {
         this->unk_2FE = 1;
     } else {
         if ((this->unk_2FB != 0) && (this->skelAnime.curFrame < 10.0f)) {
-            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0x5DC, 0);
+            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x5DC, 0);
             this->actor.shape.rot.y = this->actor.world.rot.y;
         }
         this->unk_2FE = 0;
@@ -508,7 +512,9 @@ void func_80A75260(EnIk* this, PlayState* play) {
     if (((this->skelAnime.curFrame > 1.0f) && (this->skelAnime.curFrame < 9.0f)) ||
         ((this->skelAnime.curFrame > 13.0f) && (this->skelAnime.curFrame < 18.0f))) {
         if ((this->unk_2FC == 0) && (this->unk_2FB != 0) && (this->skelAnime.curFrame < 10.0f)) {
-            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0x5DC, 0);
+            Player* player = Player_NearestToActor(&this->actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
+            Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x5DC, 0);
             this->actor.shape.rot.y = this->actor.world.rot.y;
         }
         if (this->unk_2FE < 0) {
@@ -550,7 +556,9 @@ void func_80A754A0(EnIk* this) {
 }
 
 void func_80A75530(EnIk* this, PlayState* play) {
-    Math_StepUntilS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0x7D0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_StepUntilS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x7D0);
     this->actor.shape.rot.y = this->actor.world.rot.y;
     if ((this->skelAnime.curFrame > 13.0f) && (this->skelAnime.curFrame < 18.0f)) {
         if (this->unk_2FE < 0) {
@@ -579,8 +587,10 @@ void func_80A755F0(EnIk* this) {
 void func_80A7567C(EnIk* this, PlayState* play) {
     CollisionCheck_SetAC(play, &play->colChkCtx, &this->shieldCollider.base);
     if (SkelAnime_Update(&this->skelAnime)) {
-        if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4000) &&
-            (this->actor.xzDistToPlayer < 100.0f) && (ABS(this->actor.yDistToPlayer) < 150.0f)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4000) &&
+            (this->actor.xzDistToPlayer[playerIndex] < 100.0f) && (ABS(this->actor.yDistToPlayer[playerIndex]) < 150.0f)) {
             if ((play->gameplayFrames & 1)) {
                 func_80A74E2C(this);
             } else {
@@ -618,7 +628,9 @@ void func_80A758B0(EnIk* this, PlayState* play) {
         this->bodyBreak.val = BODYBREAK_STATUS_FINISHED;
     }
     if (SkelAnime_Update(&this->skelAnime)) {
-        if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4000) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4000) {
             func_80A7489C(this);
             func_80A745E4(this, play);
         } else {
@@ -672,6 +684,8 @@ void func_80A75A38(EnIk* this, PlayState* play) {
 }
 
 void func_80A75C38(EnIk* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 temp_f0;
     u8 pad;
     u8 pad2;
@@ -731,9 +745,9 @@ void func_80A75C38(EnIk* this, PlayState* play) {
         Enemy_StartFinishingBlow(play, &this->actor);
         return;
     }
-    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0x7D0, 0);
+    Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x7D0, 0);
     if ((this->actor.params == 0) && (Rand_ZeroOne() < 0.5f)) {
-        if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) > 0x4000) {
+        if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) > 0x4000) {
             func_80A754A0(this);
         }
     }
@@ -753,9 +767,10 @@ void func_80A75C38(EnIk* this, PlayState* play) {
 }
 
 void func_80A75FA0(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnIk* this = (EnIk*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
     u8 prevInvincibilityTimer;
 
     this->unk_2FA = this->unk_2FB;
@@ -778,7 +793,7 @@ void func_80A75FA0(Actor* thisx, PlayState* play) {
                     this->unk_2FE = 0;
                 }
             }
-            func_8002F71C(play, &this->actor, 8.0f, this->actor.yawTowardsPlayer, 8.0f);
+            func_8002F71C(play, &this->actor, 8.0f, this->actor.yawTowardsPlayer[playerIndex], 8.0f);
             player->invincibilityTimer = prevInvincibilityTimer;
         }
     }
