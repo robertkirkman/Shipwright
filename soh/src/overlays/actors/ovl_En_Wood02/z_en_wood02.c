@@ -306,6 +306,8 @@ void EnWood02_Destroy(Actor* thisx, PlayState* play) {
 void EnWood02_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnWood02* this = (EnWood02*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 wobbleAmplitude;
     u8 new_var;
     u8 phi_v0;
@@ -373,18 +375,16 @@ void EnWood02_Update(Actor* thisx, PlayState* play2) {
             this->actor.home.rot.y = 0;
         }
 
-        if (this->actor.xzDistToPlayer < 600.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
             Collider_UpdateCylinder(&this->actor, &this->collider);
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
         }
     } else if (this->actor.params < 0x17) { // Bush
-        Player* player = GET_PLAYER(play);
-
         if (this->unk_14C >= -1) {
-            if (((player->rideActor == NULL) && (sqrt(this->actor.xyzDistToPlayerSq) < 20.0) &&
+            if (((player->rideActor == NULL) && (sqrt(this->actor.xyzDistToPlayerSq[playerIndex]) < 20.0) &&
                  (player->linearVelocity != 0.0f)) ||
-                ((player->rideActor != NULL) && (sqrt(this->actor.xyzDistToPlayerSq) < 60.0) &&
+                ((player->rideActor != NULL) && (sqrt(this->actor.xyzDistToPlayerSq[playerIndex]) < 60.0) &&
                  (player->rideActor->speedXZ != 0.0f))) {
                 if ((this->unk_14C >= 0) && (this->unk_14C < 0x64)) {
                     Item_DropCollectibleRandom(play, &this->actor, &this->actor.world.pos,
@@ -411,8 +411,8 @@ void EnWood02_Update(Actor* thisx, PlayState* play2) {
     if (this->unk_14C < -1) {
         this->unk_14C++;
         wobbleAmplitude = Math_SinS((this->unk_14C ^ 0xFFFF) * 0x3332) * 250.0f;
-        this->actor.shape.rot.x = (Math_CosS(this->actor.yawTowardsPlayer - this->actor.shape.rot.y) * wobbleAmplitude);
-        this->actor.shape.rot.z = (Math_SinS(this->actor.yawTowardsPlayer - this->actor.shape.rot.y) * wobbleAmplitude);
+        this->actor.shape.rot.x = (Math_CosS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) * wobbleAmplitude);
+        this->actor.shape.rot.z = (Math_SinS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) * wobbleAmplitude);
     }
 }
 

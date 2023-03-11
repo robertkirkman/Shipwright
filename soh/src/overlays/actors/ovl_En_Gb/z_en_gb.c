@@ -272,7 +272,8 @@ void func_80A2F7C0(EnGb* this) {
 }
 
 void func_80A2F83C(EnGb* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!func_80A2F760(this)) {
         if (this->actionTimer != 0) {
@@ -283,7 +284,7 @@ void func_80A2F83C(EnGb* this, PlayState* play) {
         }
     }
     if (Actor_ProcessTalkRequest(&this->dyna.actor, play)) {
-        switch (func_8002F368(play)) {
+        switch (func_8002F368(play, player)) {
             case EXCH_ITEM_NONE:
                 func_80A2F180(this);
                 this->actionFunc = func_80A2F94C;
@@ -299,7 +300,7 @@ void func_80A2F83C(EnGb* this, PlayState* play) {
         }
         return;
     }
-    if (this->dyna.actor.xzDistToPlayer < 100.0f) {
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] < 100.0f) {
         func_8002F298(&this->dyna.actor, play, 100.0f, EXCH_ITEM_POE);
     }
 }
@@ -316,11 +317,12 @@ void func_80A2F94C(EnGb* this, PlayState* play) {
 
 void func_80A2F9C0(EnGb* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_DONE && Message_ShouldAdvance(play)) {
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
         if (!(gSaveContext.infTable[0xB] & 0x40)) {
             gSaveContext.infTable[0xB] |= 0x40;
         }
         func_80A2F180(this);
-        Player_UpdateBottleHeld(play, GET_PLAYER(play), ITEM_BOTTLE, PLAYER_IA_BOTTLE);
+        Player_UpdateBottleHeld(play, player, ITEM_BOTTLE, PLAYER_IA_BOTTLE);
         Rupees_ChangeBy(10);
         this->actionFunc = func_80A2F83C;
     }
@@ -328,11 +330,12 @@ void func_80A2F9C0(EnGb* this, PlayState* play) {
 
 void func_80A2FA50(EnGb* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_DONE && Message_ShouldAdvance(play)) {
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
         if (!(gSaveContext.infTable[0xB] & 0x40)) {
             gSaveContext.infTable[0xB] |= 0x40;
         }
         func_80A2F180(this);
-        Player_UpdateBottleHeld(play, GET_PLAYER(play), ITEM_BOTTLE, PLAYER_IA_BOTTLE);
+        Player_UpdateBottleHeld(play, player, ITEM_BOTTLE, PLAYER_IA_BOTTLE);
         Rupees_ChangeBy(50);
         HIGH_SCORE(HS_POE_POINTS) += 100;
         if (HIGH_SCORE(HS_POE_POINTS) != 1000) {
@@ -341,8 +344,6 @@ void func_80A2FA50(EnGb* this, PlayState* play) {
             }
             this->actionFunc = func_80A2F83C;
         } else {
-            Player* player = GET_PLAYER(play);
-
             player->exchangeItemId = EXCH_ITEM_NONE;
             this->textId = 0x70F8;
             Message_ContinueTextbox(play, this->textId);

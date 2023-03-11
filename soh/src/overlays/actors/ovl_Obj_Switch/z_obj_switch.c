@@ -240,6 +240,7 @@ Actor* ObjSwitch_SpawnIce(ObjSwitch* this, PlayState* play) {
 }
 
 void ObjSwitch_SetOn(ObjSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
     s32 subType;
 
@@ -250,9 +251,9 @@ void ObjSwitch_SetOn(ObjSwitch* this, PlayState* play) {
         Flags_SetSwitch(play, (this->dyna.actor.params >> 8 & 0x3F));
 
         if (subType == 0 || subType == 4) {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_CORRECT_CHIME);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_CORRECT_CHIME);
         } else {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
         }
 
         this->cooldownOn = true;
@@ -260,13 +261,14 @@ void ObjSwitch_SetOn(ObjSwitch* this, PlayState* play) {
 }
 
 void ObjSwitch_SetOff(ObjSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     this->cooldownOn = false;
 
     if (Flags_GetSwitch(play, (this->dyna.actor.params >> 8 & 0x3F))) {
         Flags_UnsetSwitch(play, (this->dyna.actor.params >> 8 & 0x3F));
 
         if ((this->dyna.actor.params >> 4 & 7) == 1) {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
             this->cooldownOn = true;
         }
     }
@@ -422,9 +424,11 @@ void ObjSwitch_FloorPress(ObjSwitch* this, PlayState* play) {
         func_8005B198() == this->dyna.actor.category || this->cooldownTimer <= 0) {
         this->dyna.actor.scale.y -= 99.0f / 2000.0f;
         if (this->dyna.actor.scale.y <= 33.0f / 2000.0f) {
+            Player* player = Player_NearestToActor(&this->dyna.actor, play);
+            u16 playerIndex = Player_GetIndex(player, play);
             ObjSwitch_FloorDownInit(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
-            func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 120, 20, 10);
+            func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 120, 20, 10);
         }
     }
 }
@@ -436,6 +440,7 @@ void ObjSwitch_FloorDownInit(ObjSwitch* this) {
 }
 
 void ObjSwitch_FloorDown(ObjSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     switch ((this->dyna.actor.params >> 4 & 7)) {
         case OBJSWITCH_SUBTYPE_FLOOR_0:
             if (!Flags_GetSwitch(play, (this->dyna.actor.params >> 8 & 0x3F))) {
@@ -450,7 +455,7 @@ void ObjSwitch_FloorDown(ObjSwitch* this, PlayState* play) {
             break;
         case OBJSWITCH_SUBTYPE_FLOOR_2:
         case OBJSWITCH_SUBTYPE_FLOOR_3:
-            if (!func_800435B4(&this->dyna) && !Player_InCsMode(play)) {
+            if (!func_800435B4(&this->dyna) && !Player_InCsMode(play, player)) {
                 if (this->releaseTimer <= 0) {
                     ObjSwitch_FloorReleaseInit(this);
                     if ((this->dyna.actor.params >> 4 & 7) == OBJSWITCH_SUBTYPE_FLOOR_2) {
@@ -481,7 +486,9 @@ void ObjSwitch_FloorRelease(ObjSwitch* this, PlayState* play) {
             ObjSwitch_FloorUpInit(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
             if (subType == OBJSWITCH_SUBTYPE_FLOOR_1) {
-                func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 120, 20, 10);
+                Player* player = Player_NearestToActor(&this->dyna.actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
+                func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 120, 20, 10);
             }
         }
     }
@@ -677,6 +684,7 @@ void ObjSwitch_CrystalTurnOff(ObjSwitch* this, PlayState* play) {
 
 void ObjSwitch_Update(Actor* thisx, PlayState* play) {
     ObjSwitch* this = (ObjSwitch*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->releaseTimer > 0) {
         this->releaseTimer--;
@@ -699,7 +707,7 @@ void ObjSwitch_Update(Actor* thisx, PlayState* play) {
             break;
         case OBJSWITCH_TYPE_CRYSTAL:
         case OBJSWITCH_TYPE_CRYSTAL_TARGETABLE:
-            if (!Player_InCsMode(play) && this->disableAcTimer > 0) {
+            if (!Player_InCsMode(play, player) && this->disableAcTimer > 0) {
                 this->disableAcTimer--;
             }
             this->unk_17F = this->jntSph.col.base.acFlags;

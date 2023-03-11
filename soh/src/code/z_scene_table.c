@@ -1482,14 +1482,14 @@ void func_8009BEEC(PlayState* play) {
     s32 var;
 
     if (play->gameplayFrames % 128 == 13) {
-        var = Quake_Add(GET_ACTIVE_CAM(play), 2);
+        var = Quake_Add(GET_ACTIVE_CAM(0, play), 2); // todo
         Quake_SetSpeed(var, 10000);
         Quake_SetQuakeValues(var, 4, 0, 0, 0);
         Quake_SetCountdown(var, 127);
     }
 
     if ((play->gameplayFrames % 64 == 0) && (Rand_ZeroOne() > 0.6f)) {
-        var = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        var = Quake_Add(GET_ACTIVE_CAM(0, play), 3); // todo
         Quake_SetSpeed(var, 32000.0f + (Rand_ZeroOne() * 3000.0f));
         Quake_SetQuakeValues(var, 10.0f - (Rand_ZeroOne() * 9.0f), 0, 0, 0);
         Quake_SetCountdown(var, 48.0f - (Rand_ZeroOne() * 15.0f));
@@ -2407,14 +2407,14 @@ void func_8009FE58(PlayState* play) {
         temp = 0.020000001f;
 
         if (play->pauseCtx.state == 0) {
-            View_SetDistortionOrientation(&play->view,
+            View_SetDistortionOrientation(&play->views[0],
                                  ((360.00018f / 65535.0f) * (M_PI / 180.0f)) * temp * Math_CosS(D_8012A39C),
                                  ((360.00018f / 65535.0f) * (M_PI / 180.0f)) * temp * Math_SinS(D_8012A39C),
                                  ((360.00018f / 65535.0f) * (M_PI / 180.0f)) * temp * Math_SinS(D_8012A3A0));
-            View_SetDistortionScale(&play->view, 1.f + (0.79999995f * temp * Math_SinS(D_8012A3A0)),
+            View_SetDistortionScale(&play->views[0], 1.f + (0.79999995f * temp * Math_SinS(D_8012A3A0)),
                                     1.f + (0.39999998f * temp * Math_CosS(D_8012A3A0)),
                                     1.f + (1 * temp * Math_CosS(D_8012A39C)));
-            View_SetDistortionSpeed(&play->view, 0.95f);
+            View_SetDistortionSpeed(&play->views[0], 0.95f);
         }
 
         switch (play->roomCtx.unk_74[0]) {

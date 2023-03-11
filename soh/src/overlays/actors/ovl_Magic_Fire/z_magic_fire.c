@@ -98,7 +98,7 @@ void MagicFire_Destroy(Actor* thisx, PlayState* play) {
 
 void MagicFire_UpdateBeforeCast(Actor* thisx, PlayState* play) {
     MagicFire* this = (MagicFire*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if ((play->msgCtx.msgMode == MSGMODE_OCARINA_CORRECT_PLAYBACK) ||
         (play->msgCtx.msgMode == MSGMODE_SONG_PLAYED)) {
@@ -116,7 +116,7 @@ void MagicFire_UpdateBeforeCast(Actor* thisx, PlayState* play) {
 
 void MagicFire_Update(Actor* thisx, PlayState* play) {
     MagicFire* this = (MagicFire*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad;
 
     this->actor.world.pos = player->actor.world.pos;

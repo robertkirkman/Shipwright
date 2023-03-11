@@ -74,7 +74,7 @@ void BgMoriBigst_Init(Actor* thisx, PlayState* play) {
     osSyncPrintf("mori (bigST.鍵型天井)(arg : %04x)(sw %d)(noE %d)(roomC %d)(playerPosY %f)\n", this->dyna.actor.params,
                  Flags_GetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F),
                  Flags_GetTempClear(play, this->dyna.actor.room), Flags_GetClear(play, this->dyna.actor.room),
-                 GET_PLAYER(play)->actor.world.pos.y);
+                 GET_PLAYER(play)->actor.world.pos.y); // printf player 1
     BgMoriBigst_InitDynapoly(this, play, &gMoriBigstCol, DPM_UNK);
     Actor_ProcessInitChain(&this->dyna.actor, sInitChain);
     this->moriTexObjIndex = Object_GetIndex(&play->objectCtx, OBJECT_MORI_TEX);
@@ -107,10 +107,12 @@ void BgMoriBigst_SetupWaitForMoriTex(BgMoriBigst* this, PlayState* play) {
 
 void BgMoriBigst_WaitForMoriTex(BgMoriBigst* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (Object_IsLoaded(&play->objectCtx, this->moriTexObjIndex)) {
         thisx->draw = BgMoriBigst_Draw;
-        if (Flags_GetClear(play, thisx->room) && (GET_PLAYER(play)->actor.world.pos.y > 700.0f)) {
+        if (Flags_GetClear(play, thisx->room) && (player->actor.world.pos.y > 700.0f)) {
             if (Flags_GetSwitch(play, (thisx->params >> 8) & 0x3F)) {
                 BgMoriBigst_SetupDone(this, play);
             } else {
@@ -144,12 +146,13 @@ void BgMoriBigst_SetupStalfosFight(BgMoriBigst* this, PlayState* play) {
 }
 
 void BgMoriBigst_StalfosFight(BgMoriBigst* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((this->dyna.actor.home.rot.z == 0) &&
-        ((this->dyna.actor.home.pos.y - 5.0f) <= GET_PLAYER(play)->actor.world.pos.y)) {
+        ((this->dyna.actor.home.pos.y - 5.0f) <= player->actor.world.pos.y)) {
         BgMoriBigst_SetupFall(this, play);
-        OnePointCutscene_Init(play, 3220, 72, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3220, 72, &this->dyna.actor, MAIN_CAM);
     }
 }
 
@@ -158,23 +161,26 @@ void BgMoriBigst_SetupFall(BgMoriBigst* this, PlayState* play) {
 }
 
 void BgMoriBigst_Fall(BgMoriBigst* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor_MoveForward(&this->dyna.actor);
     if (this->dyna.actor.world.pos.y <= this->dyna.actor.home.pos.y) {
         this->dyna.actor.world.pos.y = this->dyna.actor.home.pos.y;
         BgMoriBigst_SetupLanding(this, play);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
-        OnePointCutscene_Init(play, 1020, 8, &this->dyna.actor, MAIN_CAM);
-        func_8002DF38(play, NULL, 0x3C);
+        OnePointCutscene_Init(play, player, 1020, 8, &this->dyna.actor, MAIN_CAM);
+        func_8002DF38(play, player, NULL, 0x3C);
     }
 }
 
 void BgMoriBigst_SetupLanding(BgMoriBigst* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 quake;
 
     BgMoriBigst_SetupAction(this, BgMoriBigst_Landing);
     this->waitTimer = 18;
-    quake = Quake_Add(GET_ACTIVE_CAM(play), 3);
+    quake = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
     Quake_SetSpeed(quake, 25000);
     Quake_SetQuakeValues(quake, 5, 0, 0, 0);
     Quake_SetCountdown(quake, 16);
@@ -214,10 +220,11 @@ void BgMoriBigst_SetupStalfosPairFight(BgMoriBigst* this, PlayState* play) {
 }
 
 void BgMoriBigst_StalfosPairFight(BgMoriBigst* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if ((this->dyna.actor.home.rot.z == 0 || 
         // Check if all enemies are defeated instead of the regular stalfos when enemy randomizer or crowd control is on.
         (Flags_GetTempClear(play, this->dyna.actor.room) && (CVarGetInteger("gRandomizedEnemies", 0) || (CVarGetInteger("gCrowdControl", 0))))) && 
-        !Player_InCsMode(play)) {
+        !Player_InCsMode(play, player)) {
         Flags_SetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F);
         BgMoriBigst_SetupDone(this, play);
     }

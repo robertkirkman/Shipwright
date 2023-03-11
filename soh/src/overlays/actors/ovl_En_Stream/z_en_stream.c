@@ -81,7 +81,7 @@ s32 func_80B0B81C(Vec3f* vortexPosRot, Vec3f* playerPosRot, Vec3f* posDifference
 }
 
 void EnStream_SuckPlayer(EnStream* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad48;
     Vec3f posDifference;
     f32 xzDist;
@@ -112,7 +112,7 @@ void EnStream_SuckPlayer(EnStream* this, PlayState* play) {
 }
 
 void EnStream_WaitForPlayer(EnStream* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 pad;
     Vec3f temp;
 

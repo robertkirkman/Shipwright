@@ -439,6 +439,8 @@ void EnDaiku_EscapeRotate(EnDaiku* this, PlayState* play) {
 }
 
 void EnDaiku_InitSubCamera(EnDaiku* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f eyePosDeltaLocal;
     Vec3f eyePosDeltaWorld;
@@ -460,16 +462,17 @@ void EnDaiku_InitSubCamera(EnDaiku* this, PlayState* play) {
     this->subCamAtTarget.y = this->subCamAt.y = this->actor.world.pos.y + 60.0f;
     this->subCamAtTarget.z = this->subCamAt.z = this->actor.world.pos.z;
 
-    this->subCamId = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->subCamId, CAM_STAT_ACTIVE);
+    this->subCamId = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->subCamId, CAM_STAT_ACTIVE);
 
-    Play_CameraSetAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
-    Play_CameraSetFov(play, this->subCamId, play->mainCamera.fov);
-    func_8002DF54(play, &this->actor, 1);
+    Play_CameraSetAtEye(play, player, this->subCamId, &this->subCamAt, &this->subCamEye);
+    Play_CameraSetFov(play, player, this->subCamId, play->mainCameras[playerIndex].fov);
+    func_8002DF54(play, player, &this->actor, 1);
 }
 
 void EnDaiku_UpdateSubCamera(EnDaiku* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     this->subCamAtTarget.x = this->actor.world.pos.x;
@@ -480,16 +483,17 @@ void EnDaiku_UpdateSubCamera(EnDaiku* this, PlayState* play) {
     Math_SmoothStepToF(&this->subCamAt.y, this->subCamAtTarget.y, 1.0f, 1000.0f, 0.0f);
     Math_SmoothStepToF(&this->subCamAt.z, this->subCamAtTarget.z, 1.0f, 1000.0f, 0.0f);
 
-    Play_CameraSetAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
+    Play_CameraSetAtEye(play, player, this->subCamId, &this->subCamAt, &this->subCamEye);
 }
 
 void EnDaiku_EscapeSuccess(EnDaiku* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     static Vec3f D_809E4148 = { 0.0f, 0.0f, 120.0f };
     Actor* gerudoGuard;
     Vec3f vec;
 
-    Play_ClearCamera(play, this->subCamId);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->subCamId);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
     this->subCamActive = false;
 
     if ((gSaveContext.eventChkInf[9] & 0xF) == 0xF) {
@@ -503,7 +507,7 @@ void EnDaiku_EscapeSuccess(EnDaiku* this, PlayState* play) {
             Actor_Kill(&this->actor);
         }
     } else {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
     }
 }
 
@@ -556,7 +560,7 @@ void EnDaiku_EscapeRun(EnDaiku* this, PlayState* play) {
 void EnDaiku_Update(Actor* thisx, PlayState* play) {
     EnDaiku* this = (EnDaiku*)thisx;
     s32 curFrame;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->currentAnimIndex == ENDAIKU_ANIM_RUN) {
         curFrame = this->skelAnime.curFrame;

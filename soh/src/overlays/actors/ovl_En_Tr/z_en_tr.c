@@ -208,13 +208,15 @@ void EnTr_FlyKidnapCutscene(EnTr* this, PlayState* play) {
 }
 
 void func_80B23254(EnTr* this, PlayState* play, s32 arg2, f32 arg3, f32 scale) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f pos;
     Vec3f velocity;
     Vec3f accel;
     Vec3f sp58;
     Color_RGBA8* primColor;
     Color_RGBA8* envColor;
-    Vec3f cameraEye = GET_ACTIVE_CAM(play)->eye;
+    Vec3f cameraEye = GET_ACTIVE_CAM(playerIndex, play)->eye;
     s16 yaw = Math_Vec3f_Yaw(&cameraEye, &this->actor.world.pos);
     s16 reversePitch = -Math_Vec3f_Pitch(&cameraEye, &this->actor.world.pos);
     f32 sp3C;
@@ -416,11 +418,13 @@ s32 EnTr_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* po
     Vec3f dest = { 0.0f, 0.0f, 0.0f };
     EnTr* this = (EnTr*)thisx;
     Actor* child = this->actor.child;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((child != NULL) && (limbIndex == 19)) {
         Matrix_MultVec3f(&src, &dest);
-        dest.x -= (10.0f * Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))));
-        dest.z -= (10.0f * Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))));
+        dest.x -= (10.0f * Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))));
+        dest.z -= (10.0f * Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))));
         child->world.pos = dest;
     }
     return 0;

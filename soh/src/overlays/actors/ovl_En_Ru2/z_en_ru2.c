@@ -252,7 +252,7 @@ void func_80AF29DC(EnRu2* this, PlayState* play) {
 }
 
 void func_80AF2A38(EnRu2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 posX = player->actor.world.pos.x;
     f32 posY = player->actor.world.pos.y + 50.0f;
     f32 posZ = player->actor.world.pos.z;
@@ -267,7 +267,7 @@ void func_80AF2AB4(EnRu2* this, PlayState* play) {
     s16 temp;
 
     if ((gSaveContext.chamberCutsceneNum == 2) && (gSaveContext.sceneSetupIndex < 4)) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         this->action = 1;
         play->csCtx.segment = &D_80AF411C;
         gSaveContext.cutsceneTrigger = 2;
@@ -621,7 +621,7 @@ void func_80AF37CC(EnRu2* this) {
 }
 
 s32 func_80AF383C(EnRu2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 thisPosX = this->actor.world.pos.x;
     f32 playerPosX = player->actor.world.pos.x;
 
@@ -632,15 +632,17 @@ s32 func_80AF383C(EnRu2* this, PlayState* play) {
 }
 
 void func_80AF3878(EnRu2* this, PlayState* play) {
-    if (func_80AF383C(this, play) && !Play_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    if (func_80AF383C(this, play) && !Play_InCsMode(play, player)) {
         this->action = 16;
-        this->subCamId = OnePointCutscene_Init(play, 3130, -99, &this->actor, MAIN_CAM);
+        this->subCamId = OnePointCutscene_Init(play, player, 3130, -99, &this->actor, MAIN_CAM);
     }
 }
 
 void func_80AF38D0(EnRu2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->action = 16;
-    this->subCamId = OnePointCutscene_Init(play, 3130, -99, &this->actor, MAIN_CAM);
+    this->subCamId = OnePointCutscene_Init(play, player, 3130, -99, &this->actor, MAIN_CAM);
 }
 
 void func_80AF390C(EnRu2* this, PlayState* play) {
@@ -661,7 +663,8 @@ void func_80AF39DC(EnRu2* this, PlayState* play) {
     MessageContext* msgCtx;
     s32 pad2;
     u8 dialogState;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad3;
 
     msgCtx = &play->msgCtx;
@@ -673,10 +676,9 @@ void func_80AF39DC(EnRu2* this, PlayState* play) {
             osSyncPrintf("おれが小松だ！ \n");
             this->unk_2C2++;
             if (this->unk_2C2 % 6 == 3) {
-                player = GET_PLAYER(play);
                 // "uorya-!" (screeming sound)
                 osSyncPrintf("うおりゃー！ \n");
-                func_8005B1A4(GET_ACTIVE_CAM(play));
+                func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
                 player->actor.world.pos.x = 820.0f;
                 player->actor.world.pos.y = 0.0f;
                 player->actor.world.pos.z = 180.0f;
@@ -687,7 +689,7 @@ void func_80AF39DC(EnRu2* this, PlayState* play) {
     this->unk_2C3 = dialogState;
     if (Message_GetState(msgCtx) == TEXT_STATE_CLOSING) {
         this->action = 18;
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
     }
 }
 
@@ -701,9 +703,10 @@ void func_80AF3ADC(EnRu2* this, PlayState* play) {
 }
 
 void func_80AF3B74(EnRu2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->unk_2C0 > ((((u16)(kREG(3) + 0x28)) + ((u16)(kREG(2) + 0x96))) & 0xFFFF)) {
         Actor_Kill(&this->actor);
-        OnePointCutscene_EndCutscene(play, this->subCamId);
+        OnePointCutscene_EndCutscene(play, player, this->subCamId);
     }
 }
 

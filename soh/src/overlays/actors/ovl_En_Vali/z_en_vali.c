@@ -289,6 +289,8 @@ void EnVali_SetupReturnToLurk(EnVali* this) {
 }
 
 void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Color_RGBA8 primColor = { 255, 255, 255, 255 };
     static Color_RGBA8 envColor = { 200, 255, 255, 255 };
     Vec3f pos;
@@ -298,8 +300,8 @@ void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
     s16 yaw;
 
     for (i = 0; i < 4; i++) {
-        cos = -Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)));
-        sin = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)));
+        cos = -Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)));
+        sin = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)));
         if (!((this->lightningTimer + (i << 1)) % 4)) {
             yaw = (s16)Rand_CenteredFloat(12288.0f) + (i * 0x4000) + 0x2000;
             pos.x = this->actor.world.pos.x + (Math_SinS(yaw) * 12.0f * cos);
@@ -314,7 +316,9 @@ void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
 }
 
 void EnVali_Lurk(EnVali* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < 150.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < 150.0f) {
         EnVali_SetupDropAppear(this);
     }
 }
@@ -331,6 +335,8 @@ void EnVali_DropAppear(EnVali* this, PlayState* play) {
 }
 
 void EnVali_FloatIdle(EnVali* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 curFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -357,7 +363,7 @@ void EnVali_FloatIdle(EnVali* this, PlayState* play) {
     curFrame = ((curFrame > 40) ? (80 - curFrame) : curFrame);
 
     this->actor.shape.rot.y += (s16)((curFrame + 4) * 0.4f * (0x10000 / 360.0f));
-    if (this->actor.xzDistToPlayer > 250.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 250.0f) {
         EnVali_SetupReturnToLurk(this);
     }
 }

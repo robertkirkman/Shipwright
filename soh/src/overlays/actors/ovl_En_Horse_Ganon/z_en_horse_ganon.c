@@ -115,6 +115,7 @@ void func_80A68660(unk_D_80A69248* data, s32 index, Vec3f* vec) {
 }
 
 void func_80A686A8(EnHorseGanon* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f* tempPos;
     Vec3f vec;
     s16 y;
@@ -139,7 +140,7 @@ void func_80A686A8(EnHorseGanon* this, PlayState* play) {
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
-    if (Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor) <= 300.0f) {
+    if (Actor_WorldDistXZToActor(&this->actor, &player->actor) <= 300.0f) {
         if (this->actor.speedXZ < 12.0f) {
             this->actor.speedXZ += 1.0f;
         } else {

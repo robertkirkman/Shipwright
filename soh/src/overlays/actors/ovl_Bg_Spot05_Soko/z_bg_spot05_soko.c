@@ -78,10 +78,11 @@ void func_808AE5A8(BgSpot05Soko* this, PlayState* play) {
 }
 
 void func_808AE5B4(BgSpot05Soko* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->switchFlag)) {
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 30, NA_SE_EV_METALDOOR_CLOSE);
         Actor_SetFocus(&this->dyna.actor, 50.0f);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = func_808AE630;
         this->dyna.actor.speedXZ = 0.5f;
     }

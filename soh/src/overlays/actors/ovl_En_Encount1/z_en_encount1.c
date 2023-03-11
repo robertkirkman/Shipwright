@@ -91,7 +91,8 @@ void EnEncount1_Init(Actor* thisx, PlayState* play) {
 }
 
 void EnEncount1_SpawnLeevers(EnEncount1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 floorType;
     f32 spawnDist;
     s32 spawnParams;
@@ -111,7 +112,7 @@ void EnEncount1_SpawnLeevers(EnEncount1* this, PlayState* play) {
         floorType = func_80041D4C(&play->colCtx, player->actor.floorPoly, player->actor.floorBgId);
         if ((floorType != 4) && (floorType != 7) && (floorType != 12)) {
             this->numLeeverSpawns = 0;
-        } else if (!(this->reduceLeevers && (this->actor.xzDistToPlayer > 1300.0f))) {
+        } else if (!(this->reduceLeevers && (this->actor.xzDistToPlayer[playerIndex] > 1300.0f))) {
             spawnLimit = 5;
             if (this->reduceLeevers) {
                 spawnLimit = 3;
@@ -174,7 +175,8 @@ void EnEncount1_SpawnLeevers(EnEncount1* this, PlayState* play) {
 }
 
 void EnEncount1_SpawnTektites(EnEncount1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 bgId;
     CollisionPoly* floorPoly;
     Vec3f spawnPos;
@@ -183,7 +185,7 @@ void EnEncount1_SpawnTektites(EnEncount1* this, PlayState* play) {
     if (this->timer == 0) {
         this->timer = 10;
         if ((fabsf(player->actor.world.pos.y - this->actor.world.pos.y) > 100.0f) ||
-            (this->actor.xzDistToPlayer > this->spawnRange)) {
+            (this->actor.xzDistToPlayer[playerIndex] > this->spawnRange)) {
             this->outOfRangeTimer++;
         } else {
             this->outOfRangeTimer = 0;
@@ -212,7 +214,8 @@ void EnEncount1_SpawnTektites(EnEncount1* this, PlayState* play) {
 }
 
 void EnEncount1_SpawnStalchildOrWolfos(EnEncount1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 spawnDist;
     s16 spawnAngle;
     s16 spawnId;
@@ -226,7 +229,7 @@ void EnEncount1_SpawnStalchildOrWolfos(EnEncount1* this, PlayState* play) {
 
     if (play->sceneNum != SCENE_SPOT00) {
         if ((fabsf(player->actor.world.pos.y - this->actor.world.pos.y) > 100.0f) ||
-            (this->actor.xzDistToPlayer > this->spawnRange)) {
+            (this->actor.xzDistToPlayer[playerIndex] > this->spawnRange)) {
             this->outOfRangeTimer++;
             return;
         }

@@ -149,6 +149,8 @@ void func_809B05F0(EnAni* this, PlayState* play) {
 }
 
 void func_809B064C(EnAni* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u16 textId;
     s16 yawDiff;
     u16 textId2;
@@ -162,7 +164,7 @@ void func_809B064C(EnAni* this, PlayState* play) {
         textId = !IS_DAY ? 0x5051 : 0x5050;
     }
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         if (this->actor.textId == 0x5056) {
             EnAni_SetupAction(this, func_809B04F0);
@@ -171,24 +173,26 @@ void func_809B064C(EnAni* this, PlayState* play) {
         } else {
             EnAni_SetupAction(this, func_809B04F0);
         }
-    } else if (yawDiff >= -0x36AF && yawDiff < 0 && this->actor.xzDistToPlayer < 150.0f &&
-               -80.0f < this->actor.yDistToPlayer) {
+    } else if (yawDiff >= -0x36AF && yawDiff < 0 && this->actor.xzDistToPlayer[playerIndex] < 150.0f &&
+               -80.0f < this->actor.yDistToPlayer[playerIndex]) {
         if (gSaveContext.itemGetInf[1] & 0x20) {
             EnAni_SetText(this, play, 0x5056);
         } else {
             EnAni_SetText(this, play, 0x5055);
         }
-    } else if (yawDiff >= -0x3E7 && yawDiff < 0x36B0 && this->actor.xzDistToPlayer < 350.0f) {
+    } else if (yawDiff >= -0x3E7 && yawDiff < 0x36B0 && this->actor.xzDistToPlayer[playerIndex] < 350.0f) {
         EnAni_SetText(this, play, textId);
     }
 }
 
 void func_809B07F8(EnAni* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 pad;
     s16 yawDiff;
     u16 textId;
 
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         if (this->actor.textId == 0x5056) {
             EnAni_SetupAction(this, func_809B0524);
@@ -197,14 +201,14 @@ void func_809B07F8(EnAni* this, PlayState* play) {
         } else {
             EnAni_SetupAction(this, func_809B0524);
         }
-    } else if (yawDiff > -0x36B0 && yawDiff < 0 && this->actor.xzDistToPlayer < 150.0f &&
-               -80.0f < this->actor.yDistToPlayer) {
+    } else if (yawDiff > -0x36B0 && yawDiff < 0 && this->actor.xzDistToPlayer[playerIndex] < 150.0f &&
+               -80.0f < this->actor.yDistToPlayer[playerIndex]) {
         if (gSaveContext.itemGetInf[1] & 0x20) {
             EnAni_SetText(this, play, 0x5056);
         } else {
             EnAni_SetText(this, play, 0x5055);
         }
-    } else if (yawDiff > -0x3E8 && yawDiff < 0x36B0 && this->actor.xzDistToPlayer < 350.0f) {
+    } else if (yawDiff > -0x3E8 && yawDiff < 0x36B0 && this->actor.xzDistToPlayer[playerIndex] < 350.0f) {
         if (!(gSaveContext.eventChkInf[2] & 0x8000)) {
             textId = 0x5052;
         } else {

@@ -179,6 +179,8 @@ s32 func_809B55EC(EnAttackNiw* this, PlayState* play) {
 }
 
 void func_809B5670(EnAttackNiw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 sp4E;
     s16 sp4C;
     f32 tmpf1;
@@ -188,13 +190,13 @@ void func_809B5670(EnAttackNiw* this, PlayState* play) {
 
     this->actor.speedXZ = 10.0f;
 
-    tmpf1 = (this->unk_298.x + play->view.lookAt.x) - play->view.eye.x;
-    tmpf2 = (this->unk_298.y + play->view.lookAt.y) - play->view.eye.y;
-    tmpf3 = (this->unk_298.z + play->view.lookAt.z) - play->view.eye.z;
+    tmpf1 = (this->unk_298.x + play->views[playerIndex].lookAt.x) - play->views[playerIndex].eye.x;
+    tmpf2 = (this->unk_298.y + play->views[playerIndex].lookAt.y) - play->views[playerIndex].eye.y;
+    tmpf3 = (this->unk_298.z + play->views[playerIndex].lookAt.z) - play->views[playerIndex].eye.z;
 
-    sp34.x = play->view.lookAt.x + tmpf1;
-    sp34.y = play->view.lookAt.y + tmpf2;
-    sp34.z = play->view.lookAt.z + tmpf3;
+    sp34.x = play->views[playerIndex].lookAt.x + tmpf1;
+    sp34.y = play->views[playerIndex].lookAt.y + tmpf2;
+    sp34.z = play->views[playerIndex].lookAt.z + tmpf3;
 
     this->unk_2D4 = Math_Vec3f_Yaw(&this->actor.world.pos, &sp34);
     this->unk_2D0 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp34) * -1.0f;
@@ -207,7 +209,7 @@ void func_809B5670(EnAttackNiw* this, PlayState* play) {
     Actor_GetScreenPos(play, &this->actor, &sp4E, &sp4C);
 
     if (this->actor.bgCheckFlags & 8) {
-        this->unk_2D4 = this->actor.yawTowardsPlayer;
+        this->unk_2D4 = this->actor.yawTowardsPlayer[playerIndex];
         this->unk_2D0 = this->actor.world.rot.x - 3000.0f;
         this->unk_2DC = 0.0f;
         this->unk_284 = 0.0f;
@@ -223,7 +225,7 @@ void func_809B5670(EnAttackNiw* this, PlayState* play) {
                 (fabsf(sp34.z - this->actor.world.pos.z) < 50.0f)) ||
                (this->actor.bgCheckFlags & 1)) {
 
-        this->unk_2D4 = this->actor.yawTowardsPlayer;
+        this->unk_2D4 = this->actor.yawTowardsPlayer[playerIndex];
         this->unk_2D0 = this->actor.world.rot.x - 2000.0f;
         this->unk_2DC = 0.0f;
         this->unk_27C = 0.0f;
@@ -246,6 +248,8 @@ void func_809B59B0(EnAttackNiw* this, PlayState* play) {
         Actor_Kill(&this->actor);
         return;
     }
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->actor.bgCheckFlags & 1) {
         if (this->unk_25A == 0) {
@@ -255,14 +259,14 @@ void func_809B59B0(EnAttackNiw* this, PlayState* play) {
         if (this->actor.gravity != -2.0f) {
             this->unk_280 = this->unk_278 = 14000.0f;
             this->unk_2D0 = this->unk_26C = this->unk_268 = this->unk_284 = this->unk_27C = 0.0f;
-            this->unk_2D4 = this->actor.yawTowardsPlayer;
+            this->unk_2D4 = this->actor.yawTowardsPlayer[playerIndex];
             this->unk_262 = 0x32;
             this->unk_25C = 0x64;
             this->actor.gravity = -2.0f;
         }
     }
     if (this->unk_25C == 0x32) {
-        this->unk_2D4 = Rand_CenteredFloat(200.0f) + this->actor.yawTowardsPlayer;
+        this->unk_2D4 = Rand_CenteredFloat(200.0f) + this->actor.yawTowardsPlayer[playerIndex];
     }
     Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_2D4, 2, this->unk_2DC, 0);
     Math_SmoothStepToS(&this->actor.world.rot.x, this->unk_2D0, 2, this->unk_2DC, 0);
@@ -297,7 +301,8 @@ void EnAttackNiw_Update(Actor* thisx, PlayState* play) {
     f32 tmpf1;
     EnAttackNiw* this = (EnAttackNiw*)thisx;
     EnNiw* cucco;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f sp30;
     PlayState* play2 = play;
@@ -354,7 +359,7 @@ void EnAttackNiw_Update(Actor* thisx, PlayState* play) {
     }
 
     tmpf1 = 20.0f;
-    if (this->actor.xyzDistToPlayerSq < SQ(tmpf1)) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(tmpf1)) {
         cucco = (EnNiw*)this->actor.parent;
         if ((this->actor.parent->update != NULL) && (this->actor.parent != NULL) && (cucco != NULL) &&
             (cucco->timer9 == 0) && (player->invincibilityTimer == 0)) {

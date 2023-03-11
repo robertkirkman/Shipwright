@@ -476,7 +476,7 @@ void ObjOshihiki_SetupOnScene(ObjOshihiki* this, PlayState* play) {
 
 void ObjOshihiki_OnScene(ObjOshihiki* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->stateFlags |= PUSHBLOCK_ON_SCENE;
     if ((this->timer <= 0) && (fabsf(this->dyna.unk_150) > 0.001f)) {
@@ -503,7 +503,7 @@ void ObjOshihiki_SetupOnActor(ObjOshihiki* this, PlayState* play) {
 
 void ObjOshihiki_OnActor(ObjOshihiki* this, PlayState* play) {
     s32 bgId;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     DynaPolyActor* dynaPolyActor;
 
     this->stateFlags |= PUSHBLOCK_ON_ACTOR;
@@ -563,7 +563,7 @@ void ObjOshihiki_SetupPush(ObjOshihiki* this, PlayState* play) {
 
 void ObjOshihiki_Push(ObjOshihiki* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     f32 pushDistSigned;
     s32 stopFlag;
 
@@ -584,7 +584,6 @@ void ObjOshihiki_Push(ObjOshihiki* this, PlayState* play) {
         this->pushSpeed = 0.0f;
         ObjOshihiki_SetupFall(this, play);
     } else if (stopFlag) {
-        player = GET_PLAYER(play);
         if (ObjOshihiki_CheckWall(play, this->dyna.unk_158, this->dyna.unk_150, this)) {
             Audio_PlayActorSound2(thisx, NA_SE_EV_BLOCK_BOUND);
         }
@@ -614,7 +613,7 @@ void ObjOshihiki_SetupFall(ObjOshihiki* this, PlayState* play) {
 }
 
 void ObjOshihiki_Fall(ObjOshihiki* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->stateFlags |= PUSHBLOCK_FALL;
     if (fabsf(this->dyna.unk_150) > 0.001f) {

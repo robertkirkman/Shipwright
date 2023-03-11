@@ -256,13 +256,12 @@ void BossDodongo_SetupIntroCutscene(BossDodongo* this, PlayState* play) {
 void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
     f32 phi_f0;
     Camera* camera;
-    Player* player;
     Vec3f sp60;
     Vec3f sp54;
     Vec3f sp48;
 
-    player = GET_PLAYER(play);
-    camera = Play_GetCamera(play, MAIN_CAM);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    camera = Play_GetCamera(play, player, MAIN_CAM);
 
     if (this->unk_196 != 0) {
         this->unk_196--;
@@ -287,11 +286,11 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
             break;
         case 1:
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            Play_ClearAllSubCameras(play);
-            this->cutsceneCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, 0, 1);
-            Play_ChangeCameraStatus(play, this->cutsceneCamera, 7);
+            func_8002DF54(play, player, &this->actor, 1);
+            Play_ClearAllSubCameras(play, player);
+            this->cutsceneCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, 1);
+            Play_ChangeCameraStatus(play, player, this->cutsceneCamera, 7);
             this->csState = 2;
             this->unk_196 = 0x3C;
             this->unk_198 = 160;
@@ -314,11 +313,11 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
             }
 
             if (this->unk_198 == 110) {
-                func_8002DF54(play, &this->actor, 9);
+                func_8002DF54(play, player, &this->actor, 9);
             }
 
             if (this->unk_198 == 5) {
-                func_8002DF54(play, &this->actor, 12);
+                func_8002DF54(play, player, &this->actor, 12);
             }
 
             if (this->unk_198 < 6) {
@@ -430,10 +429,10 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
                 camera->eye = this->cameraEye;
                 camera->eyeNext = this->cameraEye;
                 camera->at = this->cameraAt;
-                func_800C08AC(play, this->cutsceneCamera, 0);
+                func_800C08AC(play, player, this->cutsceneCamera, 0);
                 this->cutsceneCamera = 0;
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 BossDodongo_SetupWalk(this);
                 this->unk_1DA = 50;
                 this->unk_1BC = 0;
@@ -462,7 +461,7 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
         sp48.y = 1.0f;
         sp48.z = this->unk_20C;
 
-        Play_CameraSetAtEyeUp(play, this->cutsceneCamera, &sp54, &sp60, &sp48);
+        Play_CameraSetAtEyeUp(play, player, this->cutsceneCamera, &sp54, &sp60, &sp48);
     }
 }
 
@@ -547,6 +546,8 @@ void BossDodongo_Explode(BossDodongo* this, PlayState* play) {
     SkelAnime_Update(&this->skelAnime);
 
     if (this->unk_1DA == 0) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         for (i = 0; i < 30; i++) {
             dustVel.x = Rand_CenteredFloat(20.0f);
             dustVel.y = Rand_CenteredFloat(20.0f);
@@ -568,7 +569,7 @@ void BossDodongo_Explode(BossDodongo* this, PlayState* play) {
         this->actionFunc = BossDodongo_LayDown;
         Audio_PlayActorSound2(&this->actor, NA_SE_IT_BOMB_EXPLOSION);
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_K_DAMAGE);
-        func_80033E88(&this->actor, play, 4, 10);
+        func_80033E88(&this->actor, play, 4, 10, playerIndex);
         this->health -= 2;
 
         // make sure not to die from the bomb explosion
@@ -669,6 +670,8 @@ static Vec3f sCornerPositions[] = {
 };
 
 void BossDodongo_Walk(BossDodongo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f* sp4C;
     f32 sp48;
     f32 sp44;
@@ -693,7 +696,7 @@ void BossDodongo_Walk(BossDodongo* this, PlayState* play) {
             }
 
             if (this->cutsceneCamera == 0) {
-                func_80033E88(&this->actor, play, 4, 10);
+                func_80033E88(&this->actor, play, 4, 10, playerIndex);
             } else {
                 this->unk_1B6 = 10;
                 func_800A9F6C(0.0f, 180, 20, 100);
@@ -731,7 +734,7 @@ void BossDodongo_Walk(BossDodongo* this, PlayState* play) {
     }
 
     if ((this->unk_1DA == 0) && (this->unk_1BC == 0)) {
-        if ((this->actor.xzDistToPlayer < 500.0f) && (this->unk_1A4 != 0) && !this->playerPosInRange) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 500.0f) && (this->unk_1A4 != 0) && !this->playerPosInRange) {
             BossDodongo_SetupInhale(this);
             BossDodongo_SpawnFire(this, play, -1);
         }
@@ -743,6 +746,8 @@ void BossDodongo_Walk(BossDodongo* this, PlayState* play) {
 }
 
 void BossDodongo_Roll(BossDodongo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f* sp5C;
     Vec3f sp50;
     f32 sp4C;
@@ -774,7 +779,7 @@ void BossDodongo_Roll(BossDodongo* this, PlayState* play) {
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_K_ROLL - SFX_FLAG);
 
             if ((this->unk_19E & 7) == 0) {
-                Camera_AddQuake(&play->mainCamera, 2, 1, 8);
+                Camera_AddQuake(&play->mainCameras[playerIndex], 2, 1, 8);
             }
 
             if (!(this->unk_19E & 1)) {
@@ -804,12 +809,12 @@ void BossDodongo_Roll(BossDodongo* this, PlayState* play) {
             this->unk_228 = 9200.0f;
             this->actor.velocity.y = 20.0f;
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_K_COLI);
-            Camera_AddQuake(&play->mainCamera, 2, 6, 8);
+            Camera_AddQuake(&play->mainCameras[playerIndex], 2, 1, 8);
             sp50.x = this->actor.world.pos.x;
             sp50.y = this->actor.world.pos.y + 60.0f;
             sp50.z = this->actor.world.pos.z;
             func_80033480(play, &sp50, 250.0f, 40, 800, 10, 0);
-            func_80033E88(&this->actor, play, 6, 15);
+            func_80033E88(&this->actor, play, 6, 15, playerIndex);
         } else {
             this->actor.velocity.y = 15.0f;
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_K_COLI2);
@@ -834,8 +839,8 @@ void BossDodongo_Update(Actor* thisx, PlayState* play2) {
     BossDodongo* this = (BossDodongo*)thisx;
     f32 temp_f0;
     s16 i;
-    Player* player = GET_PLAYER(play);
-    Player* player2 = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     this->unk_1E2 = 0;
@@ -967,7 +972,7 @@ void BossDodongo_Update(Actor* thisx, PlayState* play2) {
             magmaScale = ((s16)(Rand_ZeroOne() * 50)) - 50;
         }
 
-        if (player2->csMode >= 10) {
+        if (player->csMode >= 10) {
             phi_s0_3 = -1;
         }
 
@@ -1166,7 +1171,7 @@ f32 func_808C4F6C(BossDodongo* this, PlayState* play) {
     s32 pad;
     f32 temp_f2;
     f32 rotation;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     xDiff = player->actor.world.pos.x - this->actor.world.pos.x;
     zDiff = player->actor.world.pos.z - this->actor.world.pos.z;
@@ -1189,7 +1194,7 @@ f32 func_808C50A8(BossDodongo* this, PlayState* play) {
     s32 pad;
     f32 temp_f2;
     f32 rotation;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     xDiff = player->actor.world.pos.x - this->actor.world.pos.x;
     zDiff = player->actor.world.pos.z - this->actor.world.pos.z;
@@ -1207,7 +1212,8 @@ f32 func_808C50A8(BossDodongo* this, PlayState* play) {
 }
 
 void BossDodongo_PlayerYawCheck(BossDodongo* this, PlayState* play) {
-    s16 yawDiff = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor) - this->actor.world.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    s16 yawDiff = Actor_WorldYawTowardActor(&this->actor, &player->actor) - this->actor.world.rot.y;
 
     if ((yawDiff < 0x38E3) && (-0x38E3 < yawDiff)) {
         this->playerYawInRange = true;
@@ -1311,7 +1317,8 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
     s16 i;
     Vec3f effectPos;
     Camera* camera;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
 
@@ -1319,11 +1326,11 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
         case 0:
             this->csState = 5;
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            this->cutsceneCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_UNK3);
-            Play_ChangeCameraStatus(play, this->cutsceneCamera, CAM_STAT_ACTIVE);
-            camera = Play_GetCamera(play, MAIN_CAM);
+            func_8002DF54(play, player, &this->actor, 1);
+            this->cutsceneCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_UNK3);
+            Play_ChangeCameraStatus(play, player, this->cutsceneCamera, CAM_STAT_ACTIVE);
+            camera = Play_GetCamera(play, player, MAIN_CAM);
             this->cameraEye.x = camera->eye.x;
             this->cameraEye.y = camera->eye.y;
             this->cameraEye.z = camera->eye.z;
@@ -1411,7 +1418,7 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
                 Math_SmoothStepToF(&this->actor.world.pos.z, cornerPos->z + sp184.z, 1.0f, this->unk_1E4, 0.0f);
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_K_ROLL - SFX_FLAG);
                 if ((this->unk_19E & 7) == 0) {
-                    Camera_AddQuake(&play->mainCamera, 2, 1, 8);
+                    Camera_AddQuake(&play->mainCameras[playerIndex], 2, 1, 8);
                 }
                 if (!(this->unk_19E & 1)) {
                     Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, 40.0f, 3, 8.0f, 500, 10,
@@ -1621,17 +1628,17 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
                             Math_CosS(this->actor.shape.rot.y) * -50.0f + this->actor.world.pos.z, 0, 0, 0, 0, true);
             }
             if (this->unk_1DA == 600) {
-                camera = Play_GetCamera(play, MAIN_CAM);
+                camera = Play_GetCamera(play, player, MAIN_CAM);
                 camera->eye = this->cameraEye;
                 camera->eyeNext = this->cameraEye;
                 camera->at = this->cameraAt;
-                func_800C08AC(play, this->cutsceneCamera, 0);
+                func_800C08AC(play, player, this->cutsceneCamera, 0);
                 this->unk_1BC = 0;
                 this->cutsceneCamera = MAIN_CAM;
                 this->csState = 100;
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DOOR_WARP1, -890.0f, -1523.76f,
                                    -3304.0f, 0, 0, 0, WARP_DUNGEON_CHILD);
                 this->skelAnime.playSpeed = 0.0f;
@@ -1652,7 +1659,7 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
             break;
     }
     if (this->cutsceneCamera != MAIN_CAM) {
-        Play_CameraSetAtEye(play, this->cutsceneCamera, &this->cameraAt, &this->cameraEye);
+        Play_CameraSetAtEye(play, player, this->cutsceneCamera, &this->cameraAt, &this->cameraEye);
     }
 }
 

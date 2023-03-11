@@ -6,7 +6,7 @@
 
 struct BgJyaAmishutter;
 
-typedef void (*BgJyaAmishutterActionFunc)(struct BgJyaAmishutter*);
+typedef void (*BgJyaAmishutterActionFunc)(struct BgJyaAmishutter*, u16);
 
 typedef struct BgJyaAmishutter {
     /* 0x0000 */ DynaPolyActor dyna;

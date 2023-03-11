@@ -246,14 +246,16 @@ void EnTa_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80B142F4(EnTa* this, PlayState* play, u16 textId) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         return true;
     }
 
     this->actor.textId = textId;
 
-    if ((ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) <= 0x4300) &&
-        (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) <= 0x4300) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         this->unk_2E0 |= 1;
         func_8002F2CC(&this->actor, play, 100.0f);
     }
@@ -325,10 +327,10 @@ void func_80B145F8(EnTa* this, PlayState* play) {
 }
 
 void func_80B14634(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        s32 exchangeItemId = func_8002F368(play);
+        s32 exchangeItemId = func_8002F368(play, player);
 
         switch (exchangeItemId) {
             case EXCH_ITEM_CHICKEN:
@@ -358,10 +360,10 @@ void func_80B146F8(EnTa* this, PlayState* play) {
 }
 
 void func_80B14754(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        s32 exchangeItemId = func_8002F368(play);
+        s32 exchangeItemId = func_8002F368(play, player);
 
         switch (exchangeItemId) {
             case EXCH_ITEM_POCKET_CUCCO:
@@ -459,13 +461,14 @@ void func_80B14AF4(EnTa* this, PlayState* play) {
 }
 
 void func_80B14B6C(EnTa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) {
-        s16 csCamIdx = OnePointCutscene_Init(play, 4175, -99, &this->actor, MAIN_CAM);
+        s16 csCamIdx = OnePointCutscene_Init(play, player, 4175, -99, &this->actor, MAIN_CAM);
         func_80B13AA0(this, func_80B14AF4, func_80B167C0);
         this->unk_2CC = 5;
         gSaveContext.eventChkInf[1] |= 0x10;
         if (gSaveContext.n64ddFlag) {
-            OnePointCutscene_EndCutscene(play, csCamIdx);
+            OnePointCutscene_EndCutscene(play, player, csCamIdx);
         }
         Animation_PlayOnce(&this->skelAnime, &gTalonRunTransitionAnim);
         this->currentAnimation = &gTalonRunAnim;
@@ -523,13 +526,15 @@ s32 func_80B14DD8(void) {
 }
 
 void func_80B14E28(EnTa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f b;
     Vec3f a;
 
-    this->unk_2D0 = Play_CreateSubCamera(play);
-    this->unk_2D2 = play->activeCamera;
-    Play_ChangeCameraStatus(play, this->unk_2D2, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->unk_2D0, CAM_STAT_ACTIVE);
+    this->unk_2D0 = Play_CreateSubCamera(play, player);
+    this->unk_2D2 = play->activeCameras[playerIndex];
+    Play_ChangeCameraStatus(play, player, this->unk_2D2, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->unk_2D0, CAM_STAT_ACTIVE);
 
     b.x = 1053.0f;
     b.y = 11.0f;
@@ -539,12 +544,13 @@ void func_80B14E28(EnTa* this, PlayState* play) {
     a.y = 45.0f;
     a.z = -40.0f;
 
-    Play_CameraSetAtEye(play, this->unk_2D0, &a, &b);
+    Play_CameraSetAtEye(play, player, this->unk_2D0, &a, &b);
 }
 
 void func_80B14EDC(EnTa* this, PlayState* play) {
-    Play_ChangeCameraStatus(play, this->unk_2D2, CAM_STAT_ACTIVE);
-    Play_ClearCamera(play, this->unk_2D0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Play_ChangeCameraStatus(play, player, this->unk_2D2, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->unk_2D0);
 }
 
 void func_80B14F20(EnTa* this, EnTaActionFunc arg1) {
@@ -574,7 +580,7 @@ void func_80B15034(EnTa* this, PlayState* play) {
 }
 
 s32 func_80B150AC(EnTa* this, PlayState* play, s32 idx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* interactRangeActor;
 
     if (player->stateFlags1 & 0x800) {
@@ -588,7 +594,7 @@ s32 func_80B150AC(EnTa* this, PlayState* play, s32 idx) {
 }
 
 void func_80B15100(EnTa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         s32 unk_2CA;
@@ -685,6 +691,7 @@ void func_80B15424(EnTa* this, PlayState* play) {
 }
 
 void func_80B154FC(EnTa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 i;
 
     for (i = 0; i < ARRAY_COUNT(this->superCuccos); i++) {
@@ -704,7 +711,7 @@ void func_80B154FC(EnTa* this, PlayState* play) {
                     switch (EnTa_GetSuperCuccosCount(this, play)) {
                         case 1:
                             gSaveContext.timer1State = 0;
-                            func_8002DF54(play, &this->actor, 1);
+                            func_8002DF54(play, player, &this->actor, 1);
 
                             Message_StartTextbox(play, 0x2084, &this->actor);
                             this->actionFunc = func_80B15424;
@@ -741,12 +748,12 @@ void func_80B154FC(EnTa* this, PlayState* play) {
         func_800F5918();
     }
 
-    if (gSaveContext.timer1Value == 0 && !Play_InCsMode(play)) {
+    if (gSaveContext.timer1Value == 0 && !Play_InCsMode(play, player)) {
         Audio_QueueSeqCmd(SEQ_PLAYER_BGM_MAIN << 24 | NA_BGM_STOP);
         this->unk_2E0 &= ~0x200;
         func_80078884(NA_SE_SY_FOUND);
         gSaveContext.timer1State = 0;
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
         Message_StartTextbox(play, 0x2081, &this->actor);
         this->actionFunc = func_80B15424;
         func_80B14E28(this, play);
@@ -761,6 +768,7 @@ void func_80B154FC(EnTa* this, PlayState* play) {
 }
 
 void func_80B1585C(EnTa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 i;
 
     if (this->unk_2CC > 35) {
@@ -799,11 +807,12 @@ void func_80B1585C(EnTa* this, PlayState* play) {
         Animation_Change(&this->skelAnime, &gTalonSitWakeUpAnim, 1.0f,
                          Animation_GetLastFrame(&gTalonSitWakeUpAnim) - 1.0f,
                          Animation_GetLastFrame(&gTalonSitWakeUpAnim), ANIMMODE_ONCE, 10.0f);
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
     }
 }
 
 void func_80B15AD4(EnTa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->unk_2CC == 0 && this->unk_2E0 & 0x20) {
         func_80B13AA0(this, func_80B1585C, func_80B16938);
         this->unk_2E0 &= ~0x10;
@@ -814,7 +823,7 @@ void func_80B15AD4(EnTa* this, PlayState* play) {
         func_800F5ACC(NA_BGM_TIMED_MINI_GAME);
         this->unk_2E0 |= 0x200;
         Message_CloseTextbox(play);
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
     }
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {

@@ -82,14 +82,14 @@ void ArmsHook_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void ArmsHook_Wait(ArmsHook* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->actor.parent == NULL) {
-        Player* player = GET_PLAYER(play);
         // get correct timer length for hookshot or longshot
         s32 length = ((player->heldItemAction == PLAYER_IA_HOOKSHOT) ? 13 : 26) * CVarGetFloat("gCheatHookshotReachMultiplier", 1.0f);
 
         ArmsHook_SetupAction(this, ArmsHook_Shoot);
         func_8002D9A4(&this->actor, 20.0f);
-        this->actor.parent = &GET_PLAYER(play)->actor;
+        this->actor.parent = &player->actor;
         this->timer = length;
     }
 }
@@ -139,7 +139,7 @@ void ArmsHook_AttachHookToActor(ArmsHook* this, Actor* actor) {
 }
 
 void ArmsHook_Shoot(ArmsHook* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* touchedActor;
     Actor* grabbed;
     Vec3f bodyDistDiffVec;
@@ -301,7 +301,7 @@ void ArmsHook_Update(Actor* thisx, PlayState* play) {
 void ArmsHook_Draw(Actor* thisx, PlayState* play) {
     s32 pad;
     ArmsHook* this = (ArmsHook*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp78;
     Vec3f sp6C;
     Vec3f sp60;

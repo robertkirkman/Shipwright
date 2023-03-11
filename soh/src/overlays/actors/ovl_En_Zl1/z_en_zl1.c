@@ -137,7 +137,7 @@ void func_80B4AE18(EnZl1* this) {
 }
 
 void func_80B4AF18(EnZl1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     func_80038290(play, &this->actor, &this->unk_200, &this->unk_206, this->actor.focus.pos);
@@ -157,7 +157,8 @@ void func_80B4AF18(EnZl1* this, PlayState* play) {
 }
 
 void func_80B4B010(EnZl1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad2;
     s32 pad3;
     s32 pad;
@@ -169,17 +170,17 @@ void func_80B4B010(EnZl1* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         Animation_Change(&this->skelAnime, &gChildZelda1Anim_10B38, 1.0f, 0.0f,
                          Animation_GetLastFrame(&gChildZelda1Anim_10B38), ANIMMODE_ONCE_INTERP, -10.0f);
-        this->unk_1E8 = Play_CreateSubCamera(play);
-        Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-        Play_ChangeCameraStatus(play, this->unk_1E8, CAM_STAT_ACTIVE);
+        this->unk_1E8 = Play_CreateSubCamera(play, player);
+        Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+        Play_ChangeCameraStatus(play, player, this->unk_1E8, CAM_STAT_ACTIVE);
         func_800C0808(play, this->unk_1E8, player, CAM_SET_FREE0);
         play->envCtx.screenFillColor[0] = 255;
         play->envCtx.screenFillColor[1] = 255;
         play->envCtx.screenFillColor[2] = 255;
         play->envCtx.screenFillColor[3] = 24;
         play->envCtx.fillScreen = true;
-        Play_CameraSetAtEye(play, this->unk_1E8, &vec1, &vec2);
-        Play_CameraSetFov(play, this->unk_1E8, 30.0f);
+        Play_CameraSetAtEye(play, player, this->unk_1E8, &vec1, &vec2);
+        Play_CameraSetFov(play, player, this->unk_1E8, 30.0f);
         ShrinkWindow_SetVal(0x20);
         Interface_ChangeAlpha(2);
         player->actor.world.pos = playerPos;
@@ -188,7 +189,7 @@ void func_80B4B010(EnZl1* this, PlayState* play) {
         this->actionFunc = func_80B4B240;
         Audio_PlayFanfare(NA_BGM_APPEAR);
     } else {
-        rotDiff = ABS(this->actor.yawTowardsPlayer - this->actor.shape.rot.y);
+        rotDiff = ABS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y);
         if ((rotDiff < 0x238E) && !(player->actor.world.pos.y < this->actor.world.pos.y)) {
             func_8002F2F4(&this->actor, play);
         }
@@ -202,7 +203,7 @@ void func_80B4B240(EnZl1* this, PlayState* play) {
     Vec3f sp58 = { -434.0f, 84.0f, 0.0f };
     u8 sp54[] = { 0x00, 0x00, 0x02 };
     s32 pad2;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     AnimationHeader* animHeaderSeg;
     MessageContext* msgCtx = &play->msgCtx;
     f32 frameCount;
@@ -231,8 +232,8 @@ void func_80B4B240(EnZl1* this, PlayState* play) {
         case 1:
             if ((Message_GetState(msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
                 play->envCtx.fillScreen = false;
-                Play_CameraSetAtEye(play, this->unk_1E8, &sp74, &sp68);
-                Play_CameraSetFov(play, this->unk_1E8, 25.0f);
+                Play_CameraSetAtEye(play, player, this->unk_1E8, &sp74, &sp68);
+                Play_CameraSetFov(play, player, this->unk_1E8, 25.0f);
                 player->actor.world.pos = sp58;
                 this->actor.textId = 0x702F;
                 Message_ContinueTextbox(play, this->actor.textId);
@@ -349,6 +350,7 @@ void func_80B4B874(EnZl1* this, PlayState* play) {
 }
 
 void func_80B4B8B4(EnZl1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     AnimationHeader* spB0[] = {
         NULL,
         NULL,
@@ -410,18 +412,18 @@ void func_80B4B8B4(EnZl1* this, PlayState* play) {
             this->actor.velocity.z = (sp68.z - sp74.z) / actionLength;
         }
         func_80038290(play, &this->actor, &this->unk_200, &this->unk_206, this->actor.focus.pos);
-        Play_CameraSetAtEye(play, this->unk_1E8, &sp98, &sp8C);
-        Play_CameraSetFov(play, this->unk_1E8, 70.0f);
+        Play_CameraSetAtEye(play, player, this->unk_1E8, &sp98, &sp8C);
+        Play_CameraSetFov(play, player, this->unk_1E8, 70.0f);
     }
 }
 
 void func_80B4BBC4(EnZl1* this, PlayState* play) {
     s32 pad;
     f32 frameCount = Animation_GetLastFrame(&gChildZelda1Anim_00438);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Animation_Change(&this->skelAnime, &gChildZelda1Anim_00438, 1.0f, 0.0f, frameCount, ANIMMODE_LOOP, 0.0f);
-    func_8002DF54(play, &this->actor, 1);
+    func_8002DF54(play, player, &this->actor, 1);
     func_8002F7DC(&player->actor, NA_SE_VO_LI_SURPRISE_KID);
     this->actor.textId = 0x7039;
     Message_StartTextbox(play, this->actor.textId, NULL);
@@ -490,7 +492,7 @@ void func_80B4BC78(EnZl1* this, PlayState* play) {
 void func_80B4BF2C(EnZl1* this, PlayState* play) {
     s32 pad;
     MessageContext* msgCtx = &play->msgCtx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     switch (this->unk_1E2) {
         case 0:
@@ -519,9 +521,9 @@ void func_80B4BF2C(EnZl1* this, PlayState* play) {
             }
         case 2:
             if (Actor_HasParent(&this->actor, play)) {
-                Play_CopyCamera(play, MAIN_CAM, this->unk_1E8);
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-                Play_ClearCamera(play, this->unk_1E8);
+                Play_CopyCamera(play, player, MAIN_CAM, this->unk_1E8);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+                Play_ClearCamera(play, player, this->unk_1E8);
                 this->actor.parent = NULL;
                 this->unk_1E2++;
             } else {
@@ -554,7 +556,7 @@ void func_80B4BF2C(EnZl1* this, PlayState* play) {
             break;
         case 6:
             if (Actor_TextboxIsClosing(&this->actor, play)) {
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 Interface_ChangeAlpha(50);
                 this->actor.flags &= ~ACTOR_FLAG_8;
                 this->unk_1E2 = 4;

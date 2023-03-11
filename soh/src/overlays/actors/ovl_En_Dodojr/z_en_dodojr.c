@@ -279,7 +279,7 @@ s32 func_809F6DD0(EnDodojr* this) {
 void func_809F6E54(EnDodojr* this, PlayState* play) {
     f32 angles[] = { 0.0f, 210.0f, 60.0f, 270.0f, 120.0f, 330.0f, 180.0f, 30.0f, 240.0f, 90.0f, 300.0f, 150.0f };
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f pos;
     s16 angleIndex;
 
@@ -307,8 +307,8 @@ void func_809F6E54(EnDodojr* this, PlayState* play) {
     this->actor.shape.rot.y = this->actor.world.rot.y;
 }
 
-s32 func_809F706C(EnDodojr* this) {
-    if (this->actor.xzDistToPlayer > 40.0f) {
+s32 func_809F706C(EnDodojr* this, u16 playerIndex) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 40.0f) {
         return 0;
     } else {
         return 1;
@@ -391,10 +391,11 @@ void func_809F72A4(EnDodojr* this, PlayState* play) {
 
 void func_809F73AC(EnDodojr* this, PlayState* play) {
     f32 lastFrame = Animation_GetLastFrame(&object_dodojr_Anim_000860);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 dist;
 
-    if (!(this->actor.xzDistToPlayer >= 320.0f)) {
+    if (!(this->actor.xzDistToPlayer[playerIndex] >= 320.0f)) {
         dist = this->actor.world.pos.y - player->actor.world.pos.y;
 
         if (!(dist >= 40.0f)) {
@@ -430,6 +431,8 @@ void func_809F74C4(EnDodojr* this, PlayState* play) {
 }
 
 void func_809F758C(EnDodojr* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     func_8002D868(&this->actor);
     func_809F6730(this, play, &this->actor.world.pos);
 
@@ -446,7 +449,7 @@ void func_809F758C(EnDodojr* this, PlayState* play) {
 
     func_809F6E54(this, play);
 
-    if (func_809F706C(this) != 0) {
+    if (func_809F706C(this, playerIndex) != 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_DODO_M_CRY);
         func_809F6B38(this);
         this->actionFunc = func_809F799C;

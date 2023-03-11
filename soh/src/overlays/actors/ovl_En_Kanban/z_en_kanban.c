@@ -230,9 +230,11 @@ void EnKanban_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnKanban_Message(EnKanban* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (!this->msgFlag) {
         if (this->msgTimer == 0) {
-            if (ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y)) < 0x2800) {
+            if (ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y)) < 0x2800) {
                 if (Actor_ProcessTalkRequest(&this->actor, play)) {
                     this->msgFlag = true;
                 } else {
@@ -256,7 +258,8 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
     EnKanban* this = (EnKanban*)thisx;
     EnKanban* signpost;
     EnKanban* piece;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f offset;
 
     this->frameCount++;
@@ -283,7 +286,7 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
                                                       this->actor.shape.rot.y, this->actor.shape.rot.z, ENKANBAN_PIECE);
                 if (piece != NULL) {
                     ColliderInfo* hitItem = this->collider.info.acHitInfo;
-                    s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+                    s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
                     u8 i;
 
                     if (hitItem->toucher.dmgFlags & 0x700) {
@@ -370,7 +373,7 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
                     piece->pieceHeight = sPieceSizes[piece->pieceType].y;
                     piece->actor.gravity = -1.0f;
                     piece->actionState = ENKANBAN_AIR;
-                    piece->actor.world.rot.y = (s16)Rand_CenteredFloat(0x3000) + this->actor.yawTowardsPlayer + 0x8000;
+                    piece->actor.world.rot.y = (s16)Rand_CenteredFloat(0x3000) + this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
                     piece->actor.velocity.y = Rand_ZeroFloat(2.0f) + 3.0f;
                     piece->actor.speedXZ = Rand_ZeroFloat(2.0f) + 3.0f;
                     if (piece->partCount >= 4) {
@@ -398,7 +401,7 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
             Collider_UpdateCylinder(&this->actor, &this->collider);
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
-            if (this->actor.xzDistToPlayer > 500.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] > 500.0f) {
                 this->actor.flags |= ACTOR_FLAG_0;
                 this->partFlags = 0xFFFF;
             }
@@ -583,12 +586,12 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
                 s32 rippleScale;
 
                 if ((player->actor.speedXZ > 0.0f) && (player->actor.world.pos.y < this->actor.world.pos.y) &&
-                    (this->actor.xyzDistToPlayerSq < 2500.0f)) {
+                    (this->actor.xyzDistToPlayerSq[playerIndex] < 2500.0f)) {
                     Math_ApproachF(&this->actor.speedXZ, player->actor.speedXZ, 1.0f, 0.2f);
                     if (this->actor.speedXZ > 1.0f) {
                         this->actor.speedXZ = 1.0f;
                     }
-                    if (Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer + 0x8000, 1, 0x1000,
+                    if (Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x8000, 1, 0x1000,
                                            0) > 0) {
                         this->spinVel.y = this->actor.speedXZ * 1000.0f;
                     } else {
@@ -635,8 +638,8 @@ void EnKanban_Update(Actor* thisx, PlayState* play2) {
                     }
                     EffectSsGRipple_Spawn(play, &this->actor.world.pos, rippleScale, rippleScale + 500, 0);
                 }
-            } else if ((play->actorCtx.unk_02 != 0) && (this->actor.xyzDistToPlayerSq < SQ(100.0f))) {
-                f32 hammerStrength = (100.0f - sqrtf(this->actor.xyzDistToPlayerSq)) * 0.05f;
+            } else if ((play->actorCtx.unk_02 != 0) && (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(100.0f))) {
+                f32 hammerStrength = (100.0f - sqrtf(this->actor.xyzDistToPlayerSq[playerIndex])) * 0.05f;
 
                 this->actionState = ENKANBAN_AIR;
                 this->actor.gravity = -1.0f;

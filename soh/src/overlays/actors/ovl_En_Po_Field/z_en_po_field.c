@@ -238,13 +238,14 @@ void EnPoField_SetupAppear(EnPoField* this) {
 }
 
 void EnPoField_SetupCirclePlayer(EnPoField* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Animation_PlayLoop(&this->skelAnime, &gPoeFieldFloatAnim);
     this->collider.base.acFlags |= AC_ON;
-    this->scaleModifier = this->actor.xzDistToPlayer;
+    this->scaleModifier = this->actor.xzDistToPlayer[playerIndex];
     Math_Vec3f_Copy(&this->actor.home.pos, &player->actor.world.pos);
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     if (this->actionFunc != EnPoField_Damage) {
         this->actor.flags |= ACTOR_FLAG_0;
         this->actionTimer = 600;
@@ -361,7 +362,7 @@ void EnPoField_SetupInteractWithSoul(EnPoField* this) {
 }
 
 void EnPoField_CorrectYPos(EnPoField* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->unk_194 == 0) {
         this->unk_194 = 32;
@@ -382,14 +383,15 @@ void EnPoField_CorrectYPos(EnPoField* this, PlayState* play) {
 }
 
 f32 EnPoField_SetFleeSpeed(EnPoField* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 speed = ((player->stateFlags1 & 0x800000) && player->rideActor != NULL) ? player->rideActor->speedXZ : 12.0f;
 
-    if (this->actor.xzDistToPlayer < 300.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 300.0f) {
         this->actor.speedXZ = speed * 1.5f + 2.0f;
-    } else if (this->actor.xzDistToPlayer < 400.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 400.0f) {
         this->actor.speedXZ = speed * 1.25f + 2.0f;
-    } else if (this->actor.xzDistToPlayer < 500.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 500.0f) {
         this->actor.speedXZ = speed + 2.0f;
     } else {
         this->actor.speedXZ = 12.0f;
@@ -398,7 +400,7 @@ f32 EnPoField_SetFleeSpeed(EnPoField* this, PlayState* play) {
 }
 
 void EnPoField_WaitForSpawn(EnPoField* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 spawnDist;
     s32 i;
     s32 bgId;
@@ -442,6 +444,8 @@ void EnPoField_WaitForSpawn(EnPoField* this, PlayState* play) {
 }
 
 void EnPoField_Appear(EnPoField* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
         this->lightColor.a = 255;
         Actor_SetScale(&this->actor, this->scaleModifier);
@@ -458,15 +462,15 @@ void EnPoField_Appear(EnPoField* this, PlayState* play) {
         this->actor.scale.z = this->actor.scale.x;
     }
     this->actor.shape.shadowAlpha = this->lightColor.a;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     if (this->actor.params == EN_PO_FIELD_BIG) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer + 0x8000;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         EnPoField_SetFleeSpeed(this, play);
     }
 }
 
 void EnPoField_CirclePlayer(EnPoField* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 temp_v1 = 16 - this->unk_194;
 
     SkelAnime_Update(&this->skelAnime);
@@ -502,6 +506,8 @@ void EnPoField_CirclePlayer(EnPoField* this, PlayState* play) {
 }
 
 void EnPoField_Flee(EnPoField* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 temp_f6;
     s16 phi_t0;
 
@@ -510,18 +516,18 @@ void EnPoField_Flee(EnPoField* this, PlayState* play) {
         this->actionTimer--;
     }
     if (Actor_WorldDistXZToPoint(&this->actor, &sFieldMiddle) > 3000.0f) {
-        phi_t0 = (s16)(this->actor.yawTowardsPlayer - Actor_WorldYawTowardPoint(&this->actor, &sFieldMiddle) - 0x8000) *
+        phi_t0 = (s16)(this->actor.yawTowardsPlayer[playerIndex] - Actor_WorldYawTowardPoint(&this->actor, &sFieldMiddle) - 0x8000) *
                  0.2f;
     } else {
         phi_t0 = 0;
     }
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer - phi_t0, 6, 0x400);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] - phi_t0, 6, 0x400);
     EnPoField_SetFleeSpeed(this, play);
     this->actor.world.rot.y = this->actor.shape.rot.y + 0x8000;
     temp_f6 = Math_SinS(this->actionTimer * 0x800) * 3.0f;
     this->actor.world.pos.x -= temp_f6 * Math_CosS(this->actor.shape.rot.y);
     this->actor.world.pos.z += temp_f6 * Math_SinS(this->actor.shape.rot.y);
-    if (this->actionTimer == 0 || this->actor.xzDistToPlayer > 1500.0f) {
+    if (this->actionTimer == 0 || this->actor.xzDistToPlayer[playerIndex] > 1500.0f) {
         EnPoField_SetupDisappear(this);
     } else {
         EnPoField_CorrectYPos(this, play);
@@ -543,6 +549,8 @@ void EnPoField_Damage(EnPoField* this, PlayState* play) {
 }
 
 void EnPoField_Death(EnPoField* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f sp6C;
     f32 sp68;
     s32 pad;
@@ -555,15 +563,15 @@ void EnPoField_Death(EnPoField* this, PlayState* play) {
             sp6C.y = Math_SinS(this->actionTimer * 0x1000 - 0x4000) * 23.0f + (this->actor.world.pos.y + 40.0f);
             sp68 = Math_CosS(this->actionTimer * 0x1000 - 0x4000) * 23.0f;
             sp6C.x =
-                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * sp68 + this->actor.world.pos.x;
+                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * sp68 + this->actor.world.pos.x;
             sp6C.z =
-                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * sp68 + this->actor.world.pos.z;
+                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * sp68 + this->actor.world.pos.z;
         } else {
             sp6C.y = this->actor.world.pos.y + 40.0f + 15.0f * (this->actionTimer - 5);
             sp6C.x =
-                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * 23.0f + this->actor.world.pos.x;
+                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * 23.0f + this->actor.world.pos.x;
             sp6C.z =
-                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * 23.0f + this->actor.world.pos.z;
+                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * 23.0f + this->actor.world.pos.z;
         }
         EffectSsDeadDb_Spawn(play, &sp6C, &D_80AD7114, &D_80AD7120, this->actionTimer * 10 + 80, 0, 255, 255, 255,
                              255, 0, 0, 255, 1, 9, 1);
@@ -784,6 +792,8 @@ void EnPoField_UpdateFlame(EnPoField* this, PlayState* play) {
 }
 
 void EnPoField_DrawFlame(EnPoField* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 sp4C;
     s32 pad;
 
@@ -796,7 +806,7 @@ void EnPoField_DrawFlame(EnPoField* this, PlayState* play) {
         sp4C = this->flameScale * 85000.0f;
         gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, 255, 255, 0, sp4C);
         Matrix_Translate(this->flamePosition.x, this->flamePosition.y, this->flamePosition.z, MTXMODE_NEW);
-        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
         if (this->flameTimer >= 20) {
             gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
             Matrix_Scale(this->flameScale, this->flameScale, this->flameScale, MTXMODE_APPLY);
@@ -980,6 +990,8 @@ void EnPoField_UpdateDead(Actor* thisx, PlayState* play) {
 
 void EnPoField_DrawSoul(Actor* thisx, PlayState* play) {
     EnPoField* this = (EnPoField*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     EnPoFieldInfo* info = &sPoFieldInfo[this->actor.params];
 
@@ -1004,7 +1016,7 @@ void EnPoField_DrawSoul(Actor* thisx, PlayState* play) {
         gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, info->primColor.r, info->primColor.g, info->primColor.b,
                         this->lightColor.a);
         gDPSetEnvColor(POLY_XLU_DISP++, this->lightColor.r, this->lightColor.g, this->lightColor.b, 255);
-        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * 9.58738e-05f, MTXMODE_APPLY);
+        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * 9.58738e-05f, MTXMODE_APPLY);
         gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_XLU_DISP++, gPoeFieldSoulDL);

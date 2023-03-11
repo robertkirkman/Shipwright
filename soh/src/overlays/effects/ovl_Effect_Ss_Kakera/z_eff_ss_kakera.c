@@ -348,7 +348,7 @@ s32 func_809AA0EC(EffectSs* this) {
 
 void func_809AA230(EffectSs* this, PlayState* play) {
     static f32 D_809AA5B0[] = { 10.0f, 20.0f, 40.0f };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->rReg8 == 0) {
         if ((((this->rReg4 >> 4) & 1) * 0x10) == 0x10) {

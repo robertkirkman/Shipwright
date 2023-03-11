@@ -105,7 +105,7 @@ void EnSda_Update(Actor* thisx, PlayState* play) {
     if (this->actor.params == 1) {
         player = (Player*)this->actor.parent;
     } else {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(thisx, play);
     }
 
     this->actor.world.pos = player->actor.world.pos;
@@ -123,7 +123,7 @@ void EnSda_Draw(Actor* thisx, PlayState* play) {
     if (this->actor.params == 1) {
         player = (Player*)this->actor.parent;
     } else {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(thisx, play);
     }
 
     player->actor.shape.shadowAlpha = 0;

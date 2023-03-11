@@ -71,7 +71,9 @@ static InitChainEntry sInitChain[] = {
 void BgHidanFwbig_Init(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     BgHidanFwbig* this = (BgHidanFwbig*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+
 
     Actor_ProcessInitChain(&this->actor, sInitChain);
     Collider_InitCylinder(play, &this->collider);
@@ -120,9 +122,10 @@ void BgHidanFwbig_UpdatePosition(BgHidanFwbig* this) {
 }
 
 void BgHidanFwbig_WaitForSwitch(BgHidanFwbig* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Flags_GetSwitch(play, this->actor.params)) {
         this->actionFunc = BgHidanFwbig_WaitForCs;
-        OnePointCutscene_Init(play, 3340, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3340, -99, &this->actor, MAIN_CAM);
         this->timer = 35;
     }
 }
@@ -175,16 +178,17 @@ void BgHidanFwbig_WaitForTimer(BgHidanFwbig* this, PlayState* play) {
 }
 
 void BgHidanFwbig_WaitForPlayer(BgHidanFwbig* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->actor.world.pos.x < 1150.0f) {
         this->actionFunc = BgHidanFwbig_Rise;
-        OnePointCutscene_Init(play, 3290, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3290, -99, &this->actor, MAIN_CAM);
     }
 }
 
 void BgHidanFwbig_Move(BgHidanFwbig* this, PlayState* play) {
-    if (!Player_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    if (!Player_InCsMode(play, player)) {
         if (Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.home.rot.y + (this->direction * 0x6390), 0x20)) {
             this->moveState = FWBIG_RESET;
             this->actionFunc = BgHidanFwbig_Lower;
@@ -195,7 +199,7 @@ void BgHidanFwbig_Move(BgHidanFwbig* this, PlayState* play) {
 }
 
 void BgHidanFwbig_MoveCollider(BgHidanFwbig* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f projPos;
     f32 cs;
     f32 sn;

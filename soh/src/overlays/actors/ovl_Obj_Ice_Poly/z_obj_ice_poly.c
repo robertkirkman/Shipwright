@@ -113,14 +113,16 @@ void ObjIcePoly_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void ObjIcePoly_Idle(ObjIcePoly* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     s32 pad;
     Vec3f pos;
 
     if (this->colliderIce.base.acFlags & AC_HIT) {
         this->meltTimer = -this->colliderIce.info.acHitInfo->toucher.damage;
-        this->actor.focus.rot.y = this->actor.yawTowardsPlayer;
-        OnePointCutscene_Init(play, 5120, 40, &this->actor, MAIN_CAM);
+        this->actor.focus.rot.y = this->actor.yawTowardsPlayer[playerIndex];
+        OnePointCutscene_Init(play, player, 5120, 40, &this->actor, MAIN_CAM);
         this->actionFunc = ObjIcePoly_Melt;
     } else if (this->actor.parent != NULL) {
         this->actor.parent->freezeTimer = 40;

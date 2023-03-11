@@ -53,12 +53,14 @@ void func_808B746C(Actor* thisx, PlayState* play) {
 }
 
 void func_808B7478(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
 
     Gfx_SetupDL_25Xlu(play->state.gfxCtx);
-    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - thisx->shape.rot.y + 0x8000) *
+    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - thisx->shape.rot.y + 0x8000) *
                        9.58738019108e-05f,
                    MTXMODE_APPLY);
 

@@ -82,9 +82,10 @@ void func_808B30C0(BgSpot12Gate* this) {
 }
 
 void func_808B30D8(BgSpot12Gate* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->dyna.actor.params & 0x3F)) {
         func_808B3134(this);
-        OnePointCutscene_Init(play, 4160, -99, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4160, -99, &this->dyna.actor, MAIN_CAM);
     }
 }
 
@@ -104,6 +105,8 @@ void func_808B317C(BgSpot12Gate* this) {
 }
 
 void func_808B318C(BgSpot12Gate* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 var;
 
@@ -111,7 +114,7 @@ void func_808B318C(BgSpot12Gate* this, PlayState* play) {
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y + 200.0f,
                      this->dyna.actor.velocity.y)) {
         func_808B3274(this);
-        var = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        var = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
         Quake_SetSpeed(var, -0x3CB0);
         Quake_SetQuakeValues(var, 3, 0, 0, 0);
         Quake_SetCountdown(var, 0xC);

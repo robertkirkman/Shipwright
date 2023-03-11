@@ -558,8 +558,10 @@ void EnOssan_TalkHappyMaskShopkeeper(PlayState* play) {
 }
 
 void EnOssan_UpdateCameraDirection(EnOssan* this, PlayState* play, f32 cameraFaceAngle) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->cameraFaceAngle = cameraFaceAngle;
-    Camera_SetCameraData(GET_ACTIVE_CAM(play), 0xC, NULL, NULL, cameraFaceAngle, 0, 0);
+    Camera_SetCameraData(GET_ACTIVE_CAM(playerIndex, play), 0xC, NULL, NULL, cameraFaceAngle, 0, 0);
 }
 
 s32 EnOssan_TryGetObjBankIndexes(EnOssan* this, PlayState* play, s16* objectIds) {
@@ -662,7 +664,7 @@ void EnOssan_UpdateCursorPos(PlayState* play, EnOssan* this) {
 }
 
 void EnOssan_EndInteraction(PlayState* play, EnOssan* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     // "End of conversation!"
     osSyncPrintf(VT_FGCOL(YELLOW) "%s[%d]:★★★ 会話終了！！ ★★★" VT_RST "\n", __FILE__, __LINE__);
@@ -749,7 +751,8 @@ void EnOssan_SetLookToShopkeeperFromShelf(PlayState* play, EnOssan* this) {
 }
 
 void EnOssan_State_Idle(EnOssan* this, PlayState* play, Player* player) {
-    this->headTargetRot = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    u16 playerIndex = Player_GetIndex(player, play);
+    this->headTargetRot = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         // "Start conversation!!"
@@ -757,13 +760,15 @@ void EnOssan_State_Idle(EnOssan* this, PlayState* play, Player* player) {
         player->stateFlags2 |= 0x20000000;
         func_800BC590(play);
         EnOssan_SetStateStartShopping(play, this, false);
-    } else if (this->actor.xzDistToPlayer < 100.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
         func_8002F2CC(&this->actor, play, 100);
     }
 }
 
 void EnOssan_UpdateJoystickInputState(PlayState* play, EnOssan* this) {
-    Input* input = &play->state.input[0];
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Input* input = &play->state.input[playerIndex < 4 ? playerIndex : 0];
     s8 stickX = input->rel.stick_x;
     s8 stickY = input->rel.stick_y;
 
@@ -902,10 +907,11 @@ void EnOssan_TryPaybackMask(EnOssan* this, PlayState* play) {
 }
 
 void EnOssan_State_StartConversation(EnOssan* this, PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     u8 dialogState = Message_GetState(&play->msgCtx);
 
     if (this->actor.params == OSSAN_TYPE_MASK && dialogState == TEXT_STATE_CHOICE) {
-        if (!EnOssan_TestEndInteraction(this, play, &play->state.input[0]) &&
+        if (!EnOssan_TestEndInteraction(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) &&
             Message_ShouldAdvance(play)) {
             switch (play->msgCtx.choiceIndex) {
                 case 0:
@@ -940,7 +946,7 @@ void EnOssan_State_StartConversation(EnOssan* this, PlayState* play, Player* pla
                 return;
         }
 
-        if (!EnOssan_TestEndInteraction(this, play, &play->state.input[0])) {
+        if (!EnOssan_TestEndInteraction(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0])) {
             // "Shop around by moving the stick left and right"
             osSyncPrintf("「スティック左右で品物みてくれ！」\n");
             EnOssan_StartShopping(play, this);
@@ -962,12 +968,13 @@ s32 EnOssan_FacingShopkeeperDialogResult(EnOssan* this, PlayState* play) {
 }
 
 void EnOssan_State_FacingShopkeeper(EnOssan* this, PlayState* play, Player* player) {
-    Input* input = &play->state.input[0];
+    u16 playerIndex = Player_GetIndex(player, play);
+    Input* input = &play->state.input[playerIndex < 4 ? playerIndex : 0];
     u8 nextIndex;
     bool dpad = CVarGetInteger("gDpadText", 0);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) &&
-        !EnOssan_TestEndInteraction(this, play, &play->state.input[0])) {
+        !EnOssan_TestEndInteraction(this, play, input)) {
         if (Message_ShouldAdvance(play) && EnOssan_FacingShopkeeperDialogResult(this, play)) {
             func_80078884(NA_SE_SY_DECIDE);
             return;
@@ -1040,7 +1047,9 @@ void EnOssan_State_LookToRightShelf(EnOssan* this, PlayState* play, Player* play
 }
 
 void EnOssan_CursorUpDown(EnOssan* this, PlayState* play) {
-    Input* input = &play->state.input[0];
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Input* input = &play->state.input[playerIndex < 4 ? playerIndex : 0];
     u8 curTemp = this->cursorIndex;
     u8 curScanTemp;
     bool dpad = CVarGetInteger("gDpadText", 0);
@@ -1190,7 +1199,8 @@ s32 EnOssan_HasPlayerSelectedItem(PlayState* play, EnOssan* this, Input* input) 
 }
 
 void EnOssan_State_BrowseLeftShelf(EnOssan* this, PlayState* play, Player* player) {
-    Input* input = &play->state.input[0];
+    u16 playerIndex = Player_GetIndex(player, play);
+    Input* input = &play->state.input[playerIndex < 4 ? playerIndex : 0];
     s32 a;
     s32 b;
     u8 prevIndex = this->cursorIndex;
@@ -1211,7 +1221,7 @@ void EnOssan_State_BrowseLeftShelf(EnOssan* this, PlayState* play, Player* playe
     this->stickRightPrompt.isEnabled = true;
     EnOssan_UpdateCursorPos(play, this);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) &&
-        !EnOssan_HasPlayerSelectedItem(play, this, &play->state.input[0])) {
+        !EnOssan_HasPlayerSelectedItem(play, this, input)) {
         if (this->moveHorizontal) {
             if ((this->stickAccumX > 0) || (dpad && CHECK_BTN_ALL(input->press.button, BTN_DRIGHT))) {
                 a = EnOssan_CursorRight(this, this->cursorIndex, 4);
@@ -1252,7 +1262,8 @@ void EnOssan_State_BrowseLeftShelf(EnOssan* this, PlayState* play, Player* playe
 }
 
 void EnOssan_State_BrowseRightShelf(EnOssan* this, PlayState* play, Player* player) {
-    Input* input = &play->state.input[0];
+    u16 playerIndex = Player_GetIndex(player, play);
+    Input* input = &play->state.input[playerIndex < 4 ? playerIndex : 0];
     s32 pad[2];
     u8 prevIndex;
     u8 nextIndex;
@@ -1272,7 +1283,7 @@ void EnOssan_State_BrowseRightShelf(EnOssan* this, PlayState* play, Player* play
     this->stickLeftPrompt.isEnabled = true;
     EnOssan_UpdateCursorPos(play, this);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) &&
-        !EnOssan_HasPlayerSelectedItem(play, this, &play->state.input[0])) {
+        !EnOssan_HasPlayerSelectedItem(play, this, input)) {
         if (this->moveHorizontal) {
             if ((this->stickAccumX < 0) || (dpad && CHECK_BTN_ALL(input->press.button, BTN_DLEFT))) {
                 nextIndex = EnOssan_CursorRight(this, this->cursorIndex, 0);
@@ -1340,7 +1351,7 @@ void EnOssan_State_DisplayOnlyBombDialog(EnOssan* this, PlayState* play, Player*
 }
 
 void EnOssan_GiveItemWithFanfare(PlayState* play, EnOssan* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     osSyncPrintf("\n" VT_FGCOL(YELLOW) "初めて手にいれた！！" VT_RST "\n\n");
     if (!gSaveContext.n64ddFlag) {
@@ -1517,13 +1528,14 @@ void EnOssan_BuyGoronCityBombs(PlayState* play, EnOssan* this) {
 
 void EnOssan_State_ItemSelected(EnOssan* this, PlayState* play2, Player* player) {
     PlayState* play = play2; // Necessary for OKs
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!EnOssan_TakeItemOffShelf(this)) {
         osSyncPrintf("%s[%d]:" VT_FGCOL(GREEN) "ズーム中！！" VT_RST "\n", __FILE__, __LINE__);
         return;
     }
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE &&
-        !EnOssan_TestCancelOption(this, play, &play->state.input[0]) && Message_ShouldAdvance(play)) {
+        !EnOssan_TestCancelOption(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0:
                 EnOssan_HandleCanBuyItem(play, this);
@@ -1538,13 +1550,14 @@ void EnOssan_State_ItemSelected(EnOssan* this, PlayState* play2, Player* player)
 
 void EnOssan_State_SelectMilkBottle(EnOssan* this, PlayState* play2, Player* player) {
     PlayState* play = play2; // Need for OK
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!EnOssan_TakeItemOffShelf(this)) {
         osSyncPrintf("%s[%d]:" VT_FGCOL(GREEN) "ズーム中！！" VT_RST "\n", __FILE__, __LINE__);
         return;
     }
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE &&
-        !EnOssan_TestCancelOption(this, play, &play->state.input[0]) && Message_ShouldAdvance(play)) {
+        !EnOssan_TestCancelOption(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0:
                 EnOssan_HandleCanBuyLonLonMilk(play, this);
@@ -1559,13 +1572,14 @@ void EnOssan_State_SelectMilkBottle(EnOssan* this, PlayState* play2, Player* pla
 
 void EnOssan_State_SelectWeirdEgg(EnOssan* this, PlayState* play2, Player* player) {
     PlayState* play = play2; // Needed for OK
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!EnOssan_TakeItemOffShelf(this)) {
         osSyncPrintf("%s[%d]:" VT_FGCOL(GREEN) "ズーム中！！" VT_RST "\n", __FILE__, __LINE__);
         return;
     }
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE &&
-        !EnOssan_TestCancelOption(this, play, &play->state.input[0]) && Message_ShouldAdvance(play)) {
+        !EnOssan_TestCancelOption(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0:
                 EnOssan_HandleCanBuyWeirdEgg(play, this);
@@ -1590,6 +1604,7 @@ void EnOssan_State_SelectUnimplementedItem(EnOssan* this, PlayState* play, Playe
 }
 
 void EnOssan_State_SelectBombs(EnOssan* this, PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     if (!EnOssan_TakeItemOffShelf(this)) {
         osSyncPrintf("%s[%d]:" VT_FGCOL(GREEN) "ズーム中！！" VT_RST "\n", __FILE__, __LINE__);
         return;
@@ -1600,7 +1615,7 @@ void EnOssan_State_SelectBombs(EnOssan* this, PlayState* play, Player* player) {
         return;
     }
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE &&
-        !EnOssan_TestCancelOption(this, play, &play->state.input[0]) && Message_ShouldAdvance(play)) {
+        !EnOssan_TestCancelOption(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0:
                 EnOssan_BuyGoronCityBombs(play, this);
@@ -1616,6 +1631,7 @@ void EnOssan_State_SelectBombs(EnOssan* this, PlayState* play, Player* player) {
 void EnOssan_State_SelectMaskItem(EnOssan* this, PlayState* play, Player* player) {
     u8 talkState = Message_GetState(&play->msgCtx);
     EnGirlA* item = this->shelfSlots[this->cursorIndex];
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!EnOssan_TakeItemOffShelf(this)) {
         osSyncPrintf("%s[%d]:" VT_FGCOL(GREEN) "ズーム中！！" VT_RST "\n", __FILE__, __LINE__);
@@ -1627,7 +1643,7 @@ void EnOssan_State_SelectMaskItem(EnOssan* this, PlayState* play, Player* player
             Message_ContinueTextbox(play, this->shelfSlots[this->cursorIndex]->actor.textId);
         }
     } else if (talkState == TEXT_STATE_CHOICE &&
-               !EnOssan_TestCancelOption(this, play, &play->state.input[0]) &&
+               !EnOssan_TestCancelOption(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0]) &&
                Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0:
@@ -1754,13 +1770,14 @@ void EnOssan_State_ItemPurchased(EnOssan* this, PlayState* play, Player* player)
 void EnOssan_State_ContinueShoppingPrompt(EnOssan* this, PlayState* play, Player* player) {
     EnGirlA* selectedItem;
     u8 talkState = Message_GetState(&play->msgCtx);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (talkState == TEXT_STATE_CHOICE) {
         if (Message_ShouldAdvance(play)) {
             EnOssan_ResetItemPosition(this);
             selectedItem = this->shelfSlots[this->cursorIndex];
             selectedItem->updateStockedItemFunc(play, selectedItem);
-            if (!EnOssan_TestEndInteraction(this, play, &play->state.input[0])) {
+            if (!EnOssan_TestEndInteraction(this, play, &play->state.input[playerIndex < 4 ? playerIndex : 0])) {
                 switch (play->msgCtx.choiceIndex) {
                     case 0:
                         osSyncPrintf(VT_FGCOL(YELLOW) "★★★ 続けるよ！！ ★★★" VT_RST "\n");
@@ -2272,7 +2289,7 @@ void EnOssan_Obj3ToSeg6(EnOssan* this, PlayState* play) {
 }
 
 void EnOssan_MainActionFunc(EnOssan* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->blinkFunc(this);
     EnOssan_UpdateJoystickInputState(play, this);

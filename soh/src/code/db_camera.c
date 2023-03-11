@@ -1317,11 +1317,11 @@ void DbCamera_Update(DbCamera* dbCamera, Camera* cam) {
             }
 
             DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 0.02f, 2.0f, 0.02f,
-                                   0xFF, 0xFF, 0x7F, 0x40, 0, cam->play->view.gfxCtx);
+                                   0xFF, 0xFF, 0x7F, 0x40, 0, cam->play->views[0].gfxCtx);
             DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 2.0f, 0.02f, 0.02f,
-                                   0x7F, 0xFF, 0xFF, 0x40, 0, cam->play->view.gfxCtx);
+                                   0x7F, 0xFF, 0xFF, 0x40, 0, cam->play->views[0].gfxCtx);
             DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 0.02f, 0.02f, 2.0f,
-                                   0xFF, 0x7F, 0xFF, 0x40, 0, cam->play->view.gfxCtx);
+                                   0xFF, 0x7F, 0xFF, 0x40, 0, cam->play->views[0].gfxCtx);
             if (dbCamera->sub.unk_08 == 2) {
                 for (i = 0; i < (dbCamera->sub.nPoints - 1); i++) {
                     if (dbCamera->sub.mode != 1) {
@@ -1335,14 +1335,14 @@ void DbCamera_Update(DbCamera* dbCamera, Camera* cam) {
                     spAA = dbCamera->sub.lookAt[i].cameraRoll * 0xB6;
                     if (i == dbCamera->sub.unkIdx) {
                         DebugDisplay_AddObject(spAC.x, spAC.y, spAC.z, spFC.pitch * -1, spFC.yaw, spAA, .5f, .5f, .5f,
-                                               0x7F, 0xFF, 0x7F, 0x80, 5, cam->play->view.gfxCtx);
+                                               0x7F, 0xFF, 0x7F, 0x80, 5, cam->play->views[0].gfxCtx);
                         DebugDisplay_AddObject(spB8.x, spB8.y, spB8.z, spFC.pitch * -1, spFC.yaw, spAA, 1.5f, 2.0f,
-                                               1.0f, 0x7F, 0xFF, 0x7F, 0x80, 4, cam->play->view.gfxCtx);
+                                               1.0f, 0x7F, 0xFF, 0x7F, 0x80, 4, cam->play->views[0].gfxCtx);
                     } else {
                         DebugDisplay_AddObject(spAC.x, spAC.y, spAC.z, spFC.pitch * -1, spFC.yaw, spAA, .5f, .5f, .5f,
-                                               0xFF, 0x7F, 0x7F, 0x80, 5, cam->play->view.gfxCtx);
+                                               0xFF, 0x7F, 0x7F, 0x80, 5, cam->play->views[0].gfxCtx);
                         DebugDisplay_AddObject(spB8.x, spB8.y, spB8.z, spFC.pitch * -1, spFC.yaw, spAA, 1.5f, 2.0f,
-                                               1.0f, 0xFF, 0x7F, 0x7F, 0x80, 4, cam->play->view.gfxCtx);
+                                               1.0f, 0xFF, 0x7F, 0x7F, 0x80, 4, cam->play->views[0].gfxCtx);
                     }
                 }
             }
@@ -1400,18 +1400,18 @@ void DbCamera_Update(DbCamera* dbCamera, Camera* cam) {
 
         OLib_Vec3fDiffToVecSphGeo(&spA0, &cam->eye, &cam->at);
         DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 0.02f, 2.0f, 0.02f, 0xFF,
-                               0xFF, 0x7F, 0x2D, 0, cam->play->view.gfxCtx);
+                               0xFF, 0x7F, 0x2D, 0, cam->play->views[0].gfxCtx);
         DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 2.0f, 0.02f, 0.02f, 0x7F,
-                               0xFF, 0xFF, 0x2D, 0, cam->play->view.gfxCtx);
+                               0xFF, 0xFF, 0x2D, 0, cam->play->views[0].gfxCtx);
         DebugDisplay_AddObject(dbCamera->at.x, dbCamera->at.y + 1.0f, dbCamera->at.z, 0, 0, 0, 0.02f, 0.02f, 2.0f, 0xFF,
-                               0x7F, 0xFF, 0x2D, 0, cam->play->view.gfxCtx);
+                               0x7F, 0xFF, 0x2D, 0, cam->play->views[0].gfxCtx);
         DebugDisplay_AddObject(cam->eye.x, cam->eye.y, cam->eye.z, spA0.pitch * -1, spA0.yaw, 0, .5f, .5f, .5f, 0xFF,
-                               0x7F, 0x7F, 0x80, 5, cam->play->view.gfxCtx);
+                               0x7F, 0x7F, 0x80, 5, cam->play->views[0].gfxCtx);
         DebugDisplay_AddObject(cam->at.x, cam->at.y, cam->at.z, spA0.pitch * -1, spA0.yaw, 0, 1.5f, 2.0f, 1.0f, 0xFF,
-                               0x7F, 0x7F, 0x80, 4, cam->play->view.gfxCtx);
+                               0x7F, 0x7F, 0x80, 4, cam->play->views[0].gfxCtx);
         OLib_Vec3fDiffToVecSphGeo(&spA0, &cam->eyeNext, &cam->at);
         DebugDisplay_AddObject(cam->eyeNext.x, cam->eyeNext.y, cam->eyeNext.z, spA0.pitch * -1, spA0.yaw, 0, .5f, .5f,
-                               .5f, 0xFF, 0xC0, 0x7F, 0x50, 5, cam->play->view.gfxCtx);
+                               .5f, 0xFF, 0xC0, 0x7F, 0x50, 5, cam->play->views[0].gfxCtx);
     }
 }
 

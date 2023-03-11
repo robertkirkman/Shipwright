@@ -132,6 +132,8 @@ typedef struct {
 #define ACTOR_FLAG_27 (1 << 27)
 #define ACTOR_FLAG_28 (1 << 28)
 
+#define PLAYER_COUNT 4 // magi multiplayer
+
 typedef struct Actor {
     /* 0x000 */ s16 id; // Actor ID
     /* 0x002 */ u8 category; // Actor category. Refer to the corresponding enum for values
@@ -158,10 +160,10 @@ typedef struct Actor {
     /* 0x080 */ f32 floorHeight; // Y position of the floor polygon directly below the actor
     /* 0x084 */ f32 yDistToWater; // Distance to the surface of active waterbox. Negative value means above water
     /* 0x088 */ u16 bgCheckFlags; // See comments below actor struct for wip docs. TODO: macros for these flags
-    /* 0x08A */ s16 yawTowardsPlayer; // Y rotation difference between the actor and the player
-    /* 0x08C */ f32 xyzDistToPlayerSq; // Squared distance between the actor and the player
-    /* 0x090 */ f32 xzDistToPlayer; // Distance between the actor and the player in the XZ plane
-    /* 0x094 */ f32 yDistToPlayer; // Dist is negative if the actor is above the player
+    /* 0x08A */ s16 yawTowardsPlayer[PLAYER_COUNT]; // Y rotation difference between the actor and the player
+    /* 0x08C */ f32 xyzDistToPlayerSq[PLAYER_COUNT]; // Squared distance between the actor and the player
+    /* 0x090 */ f32 xzDistToPlayer[PLAYER_COUNT]; // Distance between the actor and the player in the XZ plane
+    /* 0x094 */ f32 yDistToPlayer[PLAYER_COUNT]; // Dist is negative if the actor is above the player
     /* 0x098 */ CollisionCheckInfo colChkInfo; // Variables related to the Collision Check system
     /* 0x0B4 */ ActorShape shape; // Variables related to the physical shape of the actor
     /* 0x0E4 */ Vec3f projectedPos; // Position of the actor in projected space

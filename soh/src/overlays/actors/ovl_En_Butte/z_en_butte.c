@@ -110,6 +110,8 @@ void EnButte_UpdateTransformationEffect(void) {
 }
 
 void EnButte_DrawTransformationEffect(EnButte* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f D_809CE3C4 = { 0.0f, 0.0f, -3.0f };
     Vec3f sp5C;
     s32 alpha;
@@ -122,7 +124,7 @@ void EnButte_DrawTransformationEffect(EnButte* this, PlayState* play) {
     alpha = Math_SinS(sTransformationEffectAlpha) * 250;
     alpha = CLAMP(alpha, 0, 255);
 
-    Camera_GetCamDir(&camDir, GET_ACTIVE_CAM(play));
+    Camera_GetCamDir(&camDir, GET_ACTIVE_CAM(playerIndex, play));
     Matrix_RotateY(camDir.y * (M_PI / 0x8000), MTXMODE_NEW);
     Matrix_RotateX(camDir.x * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateZ(camDir.z * (M_PI / 0x8000), MTXMODE_APPLY);
@@ -216,7 +218,8 @@ void EnButte_SetupFlyAround(EnButte* this) {
 void EnButte_FlyAround(EnButte* this, PlayState* play) {
     EnButteFlightParams* flightParams = &sFlyAroundParams[this->flightParamsIdx];
     s16 yaw;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 distSqFromHome;
     f32 maxDistSqFromHome;
     f32 minAnimSpeed;
@@ -251,7 +254,7 @@ void EnButte_FlyAround(EnButte* this, PlayState* play) {
             minAnimSpeed = 0.3f;
         }
     } else if (this->unk_257 == 1) {
-        yaw = this->actor.yawTowardsPlayer + 0x8000 + (s16)((Rand_ZeroOne() - 0.5f) * 0x6000);
+        yaw = this->actor.yawTowardsPlayer[playerIndex] + 0x8000 + (s16)((Rand_ZeroOne() - 0.5f) * 0x6000);
         if (Math_ScaledStepToS(&this->actor.world.rot.y, yaw, rotStep) == 0) {
             minAnimSpeed = 0.4f;
         }
@@ -274,10 +277,10 @@ void EnButte_FlyAround(EnButte* this, PlayState* play) {
         (this->swordDownTimer <= 0) &&
         ((Math3D_Dist2DSq(player->actor.world.pos.x, player->actor.world.pos.z, this->actor.home.pos.x,
                           this->actor.home.pos.z) < SQ(120.0f)) ||
-         (this->actor.xzDistToPlayer < 60.0f))) {
+         (this->actor.xzDistToPlayer[playerIndex] < 60.0f))) {
         EnButte_SetupFollowLink(this);
         this->unk_257 = 2;
-    } else if (this->actor.xzDistToPlayer < 120.0) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 120.0) {
         this->unk_257 = 1;
     } else {
         this->unk_257 = 0;
@@ -292,7 +295,7 @@ void EnButte_SetupFollowLink(EnButte* this) {
 void EnButte_FollowLink(EnButte* this, PlayState* play) {
     static s32 D_809CE410 = 1500;
     EnButteFlightParams* flightParams = &sFollowLinkParams[this->flightParamsIdx];
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 distSqFromHome;
     Vec3f swordTip;
     f32 animSpeed;
@@ -384,6 +387,8 @@ void EnButte_WaitToDie(EnButte* this, PlayState* play) {
 }
 
 void EnButte_Update(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnButte* this = (EnButte*)thisx;
 
     if ((this->actor.child != NULL) && (this->actor.child->update == NULL) && (this->actor.child != &this->actor)) {
@@ -399,7 +404,7 @@ void EnButte_Update(Actor* thisx, PlayState* play) {
     this->unk_260 += 0x600;
 
     if ((this->actor.params & 1) == 1) {
-        if (GET_PLAYER(play)->swordState == 0) {
+        if (player->swordState == 0) {
             if (this->swordDownTimer > 0) {
                 this->swordDownTimer--;
             }
@@ -413,7 +418,7 @@ void EnButte_Update(Actor* thisx, PlayState* play) {
     if (this->actor.update != NULL) {
         Actor_MoveForward(&this->actor);
         Math_StepToF(&this->actor.world.pos.y, this->posYTarget, 0.6f);
-        if (this->actor.xyzDistToPlayerSq < 5000.0f) {
+        if (this->actor.xyzDistToPlayerSq[playerIndex] < 5000.0f) {
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
         }
         Actor_SetFocus(&this->actor, this->actor.shape.yOffset * this->actor.scale.y);

@@ -18,8 +18,8 @@
 #define SUBCAM_ACTIVE -1
 
 #define ONEPOINT_CS_INFO(camera) ((Unique9OnePointCs*)camera->paramData)
-#define PARENT_CAM(cam) ((cam)->play->cameraPtrs[(cam)->parentCamIdx])
-#define CHILD_CAM(cam) ((cam)->play->cameraPtrs[(cam)->childCamIdx])
+#define PARENT_CAM(cam, playerIndex) ((cam)->play->cameraPtrs[playerIndex][(cam)->parentCamIdx])
+#define CHILD_CAM(cam, playerIndex) ((cam)->play->cameraPtrs[playerIndex][(cam)->childCamIdx])
 
 typedef enum {
     /* 0x00 */ CAM_SET_NONE,

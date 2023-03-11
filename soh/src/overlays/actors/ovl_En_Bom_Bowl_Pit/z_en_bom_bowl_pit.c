@@ -50,10 +50,12 @@ void EnBomBowlPit_SetupDetectHit(EnBomBowlPit* this, PlayState* play) {
 }
 
 void EnBomBowlPit_DetectHit(EnBomBowlPit* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnBomChu* chu;
     Vec3f chuPosDiff;
 
-    if (play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_CHU_BOWLING) {
+    if (play->cameraPtrs[playerIndex][MAIN_CAM]->setting == CAM_SET_CHU_BOWLING) {
         chu = (EnBomChu*)play->actorCtx.actorLists[ACTORCAT_EXPLOSIVE].head;
 
         while (chu != NULL) {
@@ -68,23 +70,23 @@ void EnBomBowlPit_DetectHit(EnBomBowlPit* this, PlayState* play) {
 
             if (((fabsf(chuPosDiff.x) < 40.0f) || (BREG(2))) && ((fabsf(chuPosDiff.y) < 40.0f) || (BREG(2))) &&
                 ((fabsf(chuPosDiff.z) < 40.0f) || (BREG(2)))) {
-                func_8002DF54(play, NULL, 8);
+                func_8002DF54(play, player, NULL, 8);
                 chu->timer = 1;
 
-                this->camId = Play_CreateSubCamera(play);
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-                Play_ChangeCameraStatus(play, this->camId, CAM_STAT_ACTIVE);
+                this->camId = Play_CreateSubCamera(play, player);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+                Play_ChangeCameraStatus(play, player, this->camId, CAM_STAT_ACTIVE);
 
                 this->unk_1C8.x = this->unk_1C8.y = this->unk_1C8.z = 0.1f;
                 this->unk_1A4.x = this->unk_1A4.y = this->unk_1A4.z = 0.1f;
 
-                this->unk_180.x = this->unk_168.x = play->view.lookAt.x;
-                this->unk_180.y = this->unk_168.y = play->view.lookAt.y;
-                this->unk_180.z = this->unk_168.z = play->view.lookAt.z;
+                this->unk_180.x = this->unk_168.x = play->views[playerIndex].lookAt.x;
+                this->unk_180.y = this->unk_168.y = play->views[playerIndex].lookAt.y;
+                this->unk_180.z = this->unk_168.z = play->views[playerIndex].lookAt.z;
 
-                this->unk_18C.x = this->unk_174.x = play->view.eye.x;
-                this->unk_18C.y = this->unk_174.y = play->view.eye.y;
-                this->unk_18C.z = this->unk_174.z = play->view.eye.z;
+                this->unk_18C.x = this->unk_174.x = play->views[playerIndex].eye.x;
+                this->unk_18C.y = this->unk_174.y = play->views[playerIndex].eye.y;
+                this->unk_18C.z = this->unk_174.z = play->views[playerIndex].eye.z;
 
                 this->unk_1BC.x = 20.0f;
                 this->unk_1BC.y = 100.0f;
@@ -102,12 +104,12 @@ void EnBomBowlPit_DetectHit(EnBomBowlPit* this, PlayState* play) {
                 this->unk_1D4.y = fabsf(this->unk_180.y - this->unk_1BC.y) * 0.02f;
                 this->unk_1D4.z = fabsf(this->unk_180.z - this->unk_1BC.z) * 0.02f;
 
-                Play_CameraSetAtEye(play, this->camId, &this->unk_180, &this->unk_18C);
+                Play_CameraSetAtEye(play, player, this->camId, &this->unk_180, &this->unk_18C);
                 this->actor.textId = 0xF;
                 Message_StartTextbox(play, this->actor.textId, NULL);
                 this->unk_154 = TEXT_STATE_EVENT;
                 func_80078884(NA_SE_EV_HIT_SOUND);
-                func_8002DF54(play, NULL, 8);
+                func_8002DF54(play, player, NULL, 8);
                 this->status = 1;
                 this->actionFunc = EnBomBowlPit_CameraDollyIn;
                 break;
@@ -119,6 +121,7 @@ void EnBomBowlPit_DetectHit(EnBomBowlPit* this, PlayState* play) {
 }
 
 void EnBomBowlPit_CameraDollyIn(EnBomBowlPit* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->camId != SUBCAM_FREE) {
         Math_ApproachF(&this->unk_180.x, this->unk_1BC.x, this->unk_1C8.x, this->unk_1D4.x);
         Math_ApproachF(&this->unk_180.y, this->unk_1BC.y, this->unk_1C8.y, this->unk_1D4.y);
@@ -128,7 +131,7 @@ void EnBomBowlPit_CameraDollyIn(EnBomBowlPit* this, PlayState* play) {
         Math_ApproachF(&this->unk_18C.z, this->unk_198.z, this->unk_1A4.z, this->unk_1B0.z);
     }
 
-    Play_CameraSetAtEye(play, this->camId, &this->unk_180, &this->unk_18C);
+    Play_CameraSetAtEye(play, player, this->camId, &this->unk_180, &this->unk_18C);
 
     if ((this->unk_154 == Message_GetState(&play->msgCtx)) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
@@ -155,6 +158,7 @@ void EnBomBowlPit_SpawnPrize(EnBomBowlPit* this, PlayState* play) {
 }
 
 void EnBomBowlPit_SetupGivePrize(EnBomBowlPit* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->exItemDone != 0) {
         switch (this->prizeIndex) {
             case EXITEM_BOMB_BAG_BOWLING:
@@ -165,17 +169,17 @@ void EnBomBowlPit_SetupGivePrize(EnBomBowlPit* this, PlayState* play) {
                 break;
         }
 
-        Play_ClearCamera(play, this->camId);
-        Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-        func_8002DF54(play, NULL, 8);
+        Play_ClearCamera(play, player, this->camId);
+        Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = EnBomBowlPit_GivePrize;
     }
 }
 
 void EnBomBowlPit_GivePrize(EnBomBowlPit* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
-    func_8002DF54(play, NULL, 7);
+    func_8002DF54(play, player, NULL, 7);
     this->getItemId = sGetItemIds[this->prizeIndex];
     this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
 

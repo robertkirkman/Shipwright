@@ -56,8 +56,9 @@ void BgMizuUzu_Destroy(Actor* thisx, PlayState* play) {
 
 void func_8089F788(BgMizuUzu* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
-    if (GET_PLAYER(play)->currentBoots == PLAYER_BOOTS_IRON) {
+    if (player->currentBoots == PLAYER_BOOTS_IRON) {
         func_8003EBF8(play, &play->colCtx.dyna, this->dyna.bgId);
     } else {
         func_8003EC50(play, &play->colCtx.dyna, this->dyna.bgId);

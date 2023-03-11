@@ -65,7 +65,8 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
     s32 pad;
     s16 quakeIndex;
     s16 spawnerState;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     spawnerState = ENCOUNT2_INACTIVE;
     if (!this->isNotDeathMountain) {
@@ -74,7 +75,7 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
             (player->actor.world.pos.z > -3600.0f)) {
             spawnerState = ENCOUNT2_ACTIVE_DEATH_MOUNTAIN;
         }
-    } else if ((this->actor.xzDistToPlayer < 700.0f) && (Flags_GetSwitch(play, 0x37))) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < 700.0f) && (Flags_GetSwitch(play, 0x37))) {
         s16 scene = play->sceneNum;
 
         if (((scene == SCENE_GANON_DEMO) || (scene == SCENE_GANON_FINAL) || (scene == SCENE_GANON_SONOGO) ||
@@ -94,7 +95,7 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
             break;
         case ENCOUNT2_ACTIVE_DEATH_MOUNTAIN:
             if ((this->deathMountainSpawnerTimer == 1) || (!this->isQuaking)) {
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 1);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 1);
                 Quake_SetSpeed(quakeIndex, 0x7FFF);
                 Quake_SetQuakeValues(quakeIndex, 50, 0, 0, 0);
                 Quake_SetCountdown(quakeIndex, 300);
@@ -116,7 +117,8 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
 }
 
 void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnFireRock* spawnedRock;
     f32 tempVec1X;
     f32 tempVec1Y;
@@ -154,7 +156,7 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
         }
 
         Audio_PlayActorSound2(&this->actor, NA_SE_EV_VOLCANO - SFX_FLAG);
-    } else if ((this->actor.xzDistToPlayer < 700.0f) && (Flags_GetSwitch(play, 0x37) != 0)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < 700.0f) && (Flags_GetSwitch(play, 0x37) != 0)) {
         s16 scene = play->sceneNum;
 
         if (((scene == SCENE_GANON_DEMO) || (scene == SCENE_GANON_FINAL) || (scene == SCENE_GANON_SONOGO) ||
@@ -166,9 +168,9 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
     }
     if (spawnerState != ENCOUNT2_INACTIVE) {
         // Direction vector for the direction the camera is facing
-        tempVec1X = play->view.lookAt.x - play->view.eye.x;
-        tempVec1Y = play->view.lookAt.y - play->view.eye.y;
-        tempVec1Z = play->view.lookAt.z - play->view.eye.z;
+        tempVec1X = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        tempVec1Y = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        tempVec1Z = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
 
         // Normalised direction vector for the direction the camera is facing
         magnitude = sqrtf(SQ(tempVec1X) + SQ(tempVec1Y) + SQ(tempVec1Z));
@@ -177,15 +179,15 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
         tempVec2Z = tempVec1Z / magnitude;
 
         // Position between 160 and 300 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
-        tempVec1X = play->view.eye.x + (tempVec2X * 300.0f);
-        tempVec1Y = play->view.eye.y + (tempVec2Y * 160.0f) + 400.0f;
-        tempVec1Z = play->view.eye.z + (tempVec2Z * 300.0f);
+        tempVec1X = play->views[playerIndex].eye.x + (tempVec2X * 300.0f);
+        tempVec1Y = play->views[playerIndex].eye.y + (tempVec2Y * 160.0f) + 400.0f;
+        tempVec1Z = play->views[playerIndex].eye.z + (tempVec2Z * 300.0f);
 
         // Position between 160 and 200 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
         // (plus some random variation)
-        particlePos.x = Rand_CenteredFloat(200.0f) + (play->view.eye.x + (tempVec2X * 200.0f));
+        particlePos.x = Rand_CenteredFloat(200.0f) + (play->views[playerIndex].eye.x + (tempVec2X * 200.0f));
         particlePos.y = Rand_CenteredFloat(50.0f) + tempVec1Y;
-        particlePos.z = Rand_CenteredFloat(200.0f) + (play->view.eye.z + (tempVec2Z * 200.0f));
+        particlePos.z = Rand_CenteredFloat(200.0f) + (play->views[playerIndex].eye.z + (tempVec2Z * 200.0f));
         particleScale = Rand_CenteredFloat(0.005f) + 0.007f;
 
         if (spawnerState == ENCOUNT2_ACTIVE_DEATH_MOUNTAIN) {
@@ -207,8 +209,8 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
                     if (player->linearVelocity != 0.0f) {
                         // rock spawn pos is between 300 and 600 units from the camera depending on the camera yaw.
                         // Rocks will generally spawn closer to the camera in the X axis than in the Z axis.
-                        tempVec2X = Rand_CenteredFloat(200.0f) + (play->view.eye.x + (tempVec2X * 300.0f));
-                        tempVec2Z = Rand_CenteredFloat(50.0f) + (play->view.eye.z + (tempVec2Z * 600.0f));
+                        tempVec2X = Rand_CenteredFloat(200.0f) + (play->views[playerIndex].eye.x + (tempVec2X * 300.0f));
+                        tempVec2Z = Rand_CenteredFloat(50.0f) + (play->views[playerIndex].eye.z + (tempVec2Z * 600.0f));
                     } else {
                         // rock spawn pos X, Z near player
                         tempVec2X = Rand_CenteredFloat(10.0f) + player->actor.world.pos.x;
@@ -313,7 +315,7 @@ void EnEncount2_ParticleInit(EnEncount2* this, Vec3f* particlePos, f32 scale) {
 void EnEncount2_ParticleUpdate(EnEncount2* this, PlayState* play) {
     s16 i;
     EnEncount2Particle* particle = this->particles;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f targetPos;
 
     for (i = 0; i < ARRAY_COUNT(this->particles); particle++, i++) {

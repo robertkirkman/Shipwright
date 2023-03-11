@@ -301,7 +301,7 @@ void EnSt_InitColliders(EnSt* this, PlayState* play) {
 
 void EnSt_CheckBodyStickHit(EnSt* this, PlayState* play) {
     ColliderInfo* body = &this->colCylinder[0].info;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->unk_860 != 0) {
         body->bumper.dmgFlags |= 2;
@@ -320,7 +320,9 @@ void EnSt_SetBodyCylinderAC(EnSt* this, PlayState* play) {
 }
 
 void EnSt_SetLegsCylinderAC(EnSt* this, PlayState* play) {
-    s16 angleTowardsLink = ABS((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y));
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 angleTowardsLink = ABS((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y));
 
     if (angleTowardsLink < 0x3FFC) {
         Collider_UpdateCylinder(&this->actor, &this->colCylinder[2]);
@@ -376,7 +378,8 @@ void EnSt_UpdateCylinders(EnSt* this, PlayState* play) {
 }
 
 s32 EnSt_CheckHitLink(EnSt* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 hit;
     s32 i;
 
@@ -397,9 +400,9 @@ s32 EnSt_CheckHitLink(EnSt* this, PlayState* play) {
     }
 
     this->gaveDamageSpinTimer = 30;
-    play->damagePlayer(play, -8);
+    play->damagePlayer(play, player, -8);
     Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
-    func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer, 6.0f);
+    func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
     return true;
 }
 
@@ -622,8 +625,10 @@ void EnSt_UpdateYaw(EnSt* this, PlayState* play) {
         }
 
         // calculate the new yaw to or away from the player.
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         rot = this->actor.shape.rot;
-        yawTarget = (this->actionFunc == EnSt_WaitOnGround ? this->actor.yawTowardsPlayer : this->initalYaw);
+        yawTarget = (this->actionFunc == EnSt_WaitOnGround ? this->actor.yawTowardsPlayer[playerIndex] : this->initalYaw);
         yawDiff = rot.y - (yawTarget ^ yawDir);
         if (ABS(yawDiff) <= 0x4000) {
             Math_SmoothStepToS(&rot.y, yawTarget ^ yawDir, 4, 0x2000, 1);
@@ -689,13 +694,14 @@ void EnSt_Bob(EnSt* this, PlayState* play) {
 }
 
 s32 EnSt_IsCloseToPlayer(EnSt* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 yDist;
 
     if (this->takeDamageSpinTimer != 0) {
         // skull is spinning from damage.
         return false;
-    } else if (this->actor.xzDistToPlayer > 160.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] > 160.0f) {
         // player is more than 160 xz units from the Skulltula
         return false;
     }

@@ -119,7 +119,7 @@ void EnHoll_SwapRooms(PlayState* play) {
 
 // Horizontal Planes
 void func_80A58DD4(EnHoll* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 phi_t0 = ((play->sceneNum == SCENE_JYASINZOU) ? 1 : 0) & 0xFFFFFFFF;
     Vec3f vec;
     f32 absZ;
@@ -155,14 +155,15 @@ void func_80A58DD4(EnHoll* this, PlayState* play) {
 
 // Horizontal Planes
 void func_80A59014(EnHoll* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 useViewEye = gDbgCamEnabled || play->csCtx.state != CS_STATE_IDLE;
     Vec3f vec;
     s32 temp;
     f32 planeHalfWidth;
     f32 absZ;
 
-    func_8002DBD0(&this->actor, &vec, (useViewEye) ? &play->view.eye : &player->actor.world.pos);
+    func_8002DBD0(&this->actor, &vec, (useViewEye) ? &play->views[playerIndex].eye : &player->actor.world.pos);
     planeHalfWidth = (((this->actor.params >> 6) & 7) == 6) ? PLANE_HALFWIDTH : PLANE_HALFWIDTH_2;
 
     temp = EnHoll_IsKokiriSetup8();
@@ -186,11 +187,12 @@ void func_80A59014(EnHoll* this, PlayState* play) {
 
 // Vertical Planes
 void func_80A591C0(EnHoll* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    f32 absY = fabsf(this->actor.yDistToPlayer);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    f32 absY = fabsf(this->actor.yDistToPlayer[playerIndex]);
     s32 transitionActorIdx;
 
-    if (this->actor.xzDistToPlayer < 500.0f && absY < 700.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 500.0f && absY < 700.0f) {
         transitionActorIdx = (u16)this->actor.params >> 0xA;
         if (absY < 95.0f) {
             play->unk_11E18 = 0xFF;
@@ -218,11 +220,13 @@ void func_80A591C0(EnHoll* this, PlayState* play) {
 
 // Vertical Planes
 void func_80A593A4(EnHoll* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 absY;
     s32 side;
     s32 transitionActorIdx;
 
-    if ((this->actor.xzDistToPlayer < 120.0f) && (absY = fabsf(this->actor.yDistToPlayer), absY < 200.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 120.0f) && (absY = fabsf(this->actor.yDistToPlayer[playerIndex]), absY < 200.0f)) {
         if (absY < 50.0f) {
             play->unk_11E18 = 0xFF;
         } else {
@@ -230,7 +234,7 @@ void func_80A593A4(EnHoll* this, PlayState* play) {
         }
         if (absY > 50.0f) {
             transitionActorIdx = (u16)this->actor.params >> 0xA;
-            side = (0.0f < this->actor.yDistToPlayer) ? 0 : 1;
+            side = (0.0f < this->actor.yDistToPlayer[playerIndex]) ? 0 : 1;
             this->actor.room = play->transiActorCtx.list[transitionActorIdx].sides[side].room;
             if (this->actor.room != play->roomCtx.curRoom.num &&
                 func_8009728C(play, &play->roomCtx, this->actor.room) != 0) {
@@ -246,15 +250,17 @@ void func_80A593A4(EnHoll* this, PlayState* play) {
 
 // Vertical Planes
 void func_80A59520(EnHoll* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 absY;
     s8 side;
     s32 transitionActorIdx;
 
-    if (this->actor.xzDistToPlayer < 120.0f) {
-        absY = fabsf(this->actor.yDistToPlayer);
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
+        absY = fabsf(this->actor.yDistToPlayer[playerIndex]);
         if (absY < 200.0f && absY > 50.0f) {
             transitionActorIdx = (u16)this->actor.params >> 0xA;
-            side = (0.0f < this->actor.yDistToPlayer) ? 0 : 1;
+            side = (0.0f < this->actor.yDistToPlayer[playerIndex]) ? 0 : 1;
             this->actor.room = play->transiActorCtx.list[transitionActorIdx].sides[side].room;
             if (this->actor.room != play->roomCtx.curRoom.num &&
                 func_8009728C(play, &play->roomCtx, this->actor.room) != 0) {
@@ -266,7 +272,7 @@ void func_80A59520(EnHoll* this, PlayState* play) {
 
 // Horizontal Planes
 void func_80A59618(EnHoll* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f vec;
     f32 absZ;
     s32 side;

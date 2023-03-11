@@ -147,14 +147,16 @@ void func_809CB008(EnBrob* this) {
 }
 
 void func_809CB054(EnBrob* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->timer != 0) {
         this->timer--;
     }
     if (this->timer == 0) {
         if (func_8004356C(&this->dyna) != 0) {
-            func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer, 1.0f);
+            func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer[playerIndex], 1.0f);
             func_809CAE44(this, play);
-        } else if (this->dyna.actor.xzDistToPlayer < 300.0f) {
+        } else if (this->dyna.actor.xzDistToPlayer[playerIndex] < 300.0f) {
             func_809CAE44(this, play);
         }
     } else if (this->timer >= 81) {
@@ -180,6 +182,8 @@ void func_809CB114(EnBrob* this, PlayState* play) {
 }
 
 void func_809CB218(EnBrob* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 6.0f) || Animation_OnFrame(&this->skelAnime, 15.0f)) {
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EN_BROB_WAVE);
@@ -187,7 +191,7 @@ void func_809CB218(EnBrob* this, PlayState* play) {
     if (this->timer != 0) {
         this->timer--;
     }
-    if ((this->timer == 0) && (this->dyna.actor.xzDistToPlayer > 500.0f)) {
+    if ((this->timer == 0) && (this->dyna.actor.xzDistToPlayer[playerIndex] > 500.0f)) {
         func_809CAF88(this);
     }
 }
@@ -258,6 +262,8 @@ void func_809CB458(EnBrob* this, PlayState* play) {
 void EnBrob_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnBrob* this = (EnBrob*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 acHits[2];
 
@@ -278,7 +284,7 @@ void EnBrob_Update(Actor* thisx, PlayState* play2) {
 
         if (this->actionFunc == func_809CB114 && !(this->colliders[0].base.atFlags & AT_BOUNCED) &&
             !(this->colliders[1].base.atFlags & AT_BOUNCED)) {
-            func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer, 1.0f);
+            func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer[playerIndex], 1.0f);
         } else if (this->actionFunc != func_809CB114) {
             func_809CB008(this);
         }

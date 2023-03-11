@@ -106,7 +106,7 @@ void func_80ABBB34(EnNutsball* this, PlayState* play) {
 }
 
 void func_80ABBBA8(EnNutsball* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3s sp4C;
     Vec3f sp40;
 
@@ -153,7 +153,7 @@ void func_80ABBBA8(EnNutsball* this, PlayState* play) {
 
 void EnNutsball_Update(Actor* thisx, PlayState* play) {
     EnNutsball* this = (EnNutsball*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad;
 
     if (!(player->stateFlags1 & 0x300000C0) || (this->actionFunc == func_80ABBB34)) {

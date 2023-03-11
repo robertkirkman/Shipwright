@@ -124,7 +124,9 @@ void BgIceTurara_Stalagmite(BgIceTurara* this, PlayState* play) {
 }
 
 void BgIceTurara_Wait(BgIceTurara* this, PlayState* play) {
-    if (this->dyna.actor.xzDistToPlayer < 60.0f) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] < 60.0f) {
         this->shiverTimer = 10;
         this->actionFunc = BgIceTurara_Shiver;
     }

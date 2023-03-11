@@ -324,17 +324,19 @@ void EnKusa_Main(EnKusa* this, PlayState* play) {
         EnKusa_SetupCut(this);
         this->actor.flags |= ACTOR_FLAG_ENKUSA_CUT;
     } else {
-        if (!(this->collider.base.ocFlags1 & OC1_TYPE_PLAYER) && (this->actor.xzDistToPlayer > 12.0f)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (!(this->collider.base.ocFlags1 & OC1_TYPE_PLAYER) && (this->actor.xzDistToPlayer[playerIndex] > 12.0f)) {
             this->collider.base.ocFlags1 |= OC1_TYPE_PLAYER;
         }
 
-        if (this->actor.xzDistToPlayer < 600.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
             Collider_UpdateCylinder(&this->actor, &this->collider);
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
 
-            if (this->actor.xzDistToPlayer < 400.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 400.0f) {
                 CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
-                if (this->actor.xzDistToPlayer < 100.0f) {
+                if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
                     func_8002F580(&this->actor, play);
                 }
             }

@@ -193,7 +193,7 @@ void func_80895A70(BgJyaCobra* this) {
 }
 
 void func_80895BEC(BgJyaCobra* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
     Vec3f sp2C;
 
@@ -439,7 +439,7 @@ void func_80896918(BgJyaCobra* this, PlayState* play) {
 }
 
 void func_80896950(BgJyaCobra* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 > 0.001f) {
         this->unk_168++;
@@ -457,13 +457,14 @@ void func_80896950(BgJyaCobra* this, PlayState* play) {
 }
 
 void func_808969F8(BgJyaCobra* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 phi_a3;
     s16 temp2;
 
     this->actionFunc = func_80896ABC;
 
-    temp2 = this->dyna.actor.yawTowardsPlayer - this->dyna.actor.shape.rot.y;
+    temp2 = this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.shape.rot.y;
     phi_a3 = (s16)(this->dyna.actor.shape.rot.y - this->dyna.unk_158);
     phi_a3 = ABS(phi_a3);
 
@@ -483,7 +484,7 @@ void func_808969F8(BgJyaCobra* this, PlayState* play) {
 
 void func_80896ABC(BgJyaCobra* this, PlayState* play) {
     s16 temp_v0;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     temp_v0 = (s16)((this->unk_16C * 0x2000) + this->dyna.actor.home.rot.y) - this->dyna.actor.world.rot.y;
     if (ABS(temp_v0) < 7424) {

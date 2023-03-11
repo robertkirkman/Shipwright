@@ -343,6 +343,8 @@ void func_80AB5BF8(EnNiw* this, PlayState* play, s16 arg2) {
 }
 
 void EnNiw_SpawnAttackCucco(EnNiw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 viewX;
     f32 viewY;
     f32 viewZ;
@@ -350,12 +352,12 @@ void EnNiw_SpawnAttackCucco(EnNiw* this, PlayState* play) {
     Actor* attackCucco;
 
     if ((this->timer5 == 0) && (this->unk_296 < 7)) {
-        viewX = play->view.lookAt.x - play->view.eye.x;
-        viewY = play->view.lookAt.y - play->view.eye.y;
-        viewZ = play->view.lookAt.z - play->view.eye.z;
-        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->view.eye.x;
-        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->view.eye.y + 50.0f) + (viewY * 0.5f));
-        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->view.eye.z;
+        viewX = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        viewY = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        viewZ = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
+        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->views[playerIndex].eye.x;
+        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->views[playerIndex].eye.y + 50.0f) + (viewY * 0.5f));
+        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->views[playerIndex].eye.z;
         attackCucco = Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_ATTACK_NIW,
                                          attackCuccoPos.x, attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0);
 
@@ -394,8 +396,10 @@ void func_80AB6100(EnNiw* this, PlayState* play, s32 arg2) {
         if (this->timer6 == 0 || this->actor.bgCheckFlags & 8) {
             this->timer6 = 150;
             if (this->timer8 == 0) {
+                Player* player = Player_NearestToActor(&this->actor, play);
+                u16 playerIndex = Player_GetIndex(player, play);
                 this->timer8 = 70;
-                this->unk_2E4 = this->actor.yawTowardsPlayer;
+                this->unk_2E4 = this->actor.yawTowardsPlayer[playerIndex];
             }
         }
     }
@@ -448,9 +452,10 @@ void func_80AB63A8(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB6450(EnNiw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (this->actor.xzDistToPlayer < 30.0f && fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 5.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 30.0f && fabsf(this->actor.world.pos.y - player->actor.world.pos.y) < 5.0f) {
         this->timer6 = 100;
         this->actor.gravity = -2.0f;
         this->actionFunc = func_80AB7290;
@@ -758,7 +763,8 @@ void func_80AB6F04(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB70A0(EnNiw* this, PlayState* play) {
-    OnePointCutscene_Init(play, 2290, -99, &this->actor, MAIN_CAM);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    OnePointCutscene_Init(play, player, 2290, -99, &this->actor, MAIN_CAM);
     this->timer5 = 100;
     this->unk_2A2 = 1;
     this->actionFunc = func_80AB70F8;
@@ -798,8 +804,10 @@ void func_80AB714C(EnNiw* this, PlayState* play) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EV_CHICKEN_CRY_M);
     }
     if (this->timer5 == 0) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->timer7 = 10;
-        this->unk_2E4 = this->actor.yawTowardsPlayer;
+        this->unk_2E4 = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.flags &= ~ACTOR_FLAG_0;
         this->actionFunc = func_80AB7204;
     }
@@ -830,8 +838,6 @@ void func_80AB7290(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB7328(EnNiw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (this->timer6 == 0) {
         this->unk_2AC.x = this->unk_2B8.x = this->actor.world.pos.x;
         this->unk_2AC.y = this->unk_2B8.y = this->actor.world.pos.y;
@@ -844,6 +850,7 @@ void func_80AB7328(EnNiw* this, PlayState* play) {
         }
         this->actionFunc = EnNiw_ResetAction;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
         this->unk_2E4 = Math_FAtan2F(this->actor.world.pos.x - player->actor.world.pos.x,
                                      this->actor.world.pos.z - player->actor.world.pos.z) *
                         (0x8000 / M_PI);
@@ -878,7 +885,8 @@ void func_80AB747C(EnNiw* this, PlayState* play) {
 void EnNiw_Update(Actor* thisx, PlayState* play) {
     s32 pad1;
     EnNiw* this = (EnNiw*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 i;
     s16 featherCount;
     Vec3f zeroVec1 = { 0.0f, 0.0f, 0.0f };
@@ -981,9 +989,9 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
     }
     if (thisx->floorHeight <= BGCHECK_Y_MIN || thisx->floorHeight >= 32000.0f) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 上下？ ☆☆☆☆☆ %f\n" VT_RST, thisx->floorHeight);
-        cam.x = play->view.lookAt.x - play->view.eye.x;
-        cam.y = play->view.lookAt.y - play->view.eye.y;
-        cam.z = play->view.lookAt.z - play->view.eye.z;
+        cam.x = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        cam.y = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        cam.z = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
         camResult = cam.y / sqrtf(SQ(cam.x) + SQ(cam.y) + SQ(cam.z));
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｘ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.x);
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｙ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.y);
@@ -993,7 +1001,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ セットＺ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->home.pos.z);
         thisx->world.pos.x = thisx->home.pos.x;
         thisx->world.pos.z = thisx->home.pos.z;
-        thisx->world.pos.y = ((thisx->home.pos.y + play->view.eye.y) + (camResult * 160.0f));
+        thisx->world.pos.y = ((thisx->home.pos.y + play->views[playerIndex].eye.y) + (camResult * 160.0f));
 
         if (thisx->world.pos.y < thisx->home.pos.y) {
             thisx->world.pos.y = thisx->home.pos.y + 300.0f;
@@ -1051,7 +1059,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
     if (D_80AB85E0 == 0 && this->unk_2A4 <= 0 && thisx->params != 0xD && thisx->params != 0xE && thisx->params != 0xA) {
         this->timer6 = 100;
 
-        if (thisx->xzDistToPlayer > 10.0f) {
+        if (thisx->xzDistToPlayer[playerIndex] > 10.0f) {
             D_80AB85E0 = 1;
             this->timer5 = this->timer4 = this->unk_29E = 0;
             thisx->speedXZ = 0.0f;
@@ -1073,7 +1081,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
 
     dist = 20.0f;
 
-    if (this->unk_2A8 != 0 && thisx->xyzDistToPlayerSq < SQ(dist) && player->invincibilityTimer == 0) {
+    if (this->unk_2A8 != 0 && thisx->xyzDistToPlayerSq[playerIndex] < SQ(dist) && player->invincibilityTimer == 0) {
         func_8002F6D4(play, &this->actor, 2.0f, thisx->world.rot.y, 0.0f, 0x10);
     }
 

@@ -353,6 +353,8 @@ s32 EnGoroiwa_MoveUpToNextWaypoint(EnGoroiwa* this, PlayState* play) {
 }
 
 s32 EnGoroiwa_MoveDownToNextWaypoint(EnGoroiwa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Path* path = &play->setupPathList[this->actor.params & 0xFF];
     Vec3s* nextPointPos = (Vec3s*)SEGMENTED_TO_VIRTUAL(path->points) + this->nextWaypoint;
@@ -378,8 +380,8 @@ s32 EnGoroiwa_MoveDownToNextWaypoint(EnGoroiwa* this, PlayState* play) {
     this->actor.world.pos.y += this->actor.velocity.y;
     if (this->actor.velocity.y < 0.0f && this->actor.world.pos.y <= nextPointY) {
         if (this->bounceCount == 0) {
-            if (this->actor.xzDistToPlayer < 600.0f) {
-                quakeIdx = Quake_Add(GET_ACTIVE_CAM(play), 3);
+            if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
+                quakeIdx = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIdx, -0x3CB0);
                 Quake_SetQuakeValues(quakeIdx, 3, 0, 0, 0);
                 Quake_SetCountdown(quakeIdx, 7);
@@ -580,6 +582,9 @@ void EnGoroiwa_Roll(EnGoroiwa* this, PlayState* play) {
     static EnGoroiwaUnkFunc1 moveFuncs[] = { EnGoroiwa_Move, EnGoroiwa_MoveAndFall };
     static EnGoroiwaUnkFunc2 onHitSetupFuncs[] = { EnGoroiwa_SetupWait, EnGoroiwa_SetupMoveAndFallToGround };
 
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+
     s32 ascendDirection;
     s16 yawDiff;
     s16 loopMode;
@@ -587,7 +592,7 @@ void EnGoroiwa_Roll(EnGoroiwa* this, PlayState* play) {
     if (this->collider.base.atFlags & AT_HIT) {
         this->collider.base.atFlags &= ~AT_HIT;
         this->stateFlags &= ~ENGOROIWA_PLAYER_IN_THE_WAY;
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y;
         if (yawDiff > -0x4000 && yawDiff < 0x4000) {
             this->stateFlags |= ENGOROIWA_PLAYER_IN_THE_WAY;
             if (((this->actor.params >> 10) & 1) || (this->actor.home.rot.z & 1) != 1) {
@@ -595,12 +600,12 @@ void EnGoroiwa_Roll(EnGoroiwa* this, PlayState* play) {
                 EnGoroiwa_FaceNextWaypoint(this, play);
             }
         }
-        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer, 0.0f, 0);
+        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer[playerIndex], 0.0f, 0);
         osSyncPrintf(VT_FGCOL(CYAN));
         osSyncPrintf("Player ぶっ飛ばし\n"); // "Player knocked down"
         osSyncPrintf(VT_RST);
         onHitSetupFuncs[(this->actor.params >> 10) & 1](this);
-        func_8002F7DC(&GET_PLAYER(play)->actor, NA_SE_PL_BODY_HIT);
+        func_8002F7DC(&player->actor, NA_SE_PL_BODY_HIT);
         if ((this->actor.home.rot.z & 1) == 1) {
             this->collisionDisabledTimer = 50;
         }
@@ -680,9 +685,11 @@ void EnGoroiwa_SetupMoveUp(EnGoroiwa* this) {
 
 void EnGoroiwa_MoveUp(EnGoroiwa* this, PlayState* play) {
     if (this->collider.base.atFlags & AT_HIT) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->collider.base.atFlags &= ~AT_HIT;
-        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer, 0.0f, 4);
-        func_8002F7DC(&GET_PLAYER(play)->actor, NA_SE_PL_BODY_HIT);
+        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer[playerIndex], 0.0f, 4);
+        func_8002F7DC(&player->actor, NA_SE_PL_BODY_HIT);
         if ((this->actor.home.rot.z & 1) == 1) {
             this->collisionDisabledTimer = 50;
         }
@@ -704,10 +711,12 @@ void EnGoroiwa_SetupMoveDown(EnGoroiwa* this) {
 }
 
 void EnGoroiwa_MoveDown(EnGoroiwa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->collider.base.atFlags & AT_HIT) {
         this->collider.base.atFlags &= ~AT_HIT;
-        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer, 0.0f, 4);
-        func_8002F7DC(&GET_PLAYER(play)->actor, NA_SE_PL_BODY_HIT);
+        func_8002F6D4(play, &this->actor, 2.0f, this->actor.yawTowardsPlayer[playerIndex], 0.0f, 4);
+        func_8002F7DC(&player->actor, NA_SE_PL_BODY_HIT);
         if ((this->actor.home.rot.z & 1) == 1) {
             this->collisionDisabledTimer = 50;
         }
@@ -721,7 +730,8 @@ void EnGoroiwa_MoveDown(EnGoroiwa* this, PlayState* play) {
 
 void EnGoroiwa_Update(Actor* thisx, PlayState* play) {
     EnGoroiwa* this = (EnGoroiwa*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 sp30;
 
@@ -740,7 +750,7 @@ void EnGoroiwa_Update(Actor* thisx, PlayState* play) {
                 break;
         }
         EnGoroiwa_UpdateRotation(this, play);
-        if (this->actor.xzDistToPlayer < 300.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 300.0f) {
             EnGoroiwa_UpdateCollider(this);
             if ((this->stateFlags & ENGOROIWA_ENABLE_AT) && this->collisionDisabledTimer <= 0) {
                 CollisionCheck_SetAT(play, &play->colChkCtx, &this->collider.base);

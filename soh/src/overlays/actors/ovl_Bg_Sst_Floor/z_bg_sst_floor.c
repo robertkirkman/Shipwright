@@ -54,17 +54,18 @@ void BgSstFloor_Destroy(BgSstFloor* thisx, PlayState* play) {
 void BgSstFloor_Update(BgSstFloor* thisx, PlayState* play) {
     s32 pad;
     BgSstFloor* this = (BgSstFloor*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&thisx->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     CollisionHeader* colHeader = SEGMENTED_TO_VIRTUAL(&gBongoDrumCol);
 
     colHeader = ResourceMgr_LoadColByName(colHeader);
 
     colHeader->vtxList = SEGMENTED_TO_VIRTUAL(colHeader->vtxList);
 
-    if (func_80043590(&this->dyna) && (this->dyna.actor.yDistToPlayer < 1000.0f)) {
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BOSS_BONGO);
+    if (func_80043590(&this->dyna) && (this->dyna.actor.yDistToPlayer[playerIndex] < 1000.0f)) {
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BOSS_BONGO);
     } else {
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
     }
 
     if (func_8004356C(&this->dyna) && (player->fallDistance > 1000.0f)) {
@@ -82,7 +83,7 @@ void BgSstFloor_Update(BgSstFloor* thisx, PlayState* play) {
         this->drumPhase = 28;
 
         if (func_8004356C(&this->dyna) && !(player->stateFlags1 & 0x6000)) {
-            distFromRim = 600.0f - this->dyna.actor.xzDistToPlayer;
+            distFromRim = 600.0f - this->dyna.actor.xzDistToPlayer[playerIndex];
             if (distFromRim > 0.0f) {
                 if (distFromRim > 350.0f) {
                     distFromRim = 350.0f;

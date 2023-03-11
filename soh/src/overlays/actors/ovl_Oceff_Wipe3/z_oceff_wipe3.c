@@ -31,17 +31,19 @@ const ActorInit Oceff_Wipe3_InitVars = {
 
 void OceffWipe3_Init(Actor* thisx, PlayState* play) {
     OceffWipe3* this = (OceffWipe3*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Actor_SetScale(&this->actor, 0.1f);
     this->counter = 0;
-    this->actor.world.pos = GET_ACTIVE_CAM(play)->eye;
+    this->actor.world.pos = GET_ACTIVE_CAM(playerIndex, play)->eye;
     // it's actually WIPE3...
     osSyncPrintf(VT_FGCOL(CYAN) " WIPE2 arg_data = %d\n" VT_RST, this->actor.params);
 }
 
 void OceffWipe3_Destroy(Actor* thisx, PlayState* play) {
     OceffWipe3* this = (OceffWipe3*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     func_800876C8(play);
     if (gSaveContext.nayrusLoveTimer != 0) {
@@ -51,8 +53,10 @@ void OceffWipe3_Destroy(Actor* thisx, PlayState* play) {
 
 void OceffWipe3_Update(Actor* thisx, PlayState* play) {
     OceffWipe3* this = (OceffWipe3*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    this->actor.world.pos = GET_ACTIVE_CAM(play)->eye;
+    this->actor.world.pos = GET_ACTIVE_CAM(playerIndex, play)->eye;
     if (this->counter < 100) {
         this->counter++;
     } else {
@@ -69,9 +73,11 @@ void OceffWipe3_Draw(Actor* thisx, PlayState* play) {
     Vec3f eye;
     Vtx* vtxPtr;
     Vec3f vec;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    eye = GET_ACTIVE_CAM(play)->eye;
-    Camera_GetSkyboxOffset(&vec, GET_ACTIVE_CAM(play));
+    eye = GET_ACTIVE_CAM(playerIndex, play)->eye;
+    Camera_GetSkyboxOffset(&vec, GET_ACTIVE_CAM(playerIndex, play));
 
     int fastOcarinaPlayback = (CVarGetInteger("gFastOcarinaPlayback", 0) != 0);
     if (this->counter < 32) {

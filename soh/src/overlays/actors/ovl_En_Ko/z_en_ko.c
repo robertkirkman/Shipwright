@@ -384,7 +384,8 @@ u16 func_80A96FD0(PlayState* play, Actor* thisx) {
 }
 
 u16 func_80A97338(PlayState* play, Actor* thisx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnKo* this = (EnKo*)thisx;
 
     switch (ENKO_TYPE) {
@@ -647,12 +648,12 @@ u8 func_80A97C7C(EnKo* this) {
     return D_80A9A730[ENKO_TYPE][EnKo_GetForestQuestState(this)];
 }
 
-s32 EnKo_IsWithinTalkAngle(EnKo* this) {
+s32 EnKo_IsWithinTalkAngle(EnKo* this, u16 playerIndex) {
     s16 yawDiff;
     s16 yawDiffAbs;
     s32 result;
 
-    yawDiff = this->actor.yawTowardsPlayer - (f32)this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - (f32)this->actor.shape.rot.y;
     yawDiffAbs = ABS(yawDiff);
 
     if (yawDiffAbs < 0x3FFC) {
@@ -664,6 +665,8 @@ s32 EnKo_IsWithinTalkAngle(EnKo* this) {
 }
 
 s32 func_80A97D68(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
 
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
@@ -678,21 +681,23 @@ s32 func_80A97D68(EnKo* this, PlayState* play) {
         trackingMode = NPC_TRACKING_NONE;
     }
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2, trackingMode);
-    return EnKo_IsWithinTalkAngle(this);
+    return EnKo_IsWithinTalkAngle(this, playerIndex);
 }
 
 s32 func_80A97E18(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
 
     func_80034F54(play, this->unk_2E4, this->unk_304, 16);
-    if (EnKo_IsWithinTalkAngle(this) == true) {
+    if (EnKo_IsWithinTalkAngle(this, playerIndex) == true) {
         trackingMode = NPC_TRACKING_HEAD_AND_TORSO;
     } else {
         trackingMode = NPC_TRACKING_NONE;
     }
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         trackingMode = NPC_TRACKING_FULL_BODY;
-    } else if (this->lookDist < this->actor.xzDistToPlayer) {
+    } else if (this->lookDist < this->actor.xzDistToPlayer[playerIndex]) {
         trackingMode = NPC_TRACKING_NONE;
     }
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2, trackingMode);
@@ -700,11 +705,13 @@ s32 func_80A97E18(EnKo* this, PlayState* play) {
 }
 
 s32 func_80A97EB0(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
     s32 result;
 
     func_80034F54(play, this->unk_2E4, this->unk_304, 16);
-    result = EnKo_IsWithinTalkAngle(this);
+    result = EnKo_IsWithinTalkAngle(this, playerIndex);
     trackingMode = (result == true) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE;
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2, trackingMode);
     return result;
@@ -717,6 +724,8 @@ s32 func_80A97F20(EnKo* this, PlayState* play) {
 }
 
 s32 func_80A97F70(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
 
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
@@ -732,10 +741,12 @@ s32 func_80A97F70(EnKo* this, PlayState* play) {
         trackingMode = NPC_TRACKING_NONE;
     }
     Npc_TrackPoint(&this->actor, &this->interactInfo, 5, trackingMode);
-    return EnKo_IsWithinTalkAngle(this);
+    return EnKo_IsWithinTalkAngle(this, playerIndex);
 }
 
 s32 func_80A98034(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 trackingMode;
     s32 result;
 
@@ -744,14 +755,14 @@ s32 func_80A98034(EnKo* this, PlayState* play) {
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENKO_ANIM_29);
         }
         func_80034F54(play, this->unk_2E4, this->unk_304, 16);
-        result = EnKo_IsWithinTalkAngle(this);
+        result = EnKo_IsWithinTalkAngle(this, playerIndex);
         trackingMode = (result == true) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE;
     } else {
         if ((this->skelAnime.animation == &gObjOsAnim_879C) == false) {
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENKO_ANIM_31);
         }
         trackingMode = NPC_TRACKING_NONE;
-        result = EnKo_IsWithinTalkAngle(this);
+        result = EnKo_IsWithinTalkAngle(this, playerIndex);
     }
     Npc_TrackPoint(&this->actor, &this->interactInfo, 5, trackingMode);
     return result;
@@ -765,6 +776,8 @@ s32 func_80A98124(EnKo* this, PlayState* play) {
 }
 
 s32 func_80A98174(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         if (Animation_OnFrame(&this->skelAnime, 18.0f)) {
             this->skelAnime.playSpeed = 0.0f;
@@ -777,7 +790,7 @@ s32 func_80A98174(EnKo* this, PlayState* play) {
     }
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2,
                    (this->skelAnime.playSpeed == 0.0f) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE);
-    return EnKo_IsWithinTalkAngle(this);
+    return EnKo_IsWithinTalkAngle(this, playerIndex);
 }
 
 s32 EnKo_ChildStart(EnKo* this, PlayState* play) {
@@ -935,10 +948,11 @@ s32 EnKo_AdultSaved(EnKo* this, PlayState* play) {
     }
 }
 void func_80A9877C(EnKo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((play->csCtx.state != 0) || (gDbgCamEnabled != 0)) {
-        this->interactInfo.trackPos = play->view.eye;
+        this->interactInfo.trackPos = play->views[playerIndex].eye;
         this->interactInfo.yOffset = 40.0f;
         if (ENKO_TYPE != ENKO_TYPE_CHILD_0) {
             Npc_TrackPoint(&this->actor, &this->interactInfo, 2, NPC_TRACKING_HEAD_AND_TORSO);
@@ -954,7 +968,7 @@ void func_80A9877C(EnKo* this, PlayState* play) {
         ENKO_TYPE == ENKO_TYPE_CHILD_FADO && play->sceneNum == SCENE_SPOT10) {
         this->actor.textId = INV_CONTENT(ITEM_TRADE_ADULT) > ITEM_ODD_POTION ? 0x10B9 : 0x10DF;
 
-        if (func_8002F368(play) == ENKO_TYPE_CHILD_9) {
+        if (func_8002F368(play, player) == ENKO_TYPE_CHILD_9) {
             this->actor.textId = (gSaveContext.infTable[11] & 0x1000) ? 0x10B8 : 0x10B7;
             this->unk_210 = 0;
         }
@@ -1083,6 +1097,8 @@ s32 EnKo_GetForestQuestState2(EnKo* this) {
 }
 
 void func_80A98DB4(EnKo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 dist;
 
     if (play->sceneNum != SCENE_SPOT10 && play->sceneNum != SCENE_SPOT04) {
@@ -1090,9 +1106,9 @@ void func_80A98DB4(EnKo* this, PlayState* play) {
         return;
     }
     if (play->csCtx.state != 0 || gDbgCamEnabled != 0) {
-        dist = Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->view.eye) * 0.25f;
+        dist = Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->views[playerIndex].eye) * 0.25f;
     } else {
-        dist = this->actor.xzDistToPlayer;
+        dist = this->actor.xzDistToPlayer[playerIndex];
     }
 
     if (CVarGetInteger("gDisableKokiriDrawDistance", 0) != 0) {
@@ -1254,7 +1270,8 @@ void func_80A99560(EnKo* this, PlayState* play) {
 }
 
 void func_80A995CC(EnKo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 temp_f2;
     f32 phi_f0;
     s16 homeYawToPlayer = Math_Vec3f_Yaw(&this->actor.home.pos, &player->actor.world.pos);
@@ -1263,10 +1280,10 @@ void func_80A995CC(EnKo* this, PlayState* play) {
     this->actor.world.pos.x += 80.0f * Math_SinS(homeYawToPlayer);
     this->actor.world.pos.z = this->actor.home.pos.z;
     this->actor.world.pos.z += 80.0f * Math_CosS(homeYawToPlayer);
-    this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
     if (this->interactInfo.talkState == NPC_TALK_STATE_IDLE || !this->actor.isTargeted) {
-        temp_f2 = fabsf((f32)this->actor.yawTowardsPlayer - homeYawToPlayer) * 0.001f * 3.0f;
+        temp_f2 = fabsf((f32)this->actor.yawTowardsPlayer[playerIndex] - homeYawToPlayer) * 0.001f * 3.0f;
         if (temp_f2 < 1.0f) {
             this->skelAnime.playSpeed = 1.0f;
         } else {

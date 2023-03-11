@@ -126,8 +126,7 @@ u16 func_80A78FB0(PlayState* play) {
     }
 }
 
-u16 func_80A79010(PlayState* play) {
-    Player* player = GET_PLAYER(play);
+u16 func_80A79010(PlayState* play, Player* player) {
     u16 temp_v0 = Text_GetFaceReaction(play, 25);
 
     if (temp_v0 != 0) {
@@ -180,6 +179,7 @@ u16 func_80A79010(PlayState* play) {
 }
 
 u16 func_80A79168(PlayState* play, Actor* thisx) {
+    Player* player = Player_NearestToActor(thisx, play);
     u16 temp_v0 = Text_GetFaceReaction(play, 25);
 
     if (temp_v0 != 0) {
@@ -188,7 +188,7 @@ u16 func_80A79168(PlayState* play, Actor* thisx) {
     if (!LINK_IS_ADULT) {
         return func_80A78FB0(play);
     } else {
-        return func_80A79010(play);
+        return func_80A79010(play, player);
     }
 }
 
@@ -317,7 +317,8 @@ s16 func_80A79500(PlayState* play, Actor* thisx) {
 }
 
 void func_80A795C8(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 npcTrackingMode;
 
     if (this->skelAnime.animation == &object_in_Anim_0003B4 || this->skelAnime.animation == &object_in_Anim_001BE0 ||
@@ -330,7 +331,7 @@ void func_80A795C8(EnIn* this, PlayState* play) {
         npcTrackingMode = NPC_TRACKING_FULL_BODY;
     }
     if (this->actionFunc == func_80A7B024) {
-        this->interactInfo.trackPos = play->view.eye;
+        this->interactInfo.trackPos = play->views[playerIndex].eye;
         this->interactInfo.yOffset = 60.0f;
     } else {
         this->interactInfo.trackPos = player->actor.world.pos;
@@ -426,6 +427,7 @@ void func_80A79AB4(EnIn* this, PlayState* play) {
 }
 
 void func_80A79BAC(EnIn* this, PlayState* play, s32 index, u32 arg3) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 entrances[] = { 0x0558, 0x04CA, 0x0157 };
 
     play->nextEntranceIndex = entrances[index];
@@ -434,7 +436,7 @@ void func_80A79BAC(EnIn* this, PlayState* play, s32 index, u32 arg3) {
     }
     play->fadeTransition = arg3;
     play->sceneLoadFlag = 0x14;
-    func_8002DF54(play, &this->actor, 8);
+    func_8002DF54(play, player, &this->actor, 8);
     Interface_ChangeAlpha(1);
     if (index == 0) {
         AREG(6) = 0;
@@ -443,21 +445,21 @@ void func_80A79BAC(EnIn* this, PlayState* play, s32 index, u32 arg3) {
 }
 
 void func_80A79C78(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp48;
     Vec3f sp3C;
     Vec3s zeroVec = { 0, 0, 0 };
 
-    this->camId = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->camId, CAM_STAT_ACTIVE);
+    this->camId = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->camId, CAM_STAT_ACTIVE);
     sp48.x = this->actor.world.pos.x;
     sp48.y = this->actor.world.pos.y + 60.0f;
     sp48.z = this->actor.world.pos.z;
     sp3C.x = sp48.x;
     sp3C.y = sp48.y - 22.0f;
     sp3C.z = sp48.z + 40.0f;
-    Play_CameraSetAtEye(play, this->camId, &sp48, &sp3C);
+    Play_CameraSetAtEye(play, player, this->camId, &sp48, &sp3C);
     this->actor.shape.rot.y = Math_Vec3f_Yaw(&this->actor.world.pos, &sp3C);
     this->interactInfo.headRot = zeroVec;
     this->interactInfo.torsoRot = zeroVec;
@@ -651,7 +653,7 @@ void func_80A7A4C8(EnIn* this, PlayState* play) {
 }
 
 void func_80A7A568(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 phi_a2;
     s32 phi_a3;
 
@@ -672,7 +674,7 @@ void func_80A7A568(EnIn* this, PlayState* play) {
                 return;
             }
             gSaveContext.eventInf[0] =
-                (gSaveContext.eventInf[0] & ~0x10) | (((EnHorse*)GET_PLAYER(play)->rideActor)->type << 4);
+                (gSaveContext.eventInf[0] & ~0x10) | (((EnHorse*)player->rideActor)->type << 4);
             gSaveContext.eventInf[0] = (gSaveContext.eventInf[0] & ~0xF) | 2;
             phi_a2 = 2;
             phi_a3 = 2;
@@ -756,14 +758,16 @@ void func_80A7A940(EnIn* this, PlayState* play) {
 }
 
 void func_80A7AA40(EnIn* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     Vec3f sp30;
     Vec3f sp24;
 
-    this->camId = Play_CreateSubCamera(play);
-    this->activeCamId = play->activeCamera;
-    Play_ChangeCameraStatus(play, this->activeCamId, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->camId, CAM_STAT_ACTIVE);
+    this->camId = Play_CreateSubCamera(play, player);
+    this->activeCamId = play->activeCameras[playerIndex];
+    Play_ChangeCameraStatus(play, player, this->activeCamId, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->camId, CAM_STAT_ACTIVE);
 
     this->unk_2F0 = 0.0f;
     this->unk_2F4 = 50.0f;
@@ -783,7 +787,7 @@ void func_80A7AA40(EnIn* this, PlayState* play) {
     sp24.y += this->unk_300;
     sp24.z += this->unk_304;
 
-    Play_CameraSetAtEye(play, this->camId, &sp30, &sp24);
+    Play_CameraSetAtEye(play, player, this->camId, &sp30, &sp24);
     this->actor.textId = 0x203B;
     Message_StartTextbox(play, this->actor.textId, NULL);
     this->interactInfo.talkState = NPC_TALK_STATE_TALKING;
@@ -795,7 +799,7 @@ void func_80A7AA40(EnIn* this, PlayState* play) {
 }
 
 void func_80A7ABD4(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp48;
     Vec3f sp3C;
 
@@ -847,20 +851,21 @@ void func_80A7ABD4(EnIn* this, PlayState* play) {
         sp3C.x += this->unk_2FC;
         sp3C.y += this->unk_300;
         sp3C.z += this->unk_304;
-        Play_CameraSetAtEye(play, this->camId, &sp48, &sp3C);
+        Play_CameraSetAtEye(play, player, this->camId, &sp48, &sp3C);
     }
 }
 
 void func_80A7AE84(EnIn* this, PlayState* play) {
-    Play_ChangeCameraStatus(play, this->activeCamId, CAM_STAT_ACTIVE);
-    Play_ClearCamera(play, this->camId);
-    func_8002DF54(play, &this->actor, 7);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Play_ChangeCameraStatus(play, player, this->activeCamId, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->camId);
+    func_8002DF54(play, player, &this->actor, 7);
     Interface_ChangeAlpha(0x32);
     this->actionFunc = func_80A7AEF0;
 }
 
 void func_80A7AEF0(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 yaw;
     Vec3f pos = this->actor.world.pos;
 
@@ -883,7 +888,7 @@ void func_80A7B018(EnIn* this, PlayState* play) {
 }
 
 void func_80A7B024(EnIn* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->rideActor != NULL) {
         player->rideActor->freezeTimer = 10;

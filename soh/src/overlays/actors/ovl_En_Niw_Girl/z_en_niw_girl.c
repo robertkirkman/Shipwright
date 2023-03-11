@@ -189,7 +189,7 @@ void func_80AB94D0(EnNiwGirl* this, PlayState* play) {
 void EnNiwGirl_Update(Actor* thisx, PlayState* play) {
     EnNiwGirl* this = (EnNiwGirl*)thisx;
     EnNiwGirlActionFunc tempActionFunc;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     Actor_SetScale(&this->actor, 0.013f);
     this->unkUpTimer++;

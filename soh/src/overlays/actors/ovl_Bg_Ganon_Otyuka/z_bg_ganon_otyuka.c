@@ -98,6 +98,8 @@ void BgGanonOtyuka_Destroy(Actor* thisx, PlayState* play2) {
 }
 
 void BgGanonOtyuka_WaitToFall(BgGanonOtyuka* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* thisx = &this->dyna.actor;
     Actor* prop;
     BgGanonOtyuka* platform;
@@ -107,7 +109,7 @@ void BgGanonOtyuka_WaitToFall(BgGanonOtyuka* this, PlayState* play) {
     Vec3f center;
     s16 i;
 
-    if (this->isFalling || ((play->actorCtx.unk_02 != 0) && (this->dyna.actor.xyzDistToPlayerSq < 4900.0f))) {
+    if (this->isFalling || ((play->actorCtx.unk_02 != 0) && (this->dyna.actor.xyzDistToPlayerSq[playerIndex] < 4900.0f))) {
         osSyncPrintf("OTC O 1\n");
 
         for (i = 0; i < ARRAY_COUNT(D_80876A68); i++) {
@@ -161,7 +163,7 @@ void BgGanonOtyuka_WaitToFall(BgGanonOtyuka* this, PlayState* play) {
 }
 
 void BgGanonOtyuka_Fall(BgGanonOtyuka* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s16 i;
     Vec3f pos;
     Vec3f velocity;
@@ -248,10 +250,11 @@ void BgGanonOtyuka_Update(Actor* thisx, PlayState* play) {
 
 void BgGanonOtyuka_Draw(Actor* thisx, PlayState* play) {
     BgGanonOtyuka* this = (BgGanonOtyuka*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s16 i;
     Gfx* phi_s2;
     Gfx* phi_s1;
-    Camera* camera = Play_GetCamera(play, 0);
+    Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
     Actor* actor;
     BgGanonOtyuka* platform;
     BossGanon* ganondorf;

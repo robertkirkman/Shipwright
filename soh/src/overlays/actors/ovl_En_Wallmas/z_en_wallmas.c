@@ -151,7 +151,7 @@ void EnWallmas_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnWallmas_TimerInit(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->actor.flags &= ~ACTOR_FLAG_0;
     this->actor.flags |= ACTOR_FLAG_5;
@@ -164,7 +164,7 @@ void EnWallmas_TimerInit(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_SetupDrop(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     AnimationHeader* objSegChangee = &gWallmasterLungeAnim;
 
     Animation_Change(&this->skelAnime, objSegChangee, 0.0f, 20.0f, Animation_GetLastFrame(&gWallmasterLungeAnim),
@@ -256,15 +256,17 @@ void EnWallmas_SetupDie(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_SetupTakePlayer(EnWallmas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_MorphToPlayOnce(&this->skelAnime, &gWallmasterHoverAnim, -5.0f);
     this->timer = -0x1E;
     this->actionFunc = EnWallmas_TakePlayer;
     this->actor.speedXZ = 0.0f;
     this->actor.velocity.y = 0.0f;
 
-    this->yTarget = this->actor.yDistToPlayer;
-    func_8002DF38(play, &this->actor, 0x25);
-    OnePointCutscene_Init(play, 9500, 9999, &this->actor, MAIN_CAM);
+    this->yTarget = this->actor.yDistToPlayer[playerIndex];
+    func_8002DF38(play, player, &this->actor, 0x25);
+    OnePointCutscene_Init(play, player, 9500, 9999, &this->actor, MAIN_CAM);
 }
 
 void EnWallmas_ProximityOrSwitchInit(EnWallmas* this) {
@@ -294,7 +296,7 @@ void EnWallmas_SetupStun(EnWallmas* this) {
 }
 
 void EnWallmas_WaitToDrop(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f* playerPos = &player->actor.world.pos;
 
     this->actor.world.pos = *playerPos;
@@ -321,11 +323,12 @@ void EnWallmas_WaitToDrop(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_Drop(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if (!Player_InCsMode(play) && !(player->stateFlags2 & 0x10) && (player->invincibilityTimer >= 0) &&
-        (this->actor.xzDistToPlayer < 30.0f) && (this->actor.yDistToPlayer < -5.0f) &&
-        (-(f32)(player->cylinder.dim.height + 10) < this->actor.yDistToPlayer)) {
+    if (!Player_InCsMode(play, player) && !(player->stateFlags2 & 0x10) && (player->invincibilityTimer >= 0) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 30.0f) && (this->actor.yDistToPlayer[playerIndex] < -5.0f) &&
+        (-(f32)(player->cylinder.dim.height + 10) < this->actor.yDistToPlayer[playerIndex])) {
         EnWallmas_SetupTakePlayer(this, play);
     }
 }
@@ -337,19 +340,23 @@ void EnWallmas_Land(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_Stand(EnWallmas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime) != 0) {
         EnWallmas_SetupWalk(this);
     }
 
-    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer + 0x8000, 0xB6);
+    Math_ScaledStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x8000, 0xB6);
 }
 
 void EnWallmas_Walk(EnWallmas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime) != 0) {
         EnWallmas_SetupJumpToCeiling(this);
     }
 
-    Math_ScaledStepToS(&this->actor.world.rot.y, (s16)((s32)this->actor.yawTowardsPlayer + 0x8000), 0xB6);
+    Math_ScaledStepToS(&this->actor.world.rot.y, (s16)((s32)this->actor.yawTowardsPlayer[playerIndex] + 0x8000), 0xB6);
 
     if (Animation_OnFrame(&this->skelAnime, 0.0f) || Animation_OnFrame(&this->skelAnime, 12.0f) ||
         Animation_OnFrame(&this->skelAnime, 24.0f) || Animation_OnFrame(&this->skelAnime, 36.0f)) {
@@ -364,7 +371,8 @@ void EnWallmas_JumpToCeiling(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_ReturnToCeiling(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->skelAnime.curFrame > 20.0f) {
         this->timer += 9;
@@ -375,7 +383,7 @@ void EnWallmas_ReturnToCeiling(EnWallmas* this, PlayState* play) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_FALL_UP);
     }
 
-    if (this->actor.yDistToPlayer < -900.0f) {
+    if (this->actor.yDistToPlayer[playerIndex] < -900.0f) {
         if (this->actor.params == WMT_FLAG) {
             Actor_Kill(&this->actor);
             return;
@@ -422,7 +430,7 @@ void EnWallmas_Die(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_TakePlayer(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Animation_OnFrame(&this->skelAnime, 1.0f) != 0) {
         if (!LINK_IS_ADULT) {
@@ -475,7 +483,7 @@ void EnWallmas_TakePlayer(EnWallmas* this, PlayState* play) {
 }
 
 void EnWallmas_WaitForProximity(EnWallmas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos) < 200.0f) {
         EnWallmas_TimerInit(this, play);
     }

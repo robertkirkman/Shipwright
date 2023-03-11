@@ -540,7 +540,8 @@ void ObjBean_SetupWaitForBean(ObjBean* this) {
 
 void ObjBean_WaitForBean(ObjBean* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->dyna.actor, play)) {
-        if (func_8002F368(play) == EXCH_ITEM_BEAN) {
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
+        if (func_8002F368(play, player) == EXCH_ITEM_BEAN) {
             func_80B8FE00(this);
             Flags_SetSwitch(play, this->dyna.actor.params & 0x3F);
         }
@@ -633,12 +634,14 @@ void ObjBean_SetupWaitForWater(ObjBean* this) {
 
 void ObjBean_WaitForWater(ObjBean* this, PlayState* play) {
     this->transformFunc(this);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (!(this->stateFlags & BEAN_STATE_BEEN_WATERED) && Flags_GetEnv(play, 5) && (D_80B90E30 == NULL) &&
-        (this->dyna.actor.xzDistToPlayer < 50.0f)) {
+        (this->dyna.actor.xzDistToPlayer[playerIndex] < 50.0f)) {
         ObjBean_SetupGrowWaterPhase1(this);
         D_80B90E30 = this;
-        OnePointCutscene_Init(play, 2210, -99, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 2210, -99, &this->dyna.actor, MAIN_CAM);
         this->dyna.actor.flags |= ACTOR_FLAG_4;
         return;
     }
@@ -752,12 +755,14 @@ void ObjBean_SetupWaitForPlayer(ObjBean* this) {
 }
 
 void ObjBean_WaitForPlayer(ObjBean* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (func_8004356C(&this->dyna)) { // Player is standing on
         ObjBean_SetupFly(this);
         if (play->sceneNum == SCENE_SPOT10) { // Lost woods
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BEAN_LOST_WOODS);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BEAN_LOST_WOODS);
         } else {
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BEAN_GENERIC);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BEAN_GENERIC);
         }
     }
     ObjBean_UpdatePosition(this);
@@ -771,6 +776,8 @@ void ObjBean_SetupFly(ObjBean* this) {
 }
 
 void ObjBean_Fly(ObjBean* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera;
 
     ObjBean_FollowPath(this, play);
@@ -780,7 +787,7 @@ void ObjBean_Fly(ObjBean* this, PlayState* play) {
         ObjBean_SetupWaitForStepOff(this);
 
         this->dyna.actor.flags &= ~ACTOR_FLAG_4; // Never stop updating (disable)
-        camera = play->cameraPtrs[MAIN_CAM];
+        camera = play->cameraPtrs[playerIndex][MAIN_CAM];
 
         if ((camera->setting == CAM_SET_BEAN_LOST_WOODS) || (camera->setting == CAM_SET_BEAN_GENERIC)) {
             Camera_ChangeSetting(camera, CAM_SET_NORMAL0);
@@ -791,12 +798,12 @@ void ObjBean_Fly(ObjBean* this, PlayState* play) {
         func_8002F974(&this->dyna.actor, NA_SE_PL_PLANT_MOVE - SFX_FLAG);
 
         if (play->sceneNum == SCENE_SPOT10) {
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BEAN_LOST_WOODS);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BEAN_LOST_WOODS);
         } else {
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BEAN_GENERIC);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BEAN_GENERIC);
         }
     } else if (this->stateFlags & BEAN_STATE_PLAYER_ON_TOP) {
-        camera = play->cameraPtrs[MAIN_CAM];
+        camera = play->cameraPtrs[playerIndex][MAIN_CAM];
 
         if ((camera->setting == CAM_SET_BEAN_LOST_WOODS) || (camera->setting == CAM_SET_BEAN_GENERIC)) {
             Camera_ChangeSetting(camera, CAM_SET_NORMAL0);
@@ -870,6 +877,8 @@ void func_80B90A34(ObjBean* this, PlayState* play) {
 void ObjBean_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     ObjBean* this = (ObjBean*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->timer > 0) {
         this->timer--;
@@ -879,7 +888,7 @@ void ObjBean_Update(Actor* thisx, PlayState* play) {
 
     if (this->stateFlags & BEAN_STATE_DRAW_PLANT) {
         ObjBean_Move(this);
-        if (this->dyna.actor.xzDistToPlayer < 150.0f) {
+        if (this->dyna.actor.xzDistToPlayer[playerIndex] < 150.0f) {
             this->collider.dim.radius = this->dyna.actor.scale.x * 640.0f + 0.5f;
             Collider_UpdateCylinder(&this->dyna.actor, &this->collider);
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);

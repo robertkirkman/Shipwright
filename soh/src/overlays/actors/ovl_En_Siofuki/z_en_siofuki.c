@@ -113,7 +113,7 @@ void func_80AFBDC8(EnSiofuki* this, PlayState* play) {
 }
 
 void func_80AFBE8C(EnSiofuki* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 dX;
     f32 dY;
     f32 dZ;
@@ -246,6 +246,7 @@ void func_80AFC3C8(EnSiofuki* this, PlayState* play) {
 }
 
 void func_80AFC478(EnSiofuki* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     func_80AFBDC8(this, play);
     func_80AFBE8C(this, play);
     func_80AFC1D0(this, play);
@@ -254,7 +255,7 @@ void func_80AFC478(EnSiofuki* this, PlayState* play) {
         if (Flags_GetSwitch(play, ((u16)this->dyna.actor.params >> 6) & 0x3F)) {
             this->timer = 20;
             this->actionFunc = func_80AFC3C8;
-            OnePointCutscene_Init(play, 5010, 40, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 5010, 40, &this->dyna.actor, MAIN_CAM);
         }
 
         if (Flags_GetTreasure(play, (u16)this->dyna.actor.params & 0x3F)) {

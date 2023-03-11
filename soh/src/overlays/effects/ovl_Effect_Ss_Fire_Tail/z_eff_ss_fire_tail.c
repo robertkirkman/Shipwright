@@ -66,6 +66,8 @@ u32 EffectSsFireTail_Init(PlayState* play, u32 index, EffectSs* this, void* init
 }
 
 void EffectSsFireTail_Draw(PlayState* play, u32 index, EffectSs* this) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     GraphicsContext* gfxCtx = play->state.gfxCtx;
     s32 pad;
     s16 yaw;
@@ -86,14 +88,13 @@ void EffectSsFireTail_Draw(PlayState* play, u32 index, EffectSs* this) {
             Matrix_Translate(this->pos.x + this->actor->world.pos.x, this->pos.y + this->actor->world.pos.y,
                              this->pos.z + this->actor->world.pos.z, MTXMODE_NEW);
         } else {
-            Player* player = GET_PLAYER(play);
             s16 bodyPart = this->rBodyPart;
 
             this->pos.x =
-                player->bodyPartsPos[bodyPart].x - (Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))) * 5.0f);
+                player->bodyPartsPos[bodyPart].x - (Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))) * 5.0f);
             this->pos.y = player->bodyPartsPos[bodyPart].y;
             this->pos.z =
-                player->bodyPartsPos[bodyPart].z - (Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))) * 5.0f);
+                player->bodyPartsPos[bodyPart].z - (Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))) * 5.0f);
 
             Matrix_Translate(this->pos.x, this->pos.y, this->pos.z, MTXMODE_NEW);
         }
@@ -101,11 +102,11 @@ void EffectSsFireTail_Draw(PlayState* play, u32 index, EffectSs* this) {
         Matrix_Translate(this->pos.x, this->pos.y, this->pos.z, MTXMODE_NEW);
     }
 
-    yaw = Math_Vec3f_Yaw(&scale, &this->vec) - Camera_GetCamDirYaw(GET_ACTIVE_CAM(play));
+    yaw = Math_Vec3f_Yaw(&scale, &this->vec) - Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play));
     temp1 = fabsf(Math_CosS(yaw));
     temp2 = Math_SinS(yaw);
     dist = Math_Vec3f_DistXZ(&scale, &this->vec) / (this->rReg10 * 0.1f);
-    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
+    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateZ(temp2 * this->rReg2 * dist * (M_PI / 180.0f), MTXMODE_APPLY);
     temp2 = 1.0f - ((f32)(this->life + 1) / this->rLifespan);
     temp2 = 1.0f - SQ(temp2);

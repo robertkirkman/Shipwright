@@ -535,6 +535,8 @@ void EnHorse_RotateToPoint(EnHorse* this, PlayState* play, Vec3f* pos, s16 turnA
 }
 
 void EnHorse_UpdateIngoRaceInfo(EnHorse* this, PlayState* play, RaceInfo* raceInfo) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f curWaypointPos;
     Vec3f prevWaypointPos;
     f32 playerDist;
@@ -567,15 +569,15 @@ void EnHorse_UpdateIngoRaceInfo(EnHorse* this, PlayState* play, RaceInfo* raceIn
     EnHorse_RotateToPoint(this, play, &curWaypointPos, 400);
 
     if (dist < 90000.0f) {
-        playerDist = this->actor.xzDistToPlayer;
+        playerDist = this->actor.xzDistToPlayer[playerIndex];
         if (playerDist < 130.0f || this->jntSph.elements[0].info.ocElemFlags & 2) {
-            if (Math_SinS(this->actor.yawTowardsPlayer - this->actor.world.rot.y) > 0.0f) {
+            if (Math_SinS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y) > 0.0f) {
                 this->actor.world.rot.y = this->actor.world.rot.y - 280;
             } else {
                 this->actor.world.rot.y = this->actor.world.rot.y + 280;
             }
         } else if (playerDist < 300.0f) {
-            if (Math_SinS(this->actor.yawTowardsPlayer - this->actor.world.rot.y) > 0.0f) {
+            if (Math_SinS(this->actor.yawTowardsPlayer[playerIndex] - this->actor.world.rot.y) > 0.0f) {
                 this->actor.world.rot.y = this->actor.world.rot.y + 280;
             } else {
                 this->actor.world.rot.y = this->actor.world.rot.y - 280;
@@ -584,8 +586,8 @@ void EnHorse_UpdateIngoRaceInfo(EnHorse* this, PlayState* play, RaceInfo* raceIn
         this->actor.shape.rot.y = this->actor.world.rot.y;
     }
 
-    sp50 = Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor);
-    relPlayerYaw = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor) - this->actor.world.rot.y;
+    sp50 = Actor_WorldDistXZToActor(&this->actor, &player->actor);
+    relPlayerYaw = Actor_WorldYawTowardActor(&this->actor, &player->actor) - this->actor.world.rot.y;
     if (sp50 <= 200.0f || (fabsf(Math_SinS(relPlayerYaw)) < 0.8f && Math_CosS(relPlayerYaw) > 0.0f)) {
         if (this->actor.speedXZ < this->ingoHorseMaxSpeed) {
             this->actor.speedXZ += 0.47f;
@@ -640,6 +642,8 @@ void func_80A5BB90(PlayState* play, Vec3f* vec, Vec3f* arg2, f32* arg3) {
 }
 
 s32 func_80A5BBBC(PlayState* play, EnHorse* this, Vec3f* pos) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f sp24;
     f32 sp20;
     f32 eyeDist;
@@ -648,7 +652,7 @@ s32 func_80A5BBBC(PlayState* play, EnHorse* this, Vec3f* pos) {
     if (fabsf(sp20) < 0.008f) {
         return false;
     }
-    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->view.eye);
+    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->views[playerIndex].eye);
     return func_800314D4(play, &this->actor, &sp24, sp20) || eyeDist < 100.0f;
 }
 
@@ -678,7 +682,7 @@ s32 EnHorse_Spawn(EnHorse* this, PlayState* play) {
 
     for (i = 0; i < 169; i++) {
         if (sHorseSpawns[i].scene == play->sceneNum) {
-            player = GET_PLAYER(play);
+            player = Player_NearestToActor(&this->actor, play);
             if (play->sceneNum != SCENE_SPOT20 ||
                 //! Same flag checked twice
                 (Flags_GetEventChkInf(0x18) && ((gSaveContext.eventInf[0] & 0xF) != 6 || Flags_GetEventChkInf(0x18))) ||
@@ -699,7 +703,7 @@ s32 EnHorse_Spawn(EnHorse* this, PlayState* play) {
                     this->actor.world.pos.z = sHorseSpawns[i].pos.z;
                     this->actor.prevPos = this->actor.world.pos;
                     this->actor.world.rot.y = sHorseSpawns[i].angle;
-                    this->actor.shape.rot.y = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor);
+                    this->actor.shape.rot.y = Actor_WorldYawTowardActor(&this->actor, &player->actor);
                     spawn = true;
                     SkinMatrix_Vec3fMtxFMultXYZW(&play->viewProjectionMtxF, &this->actor.world.pos,
                                                  &this->actor.projectedPos, &this->actor.projectedW);
@@ -721,9 +725,9 @@ void EnHorse_ResetRace(EnHorse* this, PlayState* play) {
 }
 
 s32 EnHorse_PlayerCanMove(EnHorse* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
-    if ((player->stateFlags1 & 1) || func_8002DD78(GET_PLAYER(play)) == 1 || (player->stateFlags1 & 0x100000) ||
+    if ((player->stateFlags1 & 1) || func_8002DD78(player) == 1 || (player->stateFlags1 & 0x100000) ||
         ((this->stateFlags & ENHORSE_FLAG_19) && !this->inRace) || this->action == ENHORSE_ACT_HBA ||
         player->actor.flags & ACTOR_FLAG_8 || play->csCtx.state != 0) {
         return false;
@@ -909,7 +913,8 @@ void EnHorse_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnHorse_RotateToPlayer(EnHorse* this, PlayState* play) {
-    EnHorse_RotateToPoint(this, play, &GET_PLAYER(play)->actor.world.pos, 400);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    EnHorse_RotateToPoint(this, play, &player->actor.world.pos, 400);
     if (this->stateFlags & ENHORSE_OBSTACLE) {
         this->actor.world.rot.y += 800.0f;
     }
@@ -1516,7 +1521,7 @@ void EnHorse_Reverse(EnHorse* this, PlayState* play) {
     f32 stickMag;
     s16 stickAngle;
     s16 turnAmount;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     EnHorse_PlayWalkingSound(this);
     EnHorse_StickDirection(&this->curStick, &stickMag, &stickAngle);
@@ -1736,6 +1741,8 @@ void EnHorse_SetFollowAnimation(EnHorse* this, PlayState* play);
 
 void EnHorse_Inactive(EnHorse* this, PlayState* play2) {
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (DREG(53) != 0 && this->type == HORSE_EPONA) {
         DREG(53) = 0;
@@ -1746,9 +1753,9 @@ void EnHorse_Inactive(EnHorse* this, PlayState* play2) {
             gSaveContext.horseData.scene = play->sceneNum;
 
             // Focus the camera on Epona
-            Camera_SetParam(play->cameraPtrs[0], 8, this);
-            Camera_ChangeSetting(play->cameraPtrs[0], 0x38);
-            Camera_SetCameraData(play->cameraPtrs[0], 4, NULL, NULL, 0x51, 0, 0);
+            Camera_SetParam(play->cameraPtrs[playerIndex][MAIN_CAM], 8, this);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], 0x38);
+            Camera_SetCameraData(play->cameraPtrs[playerIndex][MAIN_CAM], 4, NULL, NULL, 0x51, 0, 0);
         }
     }
     if (!(this->stateFlags & ENHORSE_INACTIVE)) {
@@ -1809,6 +1816,8 @@ void EnHorse_StartMovingAnimation(EnHorse* this, s32 arg1, f32 arg2, f32 arg3);
 void EnHorse_Idle(EnHorse* this, PlayState* play) {
     this->actor.speedXZ = 0.0f;
     EnHorse_IdleAnimSounds(this, play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (DREG(53) && this->type == HORSE_EPONA) {
         DREG(53) = 0;
@@ -1818,9 +1827,9 @@ void EnHorse_Idle(EnHorse* this, PlayState* play) {
                                        &D_801333E8);
                 this->followTimer = 0;
                 EnHorse_SetFollowAnimation(this, play);
-                Camera_SetParam(play->cameraPtrs[0], 8, this);
-                Camera_ChangeSetting(play->cameraPtrs[0], 0x38);
-                Camera_SetCameraData(play->cameraPtrs[0], 4, NULL, NULL, 0x51, 0, 0);
+                Camera_SetParam(play->cameraPtrs[playerIndex][MAIN_CAM], 8, this);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], 0x38);
+                Camera_SetCameraData(play->cameraPtrs[playerIndex][MAIN_CAM], 4, NULL, NULL, 0x51, 0, 0);
             }
         } else {
             Audio_PlaySoundGeneral(NA_SE_EV_HORSE_NEIGH, &this->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
@@ -1865,10 +1874,11 @@ void EnHorse_StartMovingAnimation(EnHorse* this, s32 animId, f32 morphFrames, f3
 }
 
 void EnHorse_SetFollowAnimation(EnHorse* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 animId = ENHORSE_ANIM_WALK;
     f32 distToPlayer;
 
-    distToPlayer = Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor);
+    distToPlayer = Actor_WorldDistXZToActor(&this->actor, &player->actor);
     if (distToPlayer > 400.0f) {
         animId = ENHORSE_ANIM_GALLOP;
     } else if (!(distToPlayer <= 300.0f)) {
@@ -1902,18 +1912,19 @@ void EnHorse_SetFollowAnimation(EnHorse* this, PlayState* play) {
 }
 
 void EnHorse_FollowPlayer(EnHorse* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 distToPlayer;
     f32 angleDiff;
 
     DREG(53) = 0;
-    distToPlayer = Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor);
+    distToPlayer = Actor_WorldDistXZToActor(&this->actor, &player->actor);
 
     // First rotate if the player is behind
     if ((this->playerDir == PLAYER_DIR_BACK_R || this->playerDir == PLAYER_DIR_BACK_L) &&
         (distToPlayer > 300.0f && !(this->stateFlags & ENHORSE_TURNING_TO_PLAYER))) {
         this->animationIdx = ENHORSE_ANIM_REARING;
         this->stateFlags |= ENHORSE_TURNING_TO_PLAYER;
-        this->angleToPlayer = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor);
+        this->angleToPlayer = Actor_WorldYawTowardActor(&this->actor, &player->actor);
         angleDiff = (f32)this->angleToPlayer - (f32)this->actor.world.rot.y;
         if (angleDiff > 32767.f) {
             angleDiff -= 32767.0f;
@@ -2567,7 +2578,7 @@ void EnHorse_InitFleePlayer(EnHorse* this) {
 }
 
 void EnHorse_FleePlayer(EnHorse* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 distToHome;
     f32 playerDistToHome;
     f32 distToPlayer;
@@ -3000,7 +3011,7 @@ s32 EnHorse_GetMountSide(EnHorse* this, PlayState* play);
 void EnHorse_MountDismount(EnHorse* this, PlayState* play) {
     s32 pad[2];
     s32 mountSide;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     mountSide = EnHorse_GetMountSide(this, play);
     if (mountSide != 0 && !(this->stateFlags & ENHORSE_UNRIDEABLE) && player->rideActor == NULL) {
@@ -3382,12 +3393,13 @@ void EnHorse_RegenBoost(EnHorse* this, PlayState* play) {
 }
 
 void EnHorse_UpdatePlayerDir(EnHorse* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnHorse* pad;
     s16 angle;
     f32 s;
     f32 c;
 
-    angle = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor) - this->actor.world.rot.y;
+    angle = Actor_WorldYawTowardActor(&this->actor, &player->actor) - this->actor.world.rot.y;
     s = Math_SinS(angle);
     c = Math_CosS(angle);
     if (s > 0.8660254f) { // sin(60 degrees)
@@ -3436,7 +3448,7 @@ void EnHorse_TiltBody(EnHorse* this, PlayState* play) {
 }
 
 s32 EnHorse_UpdateConveyors(EnHorse* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 conveyorDir;
 
     if ((this->actor.floorPoly == NULL) && (this != (EnHorse*)player->rideActor)) {
@@ -3465,7 +3477,7 @@ void EnHorse_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     Vec3f dustAcc = { 0.0f, 0.0f, 0.0f };
     Vec3f dustVel = { 0.0f, 1.0f, 0.0f };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->lastYaw = thisx->shape.rot.y;
     EnHorse_UpdateStick(this, play);
@@ -3637,13 +3649,14 @@ s32 EnHorse_MountSideCheck(EnHorse* this, PlayState* play, Player* player) {
 }
 
 s32 EnHorse_GetMountSide(EnHorse* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->action != ENHORSE_ACT_IDLE) {
         return 0;
     }
     if ((this->animationIdx != ENHORSE_ANIM_IDLE) && (this->animationIdx != ENHORSE_ANIM_WHINNEY)) {
         return 0;
     }
-    return EnHorse_MountSideCheck(this, play, GET_PLAYER(play));
+    return EnHorse_MountSideCheck(this, play, player);
 }
 
 void EnHorse_RandomOffset(Vec3f* src, f32 dist, Vec3f* dst) {

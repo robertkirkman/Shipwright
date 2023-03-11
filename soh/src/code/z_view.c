@@ -27,7 +27,7 @@ View* View_New(GraphicsContext* gfxCtx) {
 
     if (view != NULL) {
         memset(view, 0, sizeof(View));
-        View_Init(view, gfxCtx);
+        View_Init(view, gfxCtx, 0);
     }
 
     return view;
@@ -37,12 +37,35 @@ void View_Free(View* view) {
     SYSTEM_ARENA_FREE_DEBUG(view);
 }
 
-void View_Init(View* view, GraphicsContext* gfxCtx) {
+void View_Init(View* view, GraphicsContext* gfxCtx, u32 playerIndex) {
     view->gfxCtx = gfxCtx;
-    view->viewport.topY = 0;
-    view->viewport.bottomY = SCREEN_HEIGHT;
-    view->viewport.leftX = 0;
-    view->viewport.rightX = SCREEN_WIDTH;
+    switch(playerIndex) {
+        case 0:
+        default:
+            view->viewport.topY = 0;
+            view->viewport.bottomY = SCREEN_HEIGHT / 2;
+            view->viewport.leftX = 0;
+            view->viewport.rightX = SCREEN_WIDTH / 2;
+        break;
+        case 1:
+            view->viewport.topY = 0;
+            view->viewport.bottomY = SCREEN_HEIGHT / 2;
+            view->viewport.leftX = SCREEN_WIDTH / 2;
+            view->viewport.rightX = SCREEN_WIDTH;
+        break;
+        case 2:
+            view->viewport.topY = SCREEN_HEIGHT / 2;
+            view->viewport.bottomY = SCREEN_HEIGHT;
+            view->viewport.leftX = 0;
+            view->viewport.rightX = SCREEN_WIDTH / 2;
+        break;
+        case 3:
+            view->viewport.topY = SCREEN_HEIGHT / 2;
+            view->viewport.bottomY = SCREEN_HEIGHT;
+            view->viewport.leftX = SCREEN_WIDTH / 2;
+            view->viewport.rightX = SCREEN_WIDTH;
+        break;
+    }
     view->magic = 0x56494557; // "VIEW"
     view->eye.x = 0.0f;
     view->eye.y = 0.0f;

@@ -129,7 +129,7 @@ void MirRay_SetupCollider(MirRay* this) {
 // Set up a light point between source point and reflection point. Reflection point is the pool point (for windows) or
 // at the player position (for mirrors)
 void MirRay_MakeShieldLight(MirRay* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     MirRayDataEntry* dataEntry = &sMirRayData[this->actor.params];
     Vec3f reflectionPt;
     Vec3s lightPt;
@@ -241,7 +241,7 @@ void MirRay_Destroy(Actor* thisx, PlayState* play) {
 void MirRay_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     MirRay* this = (MirRay*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     D_80B8E670 = 0;
 
@@ -269,7 +269,7 @@ void MirRay_SetIntensity(MirRay* this, PlayState* play) {
     f32 temp_f0_2;
     f32 temp_f2_2;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     MtxF* shieldMtx = &player->shieldMf;
 
     this->reflectIntensity = 0.0f;
@@ -308,7 +308,7 @@ void MirRay_SetIntensity(MirRay* this, PlayState* play) {
 // Draws six images, one for each corner of the shield, by finding the intersection of a line segment from the corner
 // perpendicular to the shield with the nearest collision (if any).
 void MirRay_SetupReflectionPolys(MirRay* this, PlayState* play, MirRayShieldReflection* reflection) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     MtxF* shieldMtx;
     s32 i;
     Vec3f posA;
@@ -365,7 +365,7 @@ void MirRay_RemoveSimilarReflections(MirRayShieldReflection* reflection) {
 
 // Creates the reflected beam's collider (to interact with objects) and places and orients the shield images
 void MirRay_ReflectedBeam(MirRay* this, PlayState* play, MirRayShieldReflection* reflection) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 i;
     f32 temp_f0;
     Vec3f vecB;
@@ -478,7 +478,7 @@ void MirRay_ReflectedBeam(MirRay* this, PlayState* play, MirRayShieldReflection*
 
 void MirRay_Draw(Actor* thisx, PlayState* play) {
     MirRay* this = (MirRay*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 i;
     MirRayShieldReflection reflection[6];
     s32 temp;

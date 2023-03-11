@@ -360,7 +360,9 @@ void EnDns_SetupWait(EnDns* this, PlayState* play) {
 }
 
 void EnDns_Wait(EnDns* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 2000, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 2000, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = EnDns_Talk;
@@ -370,7 +372,7 @@ void EnDns_Wait(EnDns* this, PlayState* play) {
         } else {
             this->actor.flags &= ~ACTOR_FLAG_16;
         }
-        if (this->actor.xzDistToPlayer < 130.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 130.0f) {
             func_8002F2F4(&this->actor, play);
         }
     }
@@ -452,7 +454,7 @@ void func_809EFF50(EnDns* this, PlayState* play) {
 }
 
 void func_809EFF98(EnDns* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (player->stateFlags1 & 0x400) {
         if ((Message_GetState(&play->msgCtx) == TEXT_STATE_DONE) && Message_ShouldAdvance(play)) {

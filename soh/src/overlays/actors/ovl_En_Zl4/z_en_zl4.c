@@ -179,8 +179,9 @@ static AnimationInfo sAnimationInfo[] = {
 
 #include "z_en_zl4_cutscene_data.c"
 
-void EnZl4_SetCsCameraAngle(PlayState* play, s16 index) {
-    Camera* activeCam = GET_ACTIVE_CAM(play);
+void EnZl4_SetCsCameraAngle(PlayState* play, Player* player, s16 index) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* activeCam = GET_ACTIVE_CAM(playerIndex, play);
 
     Camera_ChangeSetting(activeCam, CAM_SET_FREE0);
     activeCam->at = sCsCameraAngle[index].at;
@@ -189,9 +190,9 @@ void EnZl4_SetCsCameraAngle(PlayState* play, s16 index) {
     activeCam->fov = sCsCameraAngle[index].fov;
 }
 
-void EnZl4_SetCsCameraMove(PlayState* play, s16 index) {
-    Camera* activeCam = GET_ACTIVE_CAM(play);
-    Player* player = GET_PLAYER(play);
+void EnZl4_SetCsCameraMove(PlayState* play, Player* player, s16 index) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* activeCam = GET_ACTIVE_CAM(playerIndex, play);
 
     Camera_ChangeSetting(activeCam, CAM_SET_CS_0);
     Camera_ResetAnim(activeCam);
@@ -321,7 +322,7 @@ void EnZl4_SetMove(EnZl4* this, PlayState* play) {
 }
 
 void func_80B5BB78(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->interactInfo.trackPos = player->actor.world.pos;
     Npc_TrackPoint(&this->actor, &this->interactInfo, 2, NPC_TRACKING_HEAD_AND_TORSO);
@@ -334,11 +335,11 @@ void EnZl4_GetActionStartPos(CsCmdActorAction* action, Vec3f* vec) {
 }
 
 s32 EnZl4_SetupFromLegendCs(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &GET_PLAYER(play)->actor;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Actor* playerx = &player->actor;
     s16 rotY;
 
-    func_8002DF54(play, &this->actor, 8);
+    func_8002DF54(play, player, &this->actor, 8);
     playerx->world.pos = this->actor.world.pos;
     rotY = this->actor.shape.rot.y;
     playerx->world.pos.x += 56.0f * Math_SinS(rotY);
@@ -346,7 +347,7 @@ s32 EnZl4_SetupFromLegendCs(EnZl4* this, PlayState* play) {
 
     player->linearVelocity = playerx->speedXZ = 0.0f;
 
-    EnZl4_SetCsCameraMove(play, 5);
+    EnZl4_SetCsCameraMove(play, player, 5);
     ShrinkWindow_SetVal(0x20);
     Interface_ChangeAlpha(2);
     this->talkTimer2 = 0;
@@ -442,14 +443,15 @@ void EnZl4_ReverseAnimation(EnZl4* this) {
 }
 
 s32 EnZl4_CsWaitForPlayer(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Actor* playerx = &GET_PLAYER(play)->actor;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Actor* playerx = &player->actor;
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 rotY;
     s16 yawDiff;
     s16 absYawDiff;
 
     if (!Actor_ProcessTalkRequest(&this->actor, play)) {
-        yawDiff = (f32)this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = (f32)this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         absYawDiff = ABS(yawDiff);
         if ((playerx->world.pos.y != this->actor.world.pos.y) || (absYawDiff >= 0x3FFC)) {
             return false;
@@ -469,6 +471,7 @@ s32 EnZl4_CsWaitForPlayer(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     switch (this->talkState) {
         case 0:
             if (this->skelAnime.curFrame == 50.0f) {
@@ -483,7 +486,7 @@ s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
             break;
         case 1:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 1);
+                EnZl4_SetCsCameraAngle(play, player, 1);
                 Message_StartTextbox(play, 0x702F, NULL);
                 this->talkTimer2 = 0;
                 this->talkState++;
@@ -493,7 +496,7 @@ s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
                 play->csCtx.segment = SEGMENTED_TO_VIRTUAL(gZeldasCourtyardMeetCs);
                 gSaveContext.cutsceneTrigger = 1;
-                EnZl4_SetCsCameraMove(play, 0);
+                EnZl4_SetCsCameraMove(play, player, 0);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkTimer2 = 0;
                 this->talkState++;
@@ -508,7 +511,7 @@ s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
             break;
         case 4:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraMove(play, 1);
+                EnZl4_SetCsCameraMove(play, player, 1);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkTimer2 = 0;
                 this->talkState++;
@@ -523,7 +526,7 @@ s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
             break;
         case 6:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 2);
+                EnZl4_SetCsCameraAngle(play, player, 2);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_22);
                 this->mouthExpression = ZL4_MOUTH_NEUTRAL;
                 this->talkTimer2 = 0;
@@ -536,6 +539,7 @@ s32 EnZl4_CsMeetPlayer(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     switch (this->talkState) {
         case 0:
             if (EnZl4_SetNextAnim(this, ZL4_ANIM_25)) {
@@ -543,7 +547,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             }
         case 1:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 3);
+                EnZl4_SetCsCameraAngle(play, player, 3);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkTimer1 = 40;
                 this->talkState = 2;
@@ -559,7 +563,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             if (!((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play))) {
                 break;
             } else if (play->msgCtx.choiceIndex == 0) {
-                EnZl4_SetCsCameraAngle(play, 4);
+                EnZl4_SetCsCameraAngle(play, player, 4);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_28);
                 this->blinkTimer = 0;
                 this->eyeExpression = ZL4_EYES_SQUINT;
@@ -567,7 +571,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
                 Message_StartTextbox(play, 0x7032, NULL);
                 this->talkState = 7;
             } else {
-                EnZl4_SetCsCameraAngle(play, 2);
+                EnZl4_SetCsCameraAngle(play, player, 2);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_9);
                 this->mouthExpression = ZL4_MOUTH_WORRIED;
                 Message_StartTextbox(play, 0x7031, NULL);
@@ -592,7 +596,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             break;
         case 6:
             this->mouthExpression = ZL4_MOUTH_NEUTRAL;
-            EnZl4_SetCsCameraAngle(play, 3);
+            EnZl4_SetCsCameraAngle(play, player, 3);
             Message_StartTextbox(play, 0x7030, NULL);
             this->talkState = 12;
             break;
@@ -604,7 +608,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             if (!((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play))) {
                 break;
             } else if (play->msgCtx.choiceIndex == 0) {
-                EnZl4_SetCsCameraAngle(play, 4);
+                EnZl4_SetCsCameraAngle(play, player, 4);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_28);
                 this->blinkTimer = 0;
                 this->eyeExpression = ZL4_EYES_SQUINT;
@@ -612,7 +616,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
                 Message_StartTextbox(play, 0x7032, NULL);
                 this->talkState = 7;
             } else {
-                EnZl4_SetCsCameraAngle(play, 2);
+                EnZl4_SetCsCameraAngle(play, player, 2);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_9);
                 this->mouthExpression = ZL4_MOUTH_WORRIED;
                 Message_StartTextbox(play, 0x7031, NULL);
@@ -628,7 +632,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             }
         case 8:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraMove(play, 2);
+                EnZl4_SetCsCameraMove(play, player, 2);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_0);
                 this->blinkTimer = 0;
                 this->eyeExpression = ZL4_EYES_NEUTRAL;
@@ -639,7 +643,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
             break;
         case 9:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 5);
+                EnZl4_SetCsCameraAngle(play, player, 5);
                 Message_StartTextbox(play, 0x70FD, NULL);
                 this->talkState++;
             }
@@ -658,6 +662,7 @@ s32 EnZl4_CsAskStone(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsAskName(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     switch (this->talkState) {
         case 0:
             if (EnZl4_SetNextAnim(this, ZL4_ANIM_4)) {
@@ -666,7 +671,7 @@ s32 EnZl4_CsAskName(EnZl4* this, PlayState* play) {
             break;
         case 1:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 6);
+                EnZl4_SetCsCameraAngle(play, player, 6);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_1);
                 this->blinkTimer = 11;
                 this->eyeExpression = ZL4_EYES_SQUINT;
@@ -697,7 +702,7 @@ s32 EnZl4_CsAskName(EnZl4* this, PlayState* play) {
             break;
         case 5:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraMove(play, 3);
+                EnZl4_SetCsCameraMove(play, player, 3);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_0);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkTimer2 = 0;
@@ -732,14 +737,14 @@ s32 EnZl4_CsAskName(EnZl4* this, PlayState* play) {
         case 10:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play)) {
                 if (play->msgCtx.choiceIndex == 0) {
-                    EnZl4_SetCsCameraMove(play, 4);
+                    EnZl4_SetCsCameraMove(play, player, 4);
                     Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_33);
                     this->mouthExpression = ZL4_MOUTH_NEUTRAL;
                     play->msgCtx.msgMode = MSGMODE_PAUSED;
                     this->talkTimer2 = 0;
                     this->talkState = 15;
                 } else {
-                    EnZl4_SetCsCameraAngle(play, 6);
+                    EnZl4_SetCsCameraAngle(play, player, 6);
                     play->msgCtx.msgMode = MSGMODE_PAUSED;
                     this->talkTimer1 = 20;
                     this->talkState++;
@@ -810,7 +815,9 @@ s32 EnZl4_CsAskName(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsTellLegend(EnZl4* this, PlayState* play) {
-    Camera* activeCam = GET_ACTIVE_CAM(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* activeCam = GET_ACTIVE_CAM(playerIndex, play);
 
     switch (this->talkState) {
         case 0:
@@ -822,14 +829,14 @@ s32 EnZl4_CsTellLegend(EnZl4* this, PlayState* play) {
             break;
         case 1:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 7);
+                EnZl4_SetCsCameraAngle(play, player, 7);
                 Message_StartTextbox(play, 0x2076, NULL);
                 this->talkState++;
             }
             break;
         case 2:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraMove(play, 6);
+                EnZl4_SetCsCameraMove(play, player, 6);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkState++;
             }
@@ -844,7 +851,7 @@ s32 EnZl4_CsTellLegend(EnZl4* this, PlayState* play) {
             if (!((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play))) {
                 break;
             } else if (play->msgCtx.choiceIndex == 0) {
-                EnZl4_SetCsCameraAngle(play, 8);
+                EnZl4_SetCsCameraAngle(play, player, 8);
                 Message_StartTextbox(play, 0x7005, NULL);
                 this->talkState = 9;
             } else {
@@ -912,9 +919,10 @@ s32 EnZl4_CsTellLegend(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsLookWindow(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     switch (this->talkState) {
         case 0:
-            EnZl4_SetCsCameraMove(play, 7);
+            EnZl4_SetCsCameraMove(play, player, 7);
             play->csCtx.segment = SEGMENTED_TO_VIRTUAL(gZeldasCourtyardWindowCs);
             gSaveContext.cutsceneTrigger = 1;
             this->talkState++;
@@ -928,7 +936,7 @@ s32 EnZl4_CsLookWindow(EnZl4* this, PlayState* play) {
                 play->csCtx.segment = SEGMENTED_TO_VIRTUAL(gZeldasCourtyardGanonCs);
                 gSaveContext.cutsceneTrigger = 1;
                 this->talkState++;
-                func_8002DF54(play, &this->actor, 8);
+                func_8002DF54(play, player, &this->actor, 8);
             }
             break;
         case 2:
@@ -938,9 +946,9 @@ s32 EnZl4_CsLookWindow(EnZl4* this, PlayState* play) {
                 }
             } else {
                 func_800AA000(0.0f, 0xA0, 0xA, 0x28);
-                func_8002DF54(play, &this->actor, 1);
+                func_8002DF54(play, player, &this->actor, 1);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_30);
-                EnZl4_SetCsCameraAngle(play, 11);
+                EnZl4_SetCsCameraAngle(play, player, 11);
                 Message_StartTextbox(play, 0x7039, NULL);
                 this->talkState++;
             }
@@ -956,7 +964,7 @@ s32 EnZl4_CsLookWindow(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 rotY;
 
     switch (this->talkState) {
@@ -965,7 +973,7 @@ s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
             rotY = this->actor.shape.rot.y - 0x3FFC;
             player->actor.world.pos.x += 34.0f * Math_SinS(rotY);
             player->actor.world.pos.z += 34.0f * Math_CosS(rotY);
-            EnZl4_SetCsCameraMove(play, 8);
+            EnZl4_SetCsCameraMove(play, player, 8);
             this->blinkTimer = 0;
             this->eyeExpression = ZL4_EYES_WIDE;
             this->mouthExpression = ZL4_MOUTH_WORRIED;
@@ -980,7 +988,7 @@ s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
             break;
         case 2:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraMove(play, 9);
+                EnZl4_SetCsCameraMove(play, player, 9);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 this->talkTimer2 = 0;
                 this->talkState++;
@@ -995,7 +1003,7 @@ s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
             break;
         case 4:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 12);
+                EnZl4_SetCsCameraAngle(play, player, 12);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_23);
                 this->blinkTimer = 0;
                 this->eyeExpression = ZL4_EYES_NEUTRAL;
@@ -1072,13 +1080,15 @@ s32 EnZl4_CsWarnAboutGanon(EnZl4* this, PlayState* play) {
 }
 
 s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     switch (this->talkState) {
         case 0:
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_18);
             this->blinkTimer = 0;
             this->eyeExpression = ZL4_EYES_NEUTRAL;
             this->mouthExpression = ZL4_MOUTH_WORRIED;
-            EnZl4_SetCsCameraMove(play, 10);
+            EnZl4_SetCsCameraMove(play, player, 10);
             this->talkTimer2 = 0;
             this->talkState++;
         case 1:
@@ -1090,7 +1100,7 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
             break;
         case 2:
             if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-                EnZl4_SetCsCameraAngle(play, 13);
+                EnZl4_SetCsCameraAngle(play, player, 13);
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_19);
                 this->blinkTimer = 0;
                 this->eyeExpression = ZL4_EYES_NEUTRAL;
@@ -1122,11 +1132,11 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
             if (!((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play))) {
                 break;
             } else {
-                Camera_ChangeSetting(GET_ACTIVE_CAM(play), 1);
+                Camera_ChangeSetting(GET_ACTIVE_CAM(playerIndex, play), 1);
                 this->talkState = 7;
                 play->talkWithPlayer(play, &this->actor);
-                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer) + 1.0f,
-                              fabsf(this->actor.yDistToPlayer) + 1.0f);
+                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer[playerIndex]) + 1.0f,
+                              fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
                 play->msgCtx.stateTimer = 4;
                 play->msgCtx.msgMode = MSGMODE_TEXT_CLOSING;
             }
@@ -1136,8 +1146,8 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
                 Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ZL4_ANIM_0);
                 this->talkState++;
             } else {
-                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer) + 1.0f,
-                              fabsf(this->actor.yDistToPlayer) + 1.0f);
+                func_8002F434(&this->actor, play, GI_LETTER_ZELDA, fabsf(this->actor.xzDistToPlayer[playerIndex]) + 1.0f,
+                              fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
             }
             // no break here is required for matching
     }
@@ -1145,7 +1155,7 @@ s32 EnZl4_CsMakePlan(EnZl4* this, PlayState* play) {
 }
 
 void EnZl4_Cutscene(EnZl4* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     switch (this->csState) {
         case ZL4_CS_WAIT:
@@ -1160,7 +1170,7 @@ void EnZl4_Cutscene(EnZl4* this, PlayState* play) {
             this->eyeExpression = ZL4_EYES_NEUTRAL;
             this->mouthExpression = ZL4_MOUTH_SURPRISED;
             Audio_PlayFanfare(NA_BGM_APPEAR);
-            EnZl4_SetCsCameraAngle(play, 0);
+            EnZl4_SetCsCameraAngle(play, player, 0);
             Interface_ChangeAlpha(2);
             ShrinkWindow_SetVal(0x20);
             this->talkState = 0;
@@ -1204,7 +1214,7 @@ void EnZl4_Cutscene(EnZl4* this, PlayState* play) {
             break;
         case ZL4_CS_PLAN:
             if (EnZl4_CsMakePlan(this, play)) {
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 gSaveContext.unk_13EE = 0x32;
                 gSaveContext.eventChkInf[4] |= 1;
                 this->actionFunc = EnZl4_Idle;

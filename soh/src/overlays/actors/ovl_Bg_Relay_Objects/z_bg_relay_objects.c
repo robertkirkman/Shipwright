@@ -145,9 +145,11 @@ void func_808A91AC(BgRelayObjects* this, PlayState* play) {
 }
 
 void func_808A9234(BgRelayObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->dyna.actor.velocity.y += this->dyna.actor.gravity;
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y, this->dyna.actor.velocity.y)) {
-        func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 180, 20, 100);
+        func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 180, 20, 100);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
         if (this->unk_169 != play->roomCtx.curRoom.num) {
             func_800788CC(NA_SE_EN_PO_LAUGH);
@@ -168,11 +170,12 @@ void BgRelayObjects_DoNothing(BgRelayObjects* this, PlayState* play) {
 }
 
 void func_808A932C(BgRelayObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->timer != 0) {
         this->timer--;
     }
     if (this->timer == 0) {
-        if (!Player_InCsMode(play)) {
+        if (!Player_InCsMode(play, player)) {
             func_80078884(NA_SE_OC_ABYSS);
             Play_TriggerRespawn(play);
             this->actionFunc = BgRelayObjects_DoNothing;

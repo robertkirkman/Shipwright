@@ -170,7 +170,7 @@ void EnGm_SetTextID(EnGm* this) {
 void func_80A3DB04(EnGm* this, PlayState* play) {
     f32 dx;
     f32 dz;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     dx = this->talkPos.x - player->actor.world.pos.x;
     dz = this->talkPos.z - player->actor.world.pos.z;
@@ -196,7 +196,7 @@ void func_80A3DC44(EnGm* this, PlayState* play) {
     f32 dx;
     f32 dz;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     EnGm_SetTextID(this);
 

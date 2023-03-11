@@ -136,11 +136,12 @@ void BgYdanHasi_DecWaterTimer(BgYdanHasi* this, PlayState* play) {
 }
 
 void BgYdanHasi_SetupThreeBlocks(BgYdanHasi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->type)) {
         this->timer = 260;
         this->dyna.actor.draw = BgYdanHasi_Draw;
         this->actionFunc = BgYdanHasi_UpdateThreeBlocks;
-        OnePointCutscene_Init(play, 3040, 30, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3040, 30, &this->dyna.actor, MAIN_CAM);
     }
 }
 

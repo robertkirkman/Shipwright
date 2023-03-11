@@ -118,6 +118,8 @@ static Color_RGBA8 sLeafColors[] = {
 void EnDntNomal_Init(Actor* thisx, PlayState* play) {
     s32 pad;
     EnDntNomal* this = (EnDntNomal*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->type = this->actor.params;
     if (this->type < ENDNTNOMAL_TARGET) {
@@ -132,7 +134,7 @@ void EnDntNomal_Init(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ デグナッツ的当て ☆☆☆☆☆ \n" VT_RST);
         Collider_InitQuad(play, &this->targetQuad);
         Collider_SetQuad(play, &this->targetQuad, &this->actor, &sTargetQuadInit);
-        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->objId = OBJECT_HINTNUTS;
     } else {
         osSyncPrintf("\n\n");
@@ -208,6 +210,7 @@ void EnDntNomal_SetupTargetWait(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetWait(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f scorePos;
     f32 targetX = 1340.0f;
     f32 targetY = 50.0f;
@@ -253,8 +256,8 @@ void EnDntNomal_TargetWait(EnDntNomal* this, PlayState* play) {
                     if(gSaveContext.n64ddFlag) {
                         this->actionFunc = EnDntNomal_TargetGivePrize;
                     } else {
-                        OnePointCutscene_Init(play, 4140, -99, &this->actor, MAIN_CAM);
-                        func_8002DF54(play, &this->actor, 1);
+                        OnePointCutscene_Init(play, player, 4140, -99, &this->actor, MAIN_CAM);
+                        func_8002DF54(play, player, &this->actor, 1);
                         this->timer4 = 50;
                         this->actionFunc = EnDntNomal_SetupTargetUnburrow;
                     }
@@ -320,12 +323,14 @@ void EnDntNomal_TargetWalk(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetFacePlayer(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) || Animation_OnFrame(&this->skelAnime, 6.0f)) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_NUTS_WALK);
     }
-    if (fabsf(this->actor.shape.rot.y - this->actor.yawTowardsPlayer) < 30.0f) {
+    if (fabsf(this->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex]) < 30.0f) {
         this->actionFunc = EnDntNomal_SetupTargetTalk;
     }
 }
@@ -339,12 +344,14 @@ void EnDntNomal_SetupTargetTalk(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetTalk(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
-        func_8005B1A4(GET_ACTIVE_CAM(play));
-        GET_ACTIVE_CAM(play)->csId = 0;
-        func_8002DF54(play, NULL, 8);
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
+        GET_ACTIVE_CAM(playerIndex, play)->csId = 0;
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = EnDntNomal_SetupTargetGivePrize;
     }
 }
@@ -356,6 +363,7 @@ void EnDntNomal_SetupTargetGivePrize(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetGivePrize(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 frame = this->skelAnime.curFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -366,7 +374,7 @@ void EnDntNomal_TargetGivePrize(EnDntNomal* this, PlayState* play) {
 
         if (Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM, itemX, itemY, itemZ, 0,
                                0, 0, EXITEM_BULLET_BAG) == NULL) {
-            func_8002DF54(play, NULL, 7);
+            func_8002DF54(play, player, NULL, 7);
             Actor_Kill(&this->actor);
         }
         this->spawnedItem = true;
@@ -450,10 +458,12 @@ void EnDntNomal_StageUp(EnDntNomal* this, PlayState* play) {
     if ((frame >= this->endFrame) && (this->action == DNT_ACTION_ATTACK)) {
         this->actionFunc = EnDntNomal_SetupStageAttack;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (this->timer4 == 0) {
             turnMod = 0.0f;
             if (this->stagePrize == DNT_PRIZE_NONE) {
-                Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+                Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
             } else {
                 f32 dx = this->targetPos.x - this->actor.world.pos.x;
                 f32 dz = this->targetPos.z - this->actor.world.pos.z;
@@ -472,13 +482,13 @@ void EnDntNomal_StageUp(EnDntNomal* this, PlayState* play) {
                 }
                 this->timer2 = (s16)Rand_ZeroFloat(10.0f) + 10;
             }
-            rotTarget = this->actor.yawTowardsPlayer;
+            rotTarget = this->actor.yawTowardsPlayer[playerIndex];
             if (this->rotDirection != 0) {
                 rotTarget += this->rotDirection * 0x1388;
             }
             Math_SmoothStepToS(&this->actor.shape.rot.y, rotTarget, 3, 0x1388, 0);
         }
-        if (this->actor.xzDistToPlayer < 70.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
             this->actionFunc = EnDntNomal_SetupStageHide;
         }
     }
@@ -533,11 +543,13 @@ void EnDntNomal_StageCelebrate(EnDntNomal* this, PlayState* play) {
         Math_SmoothStepToS(&this->actor.shape.rot.y, Math_FAtan2F(dx, dz) * (0x8000 / M_PI), 1, 0xBB8, 0);
         this->actor.world.rot.y = this->actor.shape.rot.y;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (this->timer1 == 1) {
             this->timer3 = (s16)Rand_ZeroFloat(20.0f) + 20.0f;
         }
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 0x14, 0x1388, 0);
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x14, 0x1388, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     }
     if (this->timer5 == 0) {
         this->timer5 = 20;
@@ -575,7 +587,9 @@ void EnDntNomal_StageDance(EnDntNomal* this, PlayState* play) {
             this->actionFunc = EnDntNomal_StageSetupReturn;
         }
     } else if (this->timer3 != 0) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
         if (this->timer3 == 1) {
             this->timer4 = (s16)Rand_ZeroFloat(20.0f) + 20.0f;
             this->rotDirection = -this->rotDirection;
@@ -643,7 +657,9 @@ void EnDntNomal_StageHide(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_StageAttackHide(EnDntNomal* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer > 70.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] > 70.0f) {
         this->actionFunc = EnDntNomal_SetupStageUp;
     }
 }
@@ -661,7 +677,8 @@ void EnDntNomal_SetupStageAttack(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_StageAttack(EnDntNomal* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* nut;
     f32 frame = this->skelAnime.curFrame;
     f32 dz;
@@ -669,7 +686,7 @@ void EnDntNomal_StageAttack(EnDntNomal* this, PlayState* play) {
     f32 dy;
 
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x1388, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     dx = player->actor.world.pos.x - this->mouthPos.x;
     dy = player->actor.world.pos.y + 30.0f - this->mouthPos.y;
     dz = player->actor.world.pos.z - this->mouthPos.z;
@@ -681,7 +698,7 @@ void EnDntNomal_StageAttack(EnDntNomal* this, PlayState* play) {
     if (this->timer2 == 1) {
         this->spawnedItem = false;
         this->actionFunc = EnDntNomal_SetupStageAttack;
-    } else if (this->actor.xzDistToPlayer < 50.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
         this->action = DNT_ACTION_ATTACK;
         this->actionFunc = EnDntNomal_SetupStageHide;
     } else if ((frame >= 8.0f) && (!this->spawnedItem)) {

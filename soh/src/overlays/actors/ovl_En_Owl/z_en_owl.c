@@ -246,7 +246,7 @@ void EnOwl_Destroy(Actor* thisx, PlayState* play) {
  * Rotates this to the player instance
  */
 void EnOwl_LookAtLink(EnOwl* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->actor.shape.rot.y = this->actor.world.rot.y =
         Math_Vec3f_Yaw(&this->actor.world.pos, &player->actor.world.pos);
@@ -258,6 +258,7 @@ void EnOwl_LookAtLink(EnOwl* this, PlayState* play) {
  * the distance, and the camera has been initalized.
  */
 s32 EnOwl_CheckInitTalk(EnOwl* this, PlayState* play, u16 textId, f32 targetDist, u16 flags) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 timer;
     f32 distCheck;
 
@@ -274,12 +275,14 @@ s32 EnOwl_CheckInitTalk(EnOwl* this, PlayState* play, u16 textId, f32 targetDist
                 this->actionFlags &= ~0x40;
             }
         }
-        this->cameraIdx = OnePointCutscene_Init(play, 8700, timer, &this->actor, MAIN_CAM);
+        this->cameraIdx = OnePointCutscene_Init(play, player, 8700, timer, &this->actor, MAIN_CAM);
         return true;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = textId;
         distCheck = (flags & 2) ? 200.0f : 1000.0f;
-        if (this->actor.xzDistToPlayer < targetDist) {
+        if (this->actor.xzDistToPlayer[playerIndex] < targetDist) {
             this->actor.flags |= ACTOR_FLAG_16;
             func_8002F1C4(&this->actor, play, targetDist, distCheck, 0);
         }
@@ -291,8 +294,10 @@ s32 func_80ACA558(EnOwl* this, PlayState* play, u16 textId) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         return true;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = textId;
-        if (this->actor.xzDistToPlayer < 120.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
             func_8002F1C4(&this->actor, play, 350.0f, 1000.0f, 0);
         }
         return false;
@@ -341,7 +346,8 @@ void func_80ACA71C(EnOwl* this) {
 }
 
 void func_80ACA76C(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -351,7 +357,8 @@ void func_80ACA76C(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACA7E0(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -561,7 +568,8 @@ void EnOwl_WaitLakeHylia(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACB03C(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -745,15 +753,17 @@ void EnOwl_WaitLWPostSaria(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACB748(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f D_80ACD62C = { 0.0f, 0.0f, 0.0f };
     f32 dist;
     f32 weight;
     s32 owlType = (this->actor.params & 0xFC0) >> 6;
 
-    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->view.eye) / 45.0f;
-    this->eye.x = play->view.eye.x;
-    this->eye.y = play->view.eye.y;
-    this->eye.z = play->view.eye.z;
+    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->views[playerIndex].eye) / 45.0f;
+    this->eye.x = play->views[playerIndex].eye.x;
+    this->eye.y = play->views[playerIndex].eye.y;
+    this->eye.z = play->views[playerIndex].eye.z;
 
     weight = dist;
     if (weight > 1.0f) {
@@ -855,9 +865,11 @@ void func_80ACBAB8(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACBC0C(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.flags |= ACTOR_FLAG_5;
 
-    if (this->actor.xzDistToPlayer > 6000.0f && !(this->actionFlags & 0x80)) {
+    if (this->actor.xzDistToPlayer[playerIndex] > 6000.0f && !(this->actionFlags & 0x80)) {
         Actor_Kill(&this->actor);
     }
 
@@ -939,6 +951,8 @@ void func_80ACBF50(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACC00C(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 owlType;
     s32 temp_v0;
     s32 temp_v0_2;
@@ -946,8 +960,8 @@ void func_80ACC00C(EnOwl* this, PlayState* play) {
     Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_400, 2, 0x384, 0x258);
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
-    if (this->actor.xzDistToPlayer < 50.0f) {
-        if (!Play_InCsMode(play)) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
+        if (!Play_InCsMode(play, player)) {
             owlType = (this->actor.params & 0xFC0) >> 6;
             osSyncPrintf(VT_FGCOL(CYAN));
             osSyncPrintf("%dのフクロウ\n", owlType); // "%d owl"

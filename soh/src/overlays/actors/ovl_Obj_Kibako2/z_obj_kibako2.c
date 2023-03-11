@@ -144,6 +144,8 @@ void ObjKibako2_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void ObjKibako2_Idle(ObjKibako2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((this->collider.base.acFlags & AC_HIT) || (this->dyna.actor.home.rot.z != 0) ||
         func_80033684(play, &this->dyna.actor) != NULL) {
         ObjKibako2_Break(this, play);
@@ -152,7 +154,7 @@ void ObjKibako2_Idle(ObjKibako2* this, PlayState* play) {
         func_8003EBF8(play, &play->colCtx.dyna, this->dyna.bgId);
         this->dyna.actor.draw = NULL;
         this->actionFunc = ObjKibako2_Kill;
-    } else if (this->dyna.actor.xzDistToPlayer < 600.0f) {
+    } else if (this->dyna.actor.xzDistToPlayer[playerIndex] < 600.0f) {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }
 }

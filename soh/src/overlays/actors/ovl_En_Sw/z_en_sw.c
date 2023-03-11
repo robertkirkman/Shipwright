@@ -313,9 +313,11 @@ void EnSw_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80B0C9F0(EnSw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 phi_v1 = false;
 
-    if (this->actor.xyzDistToPlayerSq < SQ(400.0f) && ((this->actor.params & 0xE000) >> 0xD) == 0 &&
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < SQ(400.0f) && ((this->actor.params & 0xE000) >> 0xD) == 0 &&
         play->actorCtx.unk_02 != 0) {
 
         this->actor.colChkInfo.damage = this->actor.colChkInfo.health;
@@ -334,7 +336,7 @@ s32 func_80B0C9F0(EnSw* this, PlayState* play) {
             Enemy_StartFinishingBlow(play, &this->actor);
             if (((this->actor.params & 0xE000) >> 0xD) != 0) {
                 if (CVarGetInteger("gGsCutscene", 0)) {
-                    OnePointCutscene_Init(play, 2200, 90, &this->actor, MAIN_CAM);
+                    OnePointCutscene_Init(play, player, 2200, 90, &this->actor, MAIN_CAM);
                 }
                 this->skelAnime.playSpeed = 8.0f;
                 if ((play->state.frames & 1) == 0) {
@@ -435,8 +437,10 @@ s32 func_80B0CCF4(EnSw* this, f32* arg1) {
 }
 
 void func_80B0CEA8(EnSw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (!(this->actor.scale.x < 0.0139999995f)) {
-        Camera* activeCam = GET_ACTIVE_CAM(play);
+        Camera* activeCam = GET_ACTIVE_CAM(playerIndex, play);
 
         if (!(Math_Vec3f_DistXYZ(&this->actor.world.pos, &activeCam->eye) >= 380.0f)) {
             Audio_PlayActorSound2(&this->actor, ((this->actor.params & 0xE000) >> 0xD) > 0 ? NA_SE_EN_STALGOLD_ROLL
@@ -692,14 +696,14 @@ s16 func_80B0DE34(EnSw* this, Vec3f* arg1) {
 }
 
 s32 func_80B0DEA8(EnSw* this, PlayState* play, s32 arg2) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     CollisionPoly* sp58;
     s32 sp54;
     Vec3f sp48;
 
     if (!(player->stateFlags1 & 0x200000) && arg2) {
         return false;
-    } else if (func_8002DDF4(play) && arg2) {
+    } else if (func_8002DDF4(play, player) && arg2) {
         return false;
     } else if (ABS(func_80B0DE34(this, &player->actor.world.pos) - this->actor.shape.rot.z) >= 0x1FC2) {
         return false;
@@ -785,6 +789,8 @@ void func_80B0E314(EnSw* this, Vec3f arg1, f32 arg4) {
 }
 
 s32 func_80B0E430(EnSw* this, f32 arg1, s16 arg2, s32 arg3, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* activeCam;
     f32 lastFrame = Animation_GetLastFrame(&object_st_Anim_000304);
 
@@ -799,7 +805,7 @@ s32 func_80B0E430(EnSw* this, f32 arg1, s16 arg2, s32 arg3, PlayState* play) {
         return 0;
     }
 
-    activeCam = GET_ACTIVE_CAM(play);
+    activeCam = GET_ACTIVE_CAM(playerIndex, play);
 
     if (Math_Vec3f_DistXYZ(&this->actor.world.pos, &activeCam->eye) < 380.0f) {
         if (DECR(this->unk_440) == 0) {
@@ -836,7 +842,7 @@ void func_80B0E5E0(EnSw* this, PlayState* play) {
 }
 
 void func_80B0E728(EnSw* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     if (DECR(this->unk_442) != 0) {
@@ -862,7 +868,7 @@ void func_80B0E728(EnSw* this, PlayState* play) {
                 this->unk_440 = 4;
             }
 
-            if (!(Math_Vec3f_DistXYZ(&this->actor.world.pos, &this->unk_448) > 13.0f) || func_8002DDF4(play)) {
+            if (!(Math_Vec3f_DistXYZ(&this->actor.world.pos, &this->unk_448) > 13.0f) || func_8002DDF4(play, player)) {
                 this->actionFunc = func_80B0E90C;
             }
         }

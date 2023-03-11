@@ -94,6 +94,7 @@ void BgDdanKd_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgDdanKd_CheckForExplosions(BgDdanKd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* explosive;
 
     explosive = Actor_GetCollidedExplosive(play, &this->collider.base);
@@ -105,7 +106,7 @@ void BgDdanKd_CheckForExplosions(BgDdanKd* this, PlayState* play) {
     if ((explosive != NULL) && (this->prevExplosive != NULL) && (explosive != this->prevExplosive) &&
         (Math_Vec3f_DistXZ(&this->prevExplosivePos, &explosive->world.pos) > 80.0f)) {
         BgDdanKd_SetupAction(this, BgDdanKd_LowerStairs);
-        OnePointCutscene_Init(play, 3050, 999, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3050, 999, &this->dyna.actor, MAIN_CAM);
     } else {
         if (this->timer != 0) {
             this->timer--;
@@ -172,7 +173,9 @@ void BgDdanKd_LowerStairs(BgDdanKd* this, PlayState* play) {
             func_80033480(play, &pos1, 20.0f, 1, effectStrength * 135.0f, 60, 1);
             func_8003555C(play, &pos1, &sBgDdanKdVelocity, &sBgDdanKdAccel);
         }
-        Camera_AddQuake(&play->mainCamera, 0, effectStrength * 0.6f, 3);
+        for (u32 i = 0; i < PLAYER_COUNT; i++) {
+            Camera_AddQuake(&play->mainCameras[i], 0, effectStrength * 0.6f, 3);
+        }
         Audio_PlaySoundGeneral(NA_SE_EV_PILLAR_SINK - SFX_FLAG, &this->dyna.actor.projectedPos, 4, &D_801333E0,
                                &D_801333E0, &D_801333E8);
     }

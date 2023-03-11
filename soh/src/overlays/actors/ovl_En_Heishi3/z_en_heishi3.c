@@ -107,14 +107,14 @@ void EnHeishi3_SetupGuardType(EnHeishi3* this, PlayState* play) {
  * Handles the guards standing on Hyrule Castle Grounds.
  **/
 void EnHeishi3_StandSentinelInGrounds(EnHeishi3* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
     s16 yawDiffNew;
     f32 sightRange;
 
-    player = GET_PLAYER(play);
     SkelAnime_Update(&this->skelAnime);
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
     yawDiffNew = ABS(yawDiff);
     if (yawDiffNew < 0x4300) {
         if (IS_DAY) {
@@ -129,13 +129,13 @@ void EnHeishi3_StandSentinelInGrounds(EnHeishi3* this, PlayState* play) {
             sightRange = 100.0f;
         }
     }
-    if ((this->actor.xzDistToPlayer < sightRange) &&
+    if ((this->actor.xzDistToPlayer[playerIndex] < sightRange) &&
         (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 100.0f) && (sPlayerCaught == 0)) {
         sPlayerCaught = 1;
         Message_StartTextbox(play, 0x702D, &this->actor);
         func_80078884(NA_SE_SY_FOUND);
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 発見！ ☆☆☆☆☆ \n" VT_RST); // "Discovered!"
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
         this->actionFunc = EnHeishi3_CatchStart;
     }
 }
@@ -144,7 +144,7 @@ void EnHeishi3_StandSentinelInGrounds(EnHeishi3* this, PlayState* play) {
  * Handles the guards standing in front of Hyrule Castle.
  **/
 void EnHeishi3_StandSentinelInCastle(EnHeishi3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     SkelAnime_Update(&this->skelAnime);
     if ((player->actor.world.pos.x < -190.0f) && (player->actor.world.pos.x > -380.0f) &&
@@ -163,7 +163,7 @@ void EnHeishi3_StandSentinelInCastle(EnHeishi3* this, PlayState* play) {
         Message_StartTextbox(play, 0x702D, &this->actor);
         func_80078884(NA_SE_SY_FOUND);
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 発見！ ☆☆☆☆☆ \n" VT_RST); // "Discovered!"
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
         this->actionFunc = EnHeishi3_CatchStart;
     }
 }
@@ -187,7 +187,9 @@ void func_80A55BD4(EnHeishi3* this, PlayState* play) {
         this->actionFunc = EnHeishi3_ResetAnimationToIdle;
         this->actor.speedXZ = 0.0f;
     } else {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 5, 3000, 0);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 5, 3000, 0);
     }
 }
 

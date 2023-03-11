@@ -57,7 +57,7 @@ void BgJyaBlock_Destroy(Actor* thisx, PlayState* play) {
 
 void BgJyaBlock_Update(Actor* thisx, PlayState* play) {
     BgJyaBlock* this = (BgJyaBlock*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     player->stateFlags2 &= ~0x10;
     this->dyna.unk_150 = 0.0f;

@@ -210,6 +210,8 @@ void func_80AE269C(EnRd* this) {
 }
 
 void func_80AE2744(EnRd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     Math_SmoothStepToS(&this->unk_30E, 0, 1, 0x64, 0);
     Math_SmoothStepToS(&this->unk_310, 0, 1, 0x64, 0);
@@ -247,12 +249,12 @@ void func_80AE2744(EnRd* this, PlayState* play) {
 
         this->unk_305 = 0;
 
-        if (this->actor.xzDistToPlayer <= 150.0f && func_8002DDE4(play)) {
+        if (this->actor.xzDistToPlayer[playerIndex] <= 150.0f && func_8002DDE4(play, player)) {
             // Add a height check to redeads/gibdos freeze when Enemy Randomizer is on.
             // Without the height check, redeads/gibdos can freeze the player from insane distances in
             // vertical rooms (like the first room in Deku Tree), making these rooms nearly unplayable.
             s8 enemyRando = CVarGetInteger("gRandomizedEnemies", 0);
-            if (!enemyRando || (enemyRando && this->actor.yDistToPlayer <= 100.0f && this->actor.yDistToPlayer >= -100.0f)) {
+            if (!enemyRando || (enemyRando && this->actor.yDistToPlayer[playerIndex] <= 100.0f && this->actor.yDistToPlayer[playerIndex] >= -100.0f)) {
                 if ((this->actor.params != 2) && (this->unk_305 == 0)) {
                     func_80AE37BC(this);
                 } else {
@@ -314,12 +316,13 @@ void func_80AE2C1C(EnRd* this, PlayState* play) {
     Vec3f sp44 = D_80AE4918;
     Color_RGBA8 sp40 = D_80AE4924;
     Color_RGBA8 sp3C = D_80AE4928;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 sp32 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y - this->unk_30E - this->unk_310;
+    s16 sp32 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y - this->unk_30E - this->unk_310;
 
     this->skelAnime.playSpeed = this->actor.speedXZ;
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, 0xFA, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0xFA, 0);
     Math_SmoothStepToS(&this->unk_30E, 0, 1, 0x64, 0);
     Math_SmoothStepToS(&this->unk_310, 0, 1, 0x64, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
@@ -334,9 +337,9 @@ void func_80AE2C1C(EnRd* this, PlayState* play) {
             if (this->unk_306 == 0) {
                 if (!(this->unk_312 & 0x80)) {
                     player->actor.freezeTimer = 40;
-                    func_8008EEAC(play, &this->actor);
-                    GET_PLAYER(play)->unk_684 = &this->actor;
-                    func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+                    func_8008EEAC(play, player, &this->actor);
+                    player->unk_684 = &this->actor;
+                    func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
                 }
                 this->unk_306 = 0x3C;
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_REDEAD_AIM);
@@ -351,7 +354,7 @@ void func_80AE2C1C(EnRd* this, PlayState* play) {
     }
 
     if (!this->unk_307 && (Actor_WorldDistXYZToActor(&this->actor, &player->actor) <= 45.0f) &&
-        Actor_IsFacingPlayer(&this->actor, 0x38E3)) {
+        Actor_IsFacingPlayer(&this->actor, 0x38E3, player, play)) {
         player->actor.freezeTimer = 0;
         if (play->grabPlayer(play, player)) {
             this->actor.flags &= ~ACTOR_FLAG_0;
@@ -380,7 +383,7 @@ void func_80AE2F50(EnRd* this, PlayState* play) {
 }
 
 void func_80AE2FD0(EnRd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
     s16 targetY = Actor_WorldYawTowardPoint(&this->actor, &this->actor.home.pos);
 
@@ -478,7 +481,8 @@ void func_80AE33F0(EnRd* this) {
 
 void func_80AE3454(EnRd* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (SkelAnime_Update(&this->skelAnime)) {
         this->unk_304++;
@@ -488,8 +492,8 @@ void func_80AE3454(EnRd* this, PlayState* play) {
         case 1:
             Animation_PlayLoop(&this->skelAnime, &gGibdoRedeadGrabAttackAnim);
             this->unk_304++;
-            play->damagePlayer(play, -8);
-            func_800AA000(this->actor.xzDistToPlayer, 0xFF, 1, 0xC);
+            play->damagePlayer(play, player, -8);
+            func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 1, 0xC);
             this->unk_319 = 20;
         case 0:
             Math_SmoothStepToS(&this->unk_30E, 0, 1, 0x5DC, 0);
@@ -522,8 +526,8 @@ void func_80AE3454(EnRd* this, PlayState* play) {
             this->unk_319--;
 
             if (this->unk_319 == 0) {
-                play->damagePlayer(play, -8);
-                func_800AA000(this->actor.xzDistToPlayer, 0xF0, 1, 0xC);
+                play->damagePlayer(play, player, -8);
+                func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xF0, 1, 0xC);
                 this->unk_319 = 20;
                 func_8002F7DC(&player->actor, NA_SE_VO_LI_DAMAGE_S + player->ageProperties->unk_92);
             }
@@ -557,14 +561,15 @@ void func_80AE3834(EnRd* this, PlayState* play) {
     Vec3f sp34 = D_80AE492C;
     Color_RGBA8 sp30 = D_80AE4938;
     Color_RGBA8 sp2C = D_80AE493C;
-    Player* player = GET_PLAYER(play);
-    s16 temp_v0 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y - this->unk_30E - this->unk_310;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 temp_v0 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y - this->unk_30E - this->unk_310;
 
     if (ABS(temp_v0) < 0x2008) {
         if (!(this->unk_312 & 0x80)) {
             player->actor.freezeTimer = 60;
-            func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
-            func_8008EEAC(play, &this->actor);
+            func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
+            func_8008EEAC(play, player, &this->actor);
         }
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_REDEAD_AIM);
         func_80AE2B90(this, play);
@@ -614,13 +619,14 @@ void func_80AE3A8C(EnRd* this) {
 }
 
 void func_80AE3B18(EnRd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->actor.speedXZ < 0.0f) {
         this->actor.speedXZ += 0.15f;
     }
 
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     Math_SmoothStepToS(&this->unk_30E, 0, 1, 0x12C, 0);
     Math_SmoothStepToS(&this->unk_310, 0, 1, 0x12C, 0);
     if (SkelAnime_Update(&this->skelAnime)) {
@@ -726,17 +732,19 @@ void func_80AE3ECC(EnRd* this, PlayState* play) {
 }
 
 void func_80AE3F9C(EnRd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 temp1;
     s16 temp2;
     s16 temp3;
 
-    temp1 = this->actor.yawTowardsPlayer - (s16)(this->actor.shape.rot.y + this->unk_310);
+    temp1 = this->actor.yawTowardsPlayer[playerIndex] - (s16)(this->actor.shape.rot.y + this->unk_310);
     temp2 = CLAMP(temp1, -500, 500);
 
     temp1 -= this->unk_30E;
     temp3 = CLAMP(temp1, -500, 500);
 
-    if ((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y) >= 0) {
+    if ((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) >= 0) {
         this->unk_310 += ABS(temp2);
         this->unk_30E += ABS(temp3);
     } else {
@@ -750,7 +758,7 @@ void func_80AE3F9C(EnRd* this, PlayState* play) {
 
 void func_80AE4114(EnRd* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((gSaveContext.sunsSongState != SUNSSONG_INACTIVE) && (this->actor.shape.rot.x == 0) && (this->unk_318 == 0) &&
         (this->unk_31B != 9) && (this->unk_31B != 10) && (this->unk_31B != 1)) {
@@ -801,7 +809,8 @@ void func_80AE4114(EnRd* this, PlayState* play) {
 void EnRd_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnRd* this = (EnRd*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad2;
 
     func_80AE4114(this, play);

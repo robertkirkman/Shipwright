@@ -342,7 +342,7 @@ void EnFloormas_SetupJumpAtLink(EnFloormas* this) {
     this->actor.speedXZ = 0.0f;
 }
 
-void EnFloormas_SetupGrabLink(EnFloormas* this, Player* player) {
+void EnFloormas_SetupGrabLink(EnFloormas* this, Player* player, u16 playerIndex) {
     f32 yDelta;
     f32 xzDelta;
 
@@ -352,10 +352,10 @@ void EnFloormas_SetupGrabLink(EnFloormas* this, Player* player) {
     this->actor.velocity.y = 0.0f;
     EnFloormas_MakeInvulnerable(this);
     if (!LINK_IS_ADULT) {
-        yDelta = CLAMP(-this->actor.yDistToPlayer, 20.0f, 30.0f);
+        yDelta = CLAMP(-this->actor.yDistToPlayer[playerIndex], 20.0f, 30.0f);
         xzDelta = -10.0f;
     } else {
-        yDelta = CLAMP(-this->actor.yDistToPlayer, 25.0f, 45.0f);
+        yDelta = CLAMP(-this->actor.yDistToPlayer[playerIndex], 25.0f, 45.0f);
         xzDelta = -70.0f;
     }
     this->actor.world.pos.y = player->actor.world.pos.y + yDelta;
@@ -427,10 +427,12 @@ void EnFloormas_SetupFreeze(EnFloormas* this) {
 }
 
 void EnFloormas_Die(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     //Originally was doing > 0.004f, better fix thanks Gary :D
     if (this->actor.scale.x > (f32)0.004f) {
         // split
-        this->actor.shape.rot.y = this->actor.yawTowardsPlayer + 0x8000;
+        this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         EnFloormas_SetupSplit((EnFloormas*)this->actor.child);
         EnFloormas_SetupSplit((EnFloormas*)this->actor.parent);
         EnFloormas_SetupSplit(this);
@@ -444,13 +446,15 @@ void EnFloormas_Die(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_BigDecideAction(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
         // within 400 units of link and within 90 degrees rotation of him
-        if (this->actor.xzDistToPlayer < 400.0f && !Actor_IsFacingPlayer(&this->actor, 0x4000)) {
-            this->actionTarget = this->actor.yawTowardsPlayer;
+        if (this->actor.xzDistToPlayer[playerIndex] < 400.0f && !Actor_IsFacingPlayer(&this->actor, 0x4000, player, play)) {
+            this->actionTarget = this->actor.yawTowardsPlayer[playerIndex];
             EnFloormas_SetupTurn(this);
             // within 280 units of link and within 45 degrees rotation of him
-        } else if (this->actor.xzDistToPlayer < 280.0f && Actor_IsFacingPlayer(&this->actor, 0x2000)) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 280.0f && Actor_IsFacingPlayer(&this->actor, 0x2000, player, play)) {
             EnFloormas_SetupHover(this, play);
         } else {
             EnFloormas_SetupStand(this);
@@ -471,6 +475,8 @@ void EnFloormas_Stand(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_BigWalk(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 animPastFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -486,15 +492,15 @@ void EnFloormas_BigWalk(EnFloormas* this, PlayState* play) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_FALL_WALK);
     }
 
-    if ((this->actor.xzDistToPlayer < 320.0f) && (Actor_IsFacingPlayer(&this->actor, 0x4000))) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 320.0f) && (Actor_IsFacingPlayer(&this->actor, 0x4000, player, play))) {
         EnFloormas_SetupRun(this);
     } else if (this->actor.bgCheckFlags & 8) {
         // set target rotation to the colliding wall's rotation
         this->actionTarget = this->actor.wallYaw;
         EnFloormas_SetupTurn(this);
-    } else if ((this->actor.xzDistToPlayer < 400.0f) && !Actor_IsFacingPlayer(&this->actor, 0x4000)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < 400.0f) && !Actor_IsFacingPlayer(&this->actor, 0x4000, player, play)) {
         // set target rotation to link.
-        this->actionTarget = this->actor.yawTowardsPlayer;
+        this->actionTarget = this->actor.yawTowardsPlayer[playerIndex];
         EnFloormas_SetupTurn(this);
     } else if (this->actionTimer == 0) {
         EnFloormas_SetupBigStopWalk(this);
@@ -508,18 +514,20 @@ void EnFloormas_BigStopWalk(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_Run(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) || Animation_OnFrame(&this->skelAnime, 12.0f) ||
         Animation_OnFrame(&this->skelAnime, 24.0f) || Animation_OnFrame(&this->skelAnime, 36.0f)) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_FALL_WALK);
     }
 
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x71C);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x71C);
 
-    if ((this->actor.xzDistToPlayer < 280.0f) && Actor_IsFacingPlayer(&this->actor, 0x2000) &&
+    if ((this->actor.xzDistToPlayer[playerIndex] < 280.0f) && Actor_IsFacingPlayer(&this->actor, 0x2000, player, play) &&
         !(this->actor.bgCheckFlags & 8)) {
         EnFloormas_SetupHover(this, play);
-    } else if (this->actor.xzDistToPlayer > 400.0f) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] > 400.0f) {
         EnFloormas_SetupBigWalk(this);
     }
 }
@@ -555,12 +563,14 @@ void EnFloormas_Turn(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_Hover(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
         EnFloormas_SetupCharge(this);
     }
     this->actor.shape.rot.x += 0x140;
     this->actor.world.pos.y += 10.0f;
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 2730);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 2730);
     Math_StepToS(&this->zOffset, 1200, 100);
 }
 
@@ -679,6 +689,8 @@ void EnFloormas_Split(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_SmWalk(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     DECR(this->smActionTimer);
 
@@ -691,12 +703,14 @@ void EnFloormas_SmWalk(EnFloormas* this, PlayState* play) {
     } else if (this->actor.bgCheckFlags & 8) {
         this->actionTarget = this->actor.wallYaw;
         EnFloormas_SetupTurn(this);
-    } else if (this->actor.xzDistToPlayer < 120.0f) {
-        Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer + 0x8000, 0x38E);
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
+        Math_ScaledStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x8000, 0x38E);
     }
 }
 
 void EnFloormas_SmDecideAction(EnFloormas* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* primaryFloormas;
     s32 isAgainstWall;
 
@@ -726,8 +740,8 @@ void EnFloormas_SmDecideAction(EnFloormas* this, PlayState* play) {
             EnFloormas_SetupSlaveJumpAtMaster(this);
         }
     } else {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x71C);
-        if (this->actor.xzDistToPlayer < 80.0f) {
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x71C);
+        if (this->actor.xzDistToPlayer[playerIndex] < 80.0f) {
             EnFloormas_SetupJumpAtLink(this);
         }
     }
@@ -742,11 +756,12 @@ void EnFloormas_SmShrink(EnFloormas* this, PlayState* play) {
 }
 
 void EnFloormas_JumpAtLink(EnFloormas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
     if (this->skelAnime.curFrame < 20.0f) {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     } else if (Animation_OnFrame(&this->skelAnime, 20.0f)) {
         this->actor.speedXZ = 5.0f;
         this->actor.velocity.y = 7.0f;
@@ -755,15 +770,16 @@ void EnFloormas_JumpAtLink(EnFloormas* this, PlayState* play) {
         this->actor.speedXZ = 0.0f;
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_FLOORMASTER_SM_LAND);
         EnFloormas_SetupLand(this);
-    } else if ((this->actor.yDistToPlayer < -10.0f) && (this->collider.base.ocFlags1 & OC1_HIT) &&
+    } else if ((this->actor.yDistToPlayer[playerIndex] < -10.0f) && (this->collider.base.ocFlags1 & OC1_HIT) &&
                (&player->actor == this->collider.base.oc)) {
         play->grabPlayer(play, player);
-        EnFloormas_SetupGrabLink(this, player);
+        EnFloormas_SetupGrabLink(this, player, playerIndex);
     }
 }
 
 void EnFloormas_GrabLink(EnFloormas* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnFloormas* parent;
     EnFloormas* child;
     f32 yDelta;
@@ -782,10 +798,10 @@ void EnFloormas_GrabLink(EnFloormas* this, PlayState* play) {
     }
 
     if (!LINK_IS_ADULT) {
-        yDelta = CLAMP(-this->actor.yDistToPlayer, 20.0f, 30.0f);
+        yDelta = CLAMP(-this->actor.yDistToPlayer[playerIndex], 20.0f, 30.0f);
         xzDelta = -10.0f;
     } else {
-        yDelta = CLAMP(-this->actor.yDistToPlayer, 25.0f, 45.0f);
+        yDelta = CLAMP(-this->actor.yDistToPlayer[playerIndex], 25.0f, 45.0f);
         xzDelta = -30.0f;
     }
 
@@ -819,7 +835,7 @@ void EnFloormas_GrabLink(EnFloormas* this, PlayState* play) {
             } else {
                 func_8002F7DC(&player->actor, NA_SE_VO_LI_DAMAGE_S);
             }
-            play->damagePlayer(play, -8);
+            play->damagePlayer(play, player, -8);
         }
     }
 

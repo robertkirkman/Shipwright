@@ -284,7 +284,7 @@ u8 EnRr_GetMessage(u8 shield, u8 tunic) {
 }
 
 void EnRr_SetupReleasePlayer(EnRr* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     u8 shield;
     u8 tunic;
 
@@ -413,7 +413,7 @@ void EnRr_SetupStunned(EnRr* this) {
 
 void EnRr_CollisionCheck(EnRr* this, PlayState* play) {
     Vec3f hitPos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->collider2.base.acFlags & AC_HIT) {
         this->collider2.base.acFlags &= ~AC_HIT;
@@ -570,17 +570,21 @@ void EnRr_UpdateBodySegments(EnRr* this, PlayState* play) {
 }
 
 void EnRr_Approach(EnRr* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, 0x1F4, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0x1F4, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
-    if ((this->actionTimer == 0) && (this->actor.xzDistToPlayer < 160.0f)) {
+    if ((this->actionTimer == 0) && (this->actor.xzDistToPlayer[playerIndex] < 160.0f)) {
         EnRr_SetupReach(this);
-    } else if ((this->actor.xzDistToPlayer < 400.0f) && (this->actor.speedXZ == 0.0f)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] < 400.0f) && (this->actor.speedXZ == 0.0f)) {
         EnRr_SetSpeed(this, 2.0f);
     }
 }
 
 void EnRr_Reach(EnRr* this, PlayState* play) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, 0x1F4, 0);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, 0x1F4, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
     switch (this->reachState) {
         case REACH_EXTEND:
@@ -618,9 +622,10 @@ void EnRr_Reach(EnRr* this, PlayState* play) {
 }
 
 void EnRr_GrabPlayer(EnRr* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    func_800AA000(this->actor.xyzDistToPlayerSq, 120, 2, 120);
+    func_800AA000(this->actor.xyzDistToPlayerSq[playerIndex], 120, 2, 120);
     if ((this->frameCount % 8) == 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_LIKE_EAT);
     }
@@ -735,7 +740,9 @@ void EnRr_Retreat(EnRr* this, PlayState* play) {
         this->retreat = false;
         this->actionFunc = EnRr_Approach;
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer + 0x8000, 0xA, 0x3E8, 0);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex] + 0x8000, 0xA, 0x3E8, 0);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         if (this->actor.speedXZ == 0.0f) {
             EnRr_SetSpeed(this, 2.0f);

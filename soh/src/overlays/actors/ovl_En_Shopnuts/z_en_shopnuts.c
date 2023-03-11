@@ -136,6 +136,8 @@ void EnShopnuts_SetupSpawnSalesman(EnShopnuts* this) {
 }
 
 void EnShopnuts_Wait(EnShopnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 hasSlowPlaybackSpeed = false;
 
     if (this->skelAnime.playSpeed < 0.5f) {
@@ -151,43 +153,47 @@ void EnShopnuts_Wait(EnShopnuts* this, PlayState* play) {
     }
 
     this->collider.dim.height = ((CLAMP(this->skelAnime.curFrame, 9.0f, 13.0f) - 9.0f) * 9.0f) + 5.0f;
-    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer < 120.0f)) {
+    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
         EnShopnuts_SetupBurrow(this);
     } else if (SkelAnime_Update(&this->skelAnime)) {
-        if (this->actor.xzDistToPlayer < 120.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
             EnShopnuts_SetupBurrow(this);
-        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer > 320.0f)) {
+        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer[playerIndex] > 320.0f)) {
             EnShopnuts_SetupLookAround(this);
         } else {
             EnShopnuts_SetupStand(this);
         }
     }
     if (hasSlowPlaybackSpeed &&
-        ((this->actor.xzDistToPlayer > 160.0f) && (fabsf(this->actor.yDistToPlayer) < 120.0f)) &&
-        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer < 480.0f))) {
+        ((this->actor.xzDistToPlayer[playerIndex] > 160.0f) && (fabsf(this->actor.yDistToPlayer[playerIndex]) < 120.0f)) &&
+        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer[playerIndex] < 480.0f))) {
         this->skelAnime.playSpeed = 1.0f;
     }
 }
 
 void EnShopnuts_LookAround(EnShopnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && (this->animFlagAndTimer != 0)) {
         this->animFlagAndTimer--;
     }
-    if ((this->actor.xzDistToPlayer < 120.0f) || (this->animFlagAndTimer == 0)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 120.0f) || (this->animFlagAndTimer == 0)) {
         EnShopnuts_SetupBurrow(this);
     }
 }
 
 void EnShopnuts_Stand(EnShopnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && (this->animFlagAndTimer != 0)) {
         this->animFlagAndTimer--;
     }
     if (!(this->animFlagAndTimer & 0x1000)) {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     }
-    if ((this->actor.xzDistToPlayer < 120.0f) || (this->animFlagAndTimer == 0x1000)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 120.0f) || (this->animFlagAndTimer == 0x1000)) {
         EnShopnuts_SetupBurrow(this);
     } else if (this->animFlagAndTimer == 0) {
         EnShopnuts_SetupThrowNut(this);
@@ -195,10 +201,12 @@ void EnShopnuts_Stand(EnShopnuts* this, PlayState* play) {
 }
 
 void EnShopnuts_ThrowNut(EnShopnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f spawnPos;
 
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
-    if (this->actor.xzDistToPlayer < 120.0f) {
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
         EnShopnuts_SetupBurrow(this);
     } else if (SkelAnime_Update(&this->skelAnime)) {
         EnShopnuts_SetupStand(this);
@@ -231,7 +239,9 @@ void EnShopnuts_SpawnSalesman(EnShopnuts* this, PlayState* play) {
                     this->actor.params, true);
         Actor_Kill(&this->actor);
     } else {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     }
 }
 

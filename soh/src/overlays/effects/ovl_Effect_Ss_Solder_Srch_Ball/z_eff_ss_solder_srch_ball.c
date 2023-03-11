@@ -39,7 +39,7 @@ void EffectSsSolderSrchBall_Update(PlayState* play, u32 index, EffectSs* this) {
     f32 playerPosDiffY;
     f32 playerPosDiffZ;
     s16* linkDetected;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     linkDetected = this->actor;
 

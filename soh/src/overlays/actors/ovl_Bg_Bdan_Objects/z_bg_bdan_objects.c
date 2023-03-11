@@ -173,13 +173,14 @@ void BgBdanObjects_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_8086C054(BgBdanObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (BgBdanObjects_GetContactRu1(this, 0)) {
-        if (this->dyna.actor.xzDistToPlayer < 250.0f) {
+        if (this->dyna.actor.xzDistToPlayer[playerIndex] < 250.0f) {
             BgBdanObjects_SetContactRu1(this, 1);
             this->timer = 20;
-            OnePointCutscene_Init(play, 3070, -99, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3070, -99, &this->dyna.actor, MAIN_CAM);
             player->actor.world.pos.x = -1130.0f;
             player->actor.world.pos.y = -1025.0f;
             player->actor.world.pos.z = -3300.0f;
@@ -194,7 +195,7 @@ void func_8086C054(BgBdanObjects* this, PlayState* play) {
         }
     }
 
-    if (!Play_InCsMode(play) && !BgBdanObjects_GetContactRu1(this, 0)) {
+    if (!Play_InCsMode(play, player) && !BgBdanObjects_GetContactRu1(this, 0)) {
         this->dyna.actor.world.pos.y = this->dyna.actor.home.pos.y + -79.0f;
     } else {
         this->dyna.actor.world.pos.y = (this->dyna.actor.home.pos.y + -79.0f) - 5.0f;
@@ -222,12 +223,14 @@ void func_8086C1A0(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086C29C(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 temp;
 
     if (this->timer != 0) {
         this->timer--;
         if (this->timer == 0) {
-            temp = Quake_Add(GET_ACTIVE_CAM(play), 1);
+            temp = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 1);
             Quake_SetSpeed(temp, 0x3A98);
             Quake_SetQuakeValues(temp, 0, 1, 0xFA, 1);
             Quake_SetCountdown(temp, 0xA);
@@ -241,12 +244,12 @@ void func_8086C29C(BgBdanObjects* this, PlayState* play) {
         BgBdanObjects_SetContactRu1(this, 4);
         this->timer = 10;
         this->actionFunc = func_8086C55C;
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
     }
 }
 
 void func_8086C3D8(BgBdanObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     this->dyna.actor.velocity.y += 0.5f;
     if (Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y + -70.0f,
@@ -256,7 +259,7 @@ void func_8086C3D8(BgBdanObjects* this, PlayState* play) {
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BUYOSTAND_STOP_U);
         this->dyna.actor.child->world.pos.y = this->dyna.actor.world.pos.y + 140.0f;
         this->actionFunc = func_8086C5BC;
-        OnePointCutscene_Init(play, 3080, -99, this->dyna.actor.child, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3080, -99, this->dyna.actor.child, MAIN_CAM);
         player->actor.world.pos.x = -1130.0f;
         player->actor.world.pos.y = -1025.0f;
         player->actor.world.pos.z = -3500.0f;
@@ -326,10 +329,12 @@ void func_8086C6EC(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086C76C(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (func_8004356C(&this->dyna)) {
-        if (this->dyna.actor.xzDistToPlayer < 120.0f) {
+        if (this->dyna.actor.xzDistToPlayer[playerIndex] < 120.0f) {
             this->actionFunc = func_8086C7D0;
-            OnePointCutscene_Init(play, 3090, -99, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3090, -99, &this->dyna.actor, MAIN_CAM);
         }
     }
 }
@@ -348,26 +353,28 @@ void BgBdanObjects_DoNothing(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086C874(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->timer != 0) {
         this->timer--;
     }
     if (this->switchFlag == 0) {
         if (func_8004356C(&this->dyna)) {
-            this->cameraSetting = play->cameraPtrs[MAIN_CAM]->setting;
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_NORMAL2);
-            func_8005AD1C(play->cameraPtrs[MAIN_CAM], 4);
+            this->cameraSetting = play->cameraPtrs[playerIndex][MAIN_CAM]->setting;
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_NORMAL2);
+            func_8005AD1C(play->cameraPtrs[playerIndex][MAIN_CAM], 4);
             this->switchFlag = 10;
         }
     } else {
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_NORMAL2);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_NORMAL2);
         if (!func_8004356C(&this->dyna)) {
             if (this->switchFlag != 0) {
                 this->switchFlag--;
             }
         }
         if (this->switchFlag == 0) {
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], this->cameraSetting);
-            func_8005ACFC(play->cameraPtrs[MAIN_CAM], 4);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], this->cameraSetting);
+            func_8005ACFC(play->cameraPtrs[playerIndex][MAIN_CAM], 4);
         }
     }
     this->dyna.actor.world.pos.y =
@@ -411,16 +418,18 @@ void func_8086CABC(BgBdanObjects* this, PlayState* play) {
 }
 
 void func_8086CB10(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (func_8004356C(&this->dyna)) {
         Flags_SetSwitch(play, this->switchFlag);
         this->timer = 50;
         this->actionFunc = func_8086CB8C;
         this->dyna.actor.home.pos.y -= 200.0f;
-        OnePointCutscene_Init(play, 3100, 51, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3100, 51, &this->dyna.actor, MAIN_CAM);
     }
 }
 
 void func_8086CB8C(BgBdanObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->timer != 0) {
         this->timer--;
     }
@@ -430,7 +439,7 @@ void func_8086CB8C(BgBdanObjects* this, PlayState* play) {
     if (this->timer == 0) {
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BUYOSTAND_STOP_U);
         this->actionFunc = BgBdanObjects_DoNothing;
-        Play_CopyCamera(play, MAIN_CAM, SUBCAM_ACTIVE);
+        Play_CopyCamera(play, player, MAIN_CAM, SUBCAM_ACTIVE);
     } else {
         func_8002F974(&this->dyna.actor, NA_SE_EV_BUYOSTAND_FALL - SFX_FLAG);
     }

@@ -125,14 +125,15 @@ void BgHidanCurtain_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgHidanCurtain_WaitForSwitchOn(BgHidanCurtain* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Flags_GetSwitch(play, this->actor.params)) {
         if (this->type == 1) {
             this->actionFunc = BgHidanCurtain_WaitForCutscene;
-            OnePointCutscene_Init(play, 3350, -99, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3350, -99, &this->actor, MAIN_CAM);
             this->timer = 50;
         } else if (this->type == 3) {
             this->actionFunc = BgHidanCurtain_WaitForCutscene;
-            OnePointCutscene_Init(play, 3360, 60, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3360, 60, &this->actor, MAIN_CAM);
             this->timer = 30;
         } else {
             this->actionFunc = BgHidanCurtain_TurnOff;
@@ -205,14 +206,16 @@ void BgHidanCurtain_Update(Actor* thisx, PlayState* play2) {
     BgHidanCurtain* this = (BgHidanCurtain*)thisx;
     BgHidanCurtainParams* hcParams = &sHCParams[this->size];
     f32 riseProgress;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    if ((play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_SLOW_CHEST_CS) ||
-        (play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_TURN_AROUND)) {
+    if ((play->cameraPtrs[playerIndex][MAIN_CAM]->setting == CAM_SET_SLOW_CHEST_CS) ||
+        (play->cameraPtrs[playerIndex][MAIN_CAM]->setting == CAM_SET_TURN_AROUND)) {
         this->collider.base.atFlags &= ~AT_HIT;
     } else {
         if (this->collider.base.atFlags & AT_HIT) {
             this->collider.base.atFlags &= ~AT_HIT;
-            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer, 1.0f);
+            func_8002F71C(play, &this->actor, 5.0f, this->actor.yawTowardsPlayer[playerIndex], 1.0f);
         }
         if ((this->type == 4) || (this->type == 5)) {
             this->actor.world.pos.y = (2.0f * this->actor.home.pos.y) - hcParams->riseDist - this->actor.world.pos.y;

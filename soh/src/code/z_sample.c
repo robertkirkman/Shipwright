@@ -53,7 +53,7 @@ void Sample_SetupView(SampleContext* this) {
     View* view = &this->view;
     GraphicsContext* gfxCtx = this->state.gfxCtx;
 
-    View_Init(view, gfxCtx);
+    View_Init(view, gfxCtx, 0);
     SET_FULLSCREEN_VIEWPORT(view);
     func_800AA460(view, 60.0f, 10.0f, 12800.0f);
 

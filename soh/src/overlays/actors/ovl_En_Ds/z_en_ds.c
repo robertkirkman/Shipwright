@@ -153,7 +153,7 @@ void EnDs_BrewOddPotion1(EnDs* this, PlayState* play) {
 }
 
 void EnDs_OfferOddPotion(EnDs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
@@ -219,11 +219,12 @@ void EnDs_OfferBluePotion(EnDs* this, PlayState* play) {
 }
 
 void EnDs_Wait(EnDs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        if (func_8002F368(play) == EXCH_ITEM_ODD_MUSHROOM) {
+        if (func_8002F368(play, player) == EXCH_ITEM_ODD_MUSHROOM) {
             Audio_PlaySoundGeneral(NA_SE_SY_TRE_BOX_APPEAR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
             player->actor.textId = 0x504A;
             this->actionFunc = EnDs_OfferOddPotion;
@@ -239,10 +240,10 @@ void EnDs_Wait(EnDs* this, PlayState* play) {
             this->actionFunc = EnDs_Talk;
         }
     } else {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         this->actor.textId = 0x5048;
 
-        if ((ABS(yawDiff) < 0x2151) && (this->actor.xzDistToPlayer < 200.0f)) {
+        if ((ABS(yawDiff) < 0x2151) && (this->actor.xzDistToPlayer[playerIndex] < 200.0f)) {
             func_8002F298(&this->actor, play, 100.0f, EXCH_ITEM_ODD_MUSHROOM);
             this->unk_1E8 |= 1;
         }

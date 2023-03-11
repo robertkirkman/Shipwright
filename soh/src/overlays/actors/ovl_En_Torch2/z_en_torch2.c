@@ -189,7 +189,7 @@ Actor* EnTorch2_GetAttackItem(PlayState* play, Player* this) {
 s32 EnTorch2_SwingSword(PlayState* play, Input* input, Player* this) {
     f32 noAttackChance = 0.0f;
     s32 attackDelay = 7;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((this->linearVelocity < 0.0f) || (player->linearVelocity < 0.0f)) {
         return 0;
@@ -223,9 +223,9 @@ s32 EnTorch2_SwingSword(PlayState* play, Input* input, Player* this) {
     return 0;
 }
 
-void EnTorch2_Backflip(Player* this, Input* input, Actor* thisx) {
-    thisx->world.rot.y = thisx->shape.rot.y = thisx->yawTowardsPlayer;
-    sStickAngle = thisx->yawTowardsPlayer + 0x8000;
+void EnTorch2_Backflip(Player* this, Input* input, Actor* thisx, u16 playerIndex) {
+    thisx->world.rot.y = thisx->shape.rot.y = thisx->yawTowardsPlayer[playerIndex];
+    sStickAngle = thisx->yawTowardsPlayer[playerIndex] + 0x8000;
     sStickTilt = 127.0f;
     sZTargetFlag = true;
     input->cur.button = BTN_A;
@@ -235,8 +235,9 @@ void EnTorch2_Backflip(Player* this, Input* input, Actor* thisx) {
 
 void EnTorch2_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
-    Player* player2 = GET_PLAYER(play2);
-    Player* player = player2;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Player* player2 = player;
     Player* this = (Player*)thisx;
     Input* input = &sInput;
     Camera* camera;
@@ -253,20 +254,20 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
 
     sp5A = player->actor.shape.rot.y - this->actor.shape.rot.y;
     input->cur.button = 0;
-    camera = Play_GetCamera(play, 0);
+    camera = Play_GetCamera(play, player, MAIN_CAM);
     attackItem = EnTorch2_GetAttackItem(play, this);
     switch (sActionState) {
         case ENTORCH2_WAIT:
-            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+            this->actor.shape.rot.y = this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
             this->skelAnime.curFrame = 0.0f;
             this->skelAnime.playSpeed = 0.0f;
             this->actor.world.pos.x = (Math_SinS(this->actor.world.rot.y) * 25.0f) + sSpawnPoint.x;
             this->actor.world.pos.z = (Math_CosS(this->actor.world.rot.y) * 25.0f) + sSpawnPoint.z;
-            if ((this->actor.xzDistToPlayer <= 120.0f) || Actor_IsTargeted(play, &this->actor) ||
+            if ((this->actor.xzDistToPlayer[playerIndex] <= 120.0f) || Actor_IsTargeted(play, &this->actor) ||
                 (attackItem != NULL)) {
                 if (attackItem != NULL) {
                     sDodgeRollState = 1;
-                    sStickAngle = this->actor.yawTowardsPlayer;
+                    sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                     sStickTilt = 127.0f;
                     input->cur.button = BTN_A;
                     sZTargetFlag = false;
@@ -330,7 +331,7 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                 sStickTilt = 127.0f;
             } else if (attackItem != NULL) {
                 sDodgeRollState = 1;
-                sStickAngle = this->actor.yawTowardsPlayer;
+                sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                 sStickTilt = 127.0f;
                 input->cur.button = BTN_A;
             } else if (sJumpslashTimer == 0) {
@@ -339,12 +340,12 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
 
                 if (((player->swordState != 0) || (player->actor.velocity.y > -3.0f)) &&
                     (player->meleeWeaponAnimation == JUMPSLASH_START)) {
-                    this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
                     if (play->gameplayFrames % 2) {
-                        sStickAngle = this->actor.yawTowardsPlayer + 0x4000;
+                        sStickAngle = this->actor.yawTowardsPlayer[playerIndex] + 0x4000;
                     } else {
-                        sStickAngle = this->actor.yawTowardsPlayer - 0x4000;
+                        sStickAngle = this->actor.yawTowardsPlayer[playerIndex] - 0x4000;
                     }
                     sStickTilt = 127.0f;
                     sJumpslashTimer = 15;
@@ -366,12 +367,12 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                                        1.0f, 5.0f, 0.0f);
                     sSwordJumpTimer--;
                     if (((u32)sSwordJumpTimer == 0) || ((player->invincibilityTimer > 0) && (this->swordState == 0))) {
-                        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+                        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                         input->cur.button = BTN_A;
                         player->stateFlags3 &= ~4;
                         sStickTilt = 127.0f;
                         player->skelAnime.curFrame = 3.0f;
-                        sStickAngle = this->actor.yawTowardsPlayer + 0x8000;
+                        sStickAngle = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
                         sSwordJumpTimer = sSwordJumpState = 0;
                         this->actor.flags |= ACTOR_FLAG_0;
                     } else if (sSwordJumpState == 1) {
@@ -392,13 +393,13 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                     // Handles Dark Link's reaction to sword attack other than jumpslashes
 
                     if (func_800354B4(play, &this->actor, 120.0f, 0x7FFF, 0x7FFF, this->actor.world.rot.y)) {
-                        if ((player->meleeWeaponAnimation == STAB_1H) && (this->actor.xzDistToPlayer < 90.0f)) {
+                        if ((player->meleeWeaponAnimation == STAB_1H) && (this->actor.xzDistToPlayer[playerIndex] < 90.0f)) {
 
                             // Handles the reaction to a one-handed stab. If the conditions are satisfied,
                             // Dark Link jumps on Link's sword. Otherwise he backflips away.
 
                             if ((this->swordState == 0) && (sCounterState == 0) && (player->invincibilityTimer == 0) &&
-                                (player->meleeWeaponAnimation == STAB_1H) && (this->actor.xzDistToPlayer <= 85.0f) &&
+                                (player->meleeWeaponAnimation == STAB_1H) && (this->actor.xzDistToPlayer[playerIndex] <= 85.0f) &&
                                 Actor_IsTargeted(play, &this->actor)) {
 
                                 sStickTilt = 0.0f;
@@ -415,13 +416,13 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                                 sHoldShieldTimer = 0;
                                 input->cur.button = BTN_A;
                             } else {
-                                EnTorch2_Backflip(this, input, &this->actor);
+                                EnTorch2_Backflip(this, input, &this->actor, playerIndex);
                             }
                         } else {
 
                             // Handles reactions to all other sword attacks
 
-                            sStickAngle = thisx->yawTowardsPlayer;
+                            sStickAngle = thisx->yawTowardsPlayer[playerIndex];
                             input->cur.button = BTN_B;
 
                             if (player->meleeWeaponAnimation <= FORWARD_COMBO_2H) {
@@ -435,9 +436,9 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                             } else if (player->meleeWeaponAnimation <= HAMMER_SIDE) {
                                 input->cur.button = BTN_R;
                             } else if (player->meleeWeaponAnimation <= BIG_SPIN_2H) {
-                                EnTorch2_Backflip(this, input, &this->actor);
+                                EnTorch2_Backflip(this, input, &this->actor, playerIndex);
                             } else {
-                                EnTorch2_Backflip(this, input, &this->actor);
+                                EnTorch2_Backflip(this, input, &this->actor, playerIndex);
                             }
                             if (!CHECK_BTN_ANY(input->cur.button, BTN_A | BTN_R) && (this->swordState == 0) &&
                                 (player->swordState != 0)) {
@@ -448,38 +449,38 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
 
                         // Handles movement and attacks when not reacting to Link's actions
 
-                        sStickAngle = thisx->yawTowardsPlayer;
+                        sStickAngle = thisx->yawTowardsPlayer[playerIndex];
                         sp50 = 0.0f;
-                        if ((90.0f >= this->actor.xzDistToPlayer) && (this->actor.xzDistToPlayer > 70.0f) &&
+                        if ((90.0f >= this->actor.xzDistToPlayer[playerIndex]) && (this->actor.xzDistToPlayer[playerIndex] > 70.0f) &&
                             (ABS(sp5A) >= 0x7800) && (this->actor.isTargeted || !(player->stateFlags1 & 0x00400000))) {
                             EnTorch2_SwingSword(play, input, this);
-                        } else if (((this->actor.xzDistToPlayer <= 70.0f) ||
-                                    ((this->actor.xzDistToPlayer <= 80.0f + sp50) && (player->swordState != 0))) &&
+                        } else if (((this->actor.xzDistToPlayer[playerIndex] <= 70.0f) ||
+                                    ((this->actor.xzDistToPlayer[playerIndex] <= 80.0f + sp50) && (player->swordState != 0))) &&
                                    (this->swordState == 0)) {
                             if (!EnTorch2_SwingSword(play, input, this) && (this->swordState == 0) &&
                                 (sCounterState == 0)) {
-                                EnTorch2_Backflip(this, input, &this->actor);
+                                EnTorch2_Backflip(this, input, &this->actor, playerIndex);
                             }
-                        } else if (this->actor.xzDistToPlayer <= 50 + sp50) {
+                        } else if (this->actor.xzDistToPlayer[playerIndex] <= 50 + sp50) {
                             sStickTilt = 127.0f;
-                            sStickAngle = this->actor.yawTowardsPlayer;
+                            sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                             if (!this->actor.isTargeted) {
                                 Math_SmoothStepToS(&sStickAngle, player->actor.shape.rot.y + 0x7FFF, 1, 0x2328, 0);
                             }
-                        } else if (this->actor.xzDistToPlayer > 100.0f + sp50) {
+                        } else if (this->actor.xzDistToPlayer[playerIndex] > 100.0f + sp50) {
                             if ((player->swordState == 0) || (player->meleeWeaponAnimation < SPIN_ATTACK_1H) ||
-                                (player->meleeWeaponAnimation > BIG_SPIN_2H) || (this->actor.xzDistToPlayer >= 280.0f)) {
+                                (player->meleeWeaponAnimation > BIG_SPIN_2H) || (this->actor.xzDistToPlayer[playerIndex] >= 280.0f)) {
                                 sStickTilt = 127.0f;
-                                sStickAngle = this->actor.yawTowardsPlayer;
+                                sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                                 if (!this->actor.isTargeted) {
                                     Math_SmoothStepToS(&sStickAngle, player->actor.shape.rot.y + 0x7FFF, 1, 0x2328, 0);
                                 }
                             } else {
-                                EnTorch2_Backflip(this, input, &this->actor);
+                                EnTorch2_Backflip(this, input, &this->actor, playerIndex);
                             }
                         } else if (((ABS(sp5A) < 0x7800) && (ABS(sp5A) >= 0x3000)) ||
                                    !EnTorch2_SwingSword(play, input, this)) {
-                            sStickAngle = this->actor.yawTowardsPlayer;
+                            sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                             sStickTilt = 127.0f;
                             if (!this->actor.isTargeted) {
                                 Math_SmoothStepToS(&sStickAngle, player->actor.shape.rot.y + 0x7FFF, 1, 0x2328, 0);
@@ -493,8 +494,8 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
             } else if (sJumpslashFlag && (sAlpha == 255) && (this->actor.velocity.y > 0)) {
                 input->cur.button |= BTN_B;
             } else if (!sJumpslashFlag && (this->actor.bgCheckFlags & 1)) {
-                this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
-                sStickAngle = this->actor.yawTowardsPlayer;
+                this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
+                sStickAngle = this->actor.yawTowardsPlayer[playerIndex];
                 if (sAlpha != 255) {
                     sStickAngle += 0x8000;
                     sStickTilt = 127.0f;
@@ -575,7 +576,7 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
         input->cur.button = BTN_R;
     }
 
-    if ((sActionState == ENTORCH2_ATTACK) && (this->actor.xzDistToPlayer <= 610.0f) && sZTargetFlag) {
+    if ((sActionState == ENTORCH2_ATTACK) && (this->actor.xzDistToPlayer[playerIndex] <= 610.0f) && sZTargetFlag) {
         input->cur.button |= BTN_Z;
     }
 
@@ -613,7 +614,7 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
             this->unk_8A4 = 6.0f;
             this->unk_8A8 = 6.0f;
             this->unk_8A0 = this->actor.colChkInfo.damage;
-            this->unk_8A2 = this->actor.yawTowardsPlayer + 0x8000;
+            this->unk_8A2 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
             sDeathFlag++;
             sActionState = ENTORCH2_DEATH;
             Enemy_StartFinishingBlow(play, &this->actor);
@@ -633,7 +634,7 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
                 this->unk_8A1 = 1;
                 this->unk_8A8 = 6.0f;
                 this->unk_8A4 = 8.0f;
-                this->unk_8A2 = this->actor.yawTowardsPlayer + 0x8000;
+                this->unk_8A2 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
                 Actor_SetDropFlag(&this->actor, &this->cylinder.info, 1);
                 this->stateFlags3 &= ~4;
                 this->stateFlags3 |= 1;
@@ -679,9 +680,9 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
         if (gSaveContext.health < 0x50) {
             staggerThreshold = (u32)Rand_CenteredFloat(2.0f) + 3;
         }
-        if (this->actor.xzDistToPlayer > 80.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] > 80.0f) {
             this->linearVelocity = 1.2f;
-        } else if (this->actor.xzDistToPlayer < 70.0f) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
             this->linearVelocity = -1.5f;
         } else {
             this->linearVelocity = 1.0f;
@@ -694,9 +695,9 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
         }
     }
     if (player->linearVelocity == -18.0f) {
-        if (this->actor.xzDistToPlayer > 80.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] > 80.0f) {
             player->linearVelocity = 1.2f;
-        } else if (this->actor.xzDistToPlayer < 70.0f) {
+        } else if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
             player->linearVelocity = -1.5f;
         } else {
             player->linearVelocity = 1.0f;

@@ -105,9 +105,10 @@ void func_80889ACC(BgHidanKousi* this) {
 }
 
 void func_80889B5C(BgHidanKousi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, (this->dyna.actor.params >> 8) & 0xFF)) {
         BgHidanKousi_SetupAction(this, func_80889BC0);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->unk_168 = 0xC8;
     }
 }

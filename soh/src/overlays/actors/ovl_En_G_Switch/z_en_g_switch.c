@@ -254,10 +254,11 @@ void EnGSwitch_SilverRupeeTracker(EnGSwitch* this, PlayState* play) {
 }
 
 void EnGSwitch_SilverRupeeIdle(EnGSwitch* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->actor.shape.rot.y += 0x800;
-    if (this->actor.xyzDistToPlayerSq < 900.0f) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] < 900.0f) {
         Rupees_ChangeBy(5);
         sCollectedCount++;
         func_80078884(NA_SE_SY_GET_RUPY);
@@ -273,7 +274,7 @@ void EnGSwitch_SilverRupeeIdle(EnGSwitch* this, PlayState* play) {
 }
 
 void EnGSwitch_SilverRupeeCollected(EnGSwitch* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->actor.shape.rot.y += 0x3C0;
     if (this->killTimer == 0) {

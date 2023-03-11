@@ -51,7 +51,7 @@ void EndTitle_DrawFull(Actor* thisx, PlayState* play) {
     MtxF* mf;
     EndTitle* this = (EndTitle*)thisx;
     s32 frameCount = play->csCtx.frames;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     mf = &player->mf_9E0;
 

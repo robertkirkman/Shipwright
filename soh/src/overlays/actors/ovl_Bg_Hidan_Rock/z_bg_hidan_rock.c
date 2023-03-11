@@ -125,7 +125,7 @@ void func_8088B268(BgHidanRock* this, PlayState* play) {
     f32 sp2C;
     s32 temp_v1;
     s32 frame;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         if (this->timer == 0) {
@@ -212,14 +212,18 @@ void func_8088B5F4(BgHidanRock* this, PlayState* play) {
 }
 
 void func_8088B634(BgHidanRock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (func_8004356C(&this->dyna)) {
         this->timer = 20;
-        this->dyna.actor.world.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4000;
+        this->dyna.actor.world.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4000;
         this->actionFunc = func_8088B69C;
     }
 }
 
 void func_8088B69C(BgHidanRock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->timer != 0) {
         this->timer--;
     }
@@ -236,12 +240,14 @@ void func_8088B69C(BgHidanRock* this, PlayState* play) {
     }
 
     if (!(this->timer % 4)) {
-        func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 0xB4, 0x0A, 0x64);
+        func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 0xB4, 0x0A, 0x64);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BLOCK_SHAKE);
     }
 }
 
 void func_8088B79C(BgHidanRock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->timer--;
     if (this->dyna.actor.bgCheckFlags & 2) {
         if (this->type == 0) {
@@ -267,10 +273,10 @@ void func_8088B79C(BgHidanRock* this, PlayState* play) {
             if (this->unk_169 == 0) {
                 this->unk_169 = 3;
             }
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_FIRE_PLATFORM);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_FIRE_PLATFORM);
         } else if (!func_8004356C(&this->dyna)) {
             if (this->unk_169 != 0) {
-                Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
             }
             this->unk_169 = 0;
         }
@@ -295,7 +301,8 @@ void func_8088B954(BgHidanRock* this, PlayState* play) {
 }
 
 void func_8088B990(BgHidanRock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->timer++;
     if (this->dyna.unk_150 != 0.0f) {
@@ -320,10 +327,10 @@ void func_8088B990(BgHidanRock* this, PlayState* play) {
             if (this->unk_169 == 0) {
                 this->unk_169 = 3;
             }
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_FIRE_PLATFORM);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_FIRE_PLATFORM);
         } else if (!func_8004356C(&this->dyna)) {
             if (this->unk_169 != 0) {
-                Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
             }
             this->unk_169 = 0;
         }
@@ -352,6 +359,8 @@ static void* sVerticalFlamesTexs[] = {
 };
 
 void func_8088BC40(PlayState* play, BgHidanRock* this) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
@@ -367,7 +376,7 @@ void func_8088BC40(PlayState* play, BgHidanRock* this) {
                          MTXMODE_NEW);
     }
 
-    Matrix_RotateZYX(0, Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000, 0, MTXMODE_APPLY);
+    Matrix_RotateZYX(0, Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000, 0, MTXMODE_APPLY);
     Matrix_Translate(-10.5f, 0.0f, 0.0f, MTXMODE_APPLY);
     Matrix_Scale(6.0f, this->unk_16C, 6.0f, MTXMODE_APPLY);
 

@@ -92,11 +92,12 @@ void BgMizuShutter_Destroy(BgMizuShutter* thisx, PlayState* play) {
 }
 
 void BgMizuShutter_WaitForSwitch(BgMizuShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, (u16)this->dyna.actor.params & 0x3F)) {
         if (ABS(this->dyna.actor.world.rot.x) > 0x2C60) {
-            OnePointCutscene_Init(play, 4510, -99, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4510, -99, &this->dyna.actor, MAIN_CAM);
         } else {
-            OnePointCutscene_Attention(play, &this->dyna.actor);
+            OnePointCutscene_Attention(play, player, &this->dyna.actor);
         }
         this->actionFunc = BgMizuShutter_WaitForCutscene;
         this->timer = 30;
@@ -111,6 +112,8 @@ void BgMizuShutter_WaitForCutscene(BgMizuShutter* this, PlayState* play) {
 }
 
 void BgMizuShutter_Move(BgMizuShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Flags_GetSwitch(play, (u16)this->dyna.actor.params & 0x3F)) {
         Math_SmoothStepToF(&this->dyna.actor.world.pos.x, this->openPos.x, 1.0f, 4.0f, 0.1f);
         Math_SmoothStepToF(&this->dyna.actor.world.pos.y, this->openPos.y, 1.0f, 4.0f, 0.1f);
@@ -128,7 +131,7 @@ void BgMizuShutter_Move(BgMizuShutter* this, PlayState* play) {
         if ((this->dyna.actor.world.pos.x == this->closedPos.x) &&
             (this->dyna.actor.world.pos.y == this->closedPos.y) &&
             (this->dyna.actor.world.pos.z == this->closedPos.z)) {
-            func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 0x78, 0x14, 0xA);
+            func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 0x78, 0x14, 0xA);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
             this->actionFunc = BgMizuShutter_WaitForSwitch;
         }

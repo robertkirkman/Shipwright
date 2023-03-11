@@ -177,8 +177,9 @@ void func_808B7AEC(BgSpot18Basket* this) {
 }
 
 void func_808B7AFC(BgSpot18Basket* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F)) {
-        OnePointCutscene_Init(play, 4220, 80, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4220, 80, &this->dyna.actor, MAIN_CAM);
         func_808B7B58(this);
     }
 }
@@ -202,6 +203,7 @@ void func_808B7BB0(BgSpot18Basket* this) {
 }
 
 void func_808B7BCC(BgSpot18Basket* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 positionDiff;
     Actor* colliderBaseAc;
 
@@ -226,7 +228,7 @@ void func_808B7BCC(BgSpot18Basket* this, PlayState* play) {
             if (positionDiff > 120.0f && positionDiff < 200.0f) {
                 if (Math3D_Dist2DSq(colliderBaseAc->world.pos.z, this->colliderJntSph.base.ac->world.pos.x,
                                     this->dyna.actor.world.pos.z, this->dyna.actor.world.pos.x) < SQ(32.0f)) {
-                    OnePointCutscene_Init(play, 4210, 240, &this->dyna.actor, MAIN_CAM);
+                    OnePointCutscene_Init(play, player, 4210, 240, &this->dyna.actor, MAIN_CAM);
                     func_808B7D38(this);
                     func_8003EBF8(play, &play->colCtx.dyna, this->dyna.bgId);
                 }

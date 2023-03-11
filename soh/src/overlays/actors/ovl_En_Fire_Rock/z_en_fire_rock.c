@@ -70,8 +70,8 @@ static ColliderCylinderInit D_80A12CCC = {
 
 void EnFireRock_Init(Actor* thisx, PlayState* play) {
     PlayState* play2 = play;
-    Player* player = GET_PLAYER(play);
     EnFireRock* this = (EnFireRock*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s16 temp;
 
     this->type = this->actor.params;
@@ -163,11 +163,11 @@ void EnFireRock_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnFireRock_Fall(EnFireRock* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f flamePos;
     s32 i;
 
-    player = GET_PLAYER(play);
     if ((this->actor.floorHeight == -10000.0f) || (this->actor.world.pos.y < (player->actor.world.pos.y - 200.0f))) {
         Actor_Kill(&this->actor);
         return;
@@ -197,7 +197,7 @@ void EnFireRock_Fall(EnFireRock* this, PlayState* play) {
         switch (this->type) {
             case FIRE_ROCK_SPAWNED_FALLING1:
             case FIRE_ROCK_SPAWNED_FALLING2:
-                func_80033E88(&this->actor, play, 5, 2);
+                func_80033E88(&this->actor, play, 5, 2, playerIndex);
             case FIRE_ROCK_BROKEN_PIECE1:
                 Actor_SpawnFloorDustRing(play, &this->actor, &this->actor.world.pos, this->actor.shape.shadowScale,
                                          1, 8.0f, 500, 10, false);
@@ -261,9 +261,11 @@ void EnFireRock_SpawnMoreBrokenPieces(EnFireRock* this, PlayState* play) {
 }
 
 void FireRock_WaitSpawnRocksFromCeiling(EnFireRock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnFireRock* spawnedFireRock;
 
-    if (this->actor.xzDistToPlayer < 200.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f) {
         if ((this->playerNearby == 0) && (this->timer2 == 0)) {
             this->timer2 = 30;
             spawnedFireRock = (EnFireRock*)Actor_Spawn(
@@ -304,8 +306,8 @@ void FireRock_WaitOnFloor(EnFireRock* this, PlayState* play) {
 void EnFireRock_Update(Actor* thisx, PlayState* play) {
     EnFireRock* this = (EnFireRock*)thisx;
     s16 setCollision;
-    Player* player = GET_PLAYER(play);
-    Actor* playerActor = &GET_PLAYER(play)->actor;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Actor* playerActor = &player->actor;
 
     if (this->timer2 != 0) {
         this->timer2--;

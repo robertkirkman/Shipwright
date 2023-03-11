@@ -271,6 +271,8 @@ void EnExItem_WaitForObject(EnExItem* this, PlayState* play) {
 }
 
 void EnExItem_BowlPrize(EnExItem* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     f32 tmpf1;
     f32 tmpf2;
@@ -295,18 +297,18 @@ void EnExItem_BowlPrize(EnExItem* this, PlayState* play) {
             if (this->type == EXITEM_BOMBCHUS_BOWLING) {
                 sp3C = 220.0f;
             }
-            tmpf1 = play->view.lookAt.x - play->view.eye.x;
-            tmpf2 = play->view.lookAt.y - play->view.eye.y;
-            tmpf3 = play->view.lookAt.z + sp3C - play->view.eye.z;
+            tmpf1 = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+            tmpf2 = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+            tmpf3 = play->views[playerIndex].lookAt.z + sp3C - play->views[playerIndex].eye.z;
             tmpf4 = sqrtf(SQ(tmpf1) + SQ(tmpf2) + SQ(tmpf3));
 
             tmpf5 = (tmpf1 / tmpf4) * 5.0f;
             tmpf6 = (tmpf2 / tmpf4) * 5.0f;
             tmpf7 = (tmpf3 / tmpf4) * 5.0f;
 
-            tmpf1 = play->view.eye.x + tmpf5 - this->actor.world.pos.x;
-            tmpf2 = play->view.eye.y + tmpf6 - this->actor.world.pos.y;
-            tmpf3 = play->view.eye.z + tmpf7 - this->actor.world.pos.z;
+            tmpf1 = play->views[playerIndex].eye.x + tmpf5 - this->actor.world.pos.x;
+            tmpf2 = play->views[playerIndex].eye.y + tmpf6 - this->actor.world.pos.y;
+            tmpf3 = play->views[playerIndex].eye.z + tmpf7 - this->actor.world.pos.z;
 
             this->actor.world.pos.x += (tmpf1 / tmpf4) * 5.0f;
             this->actor.world.pos.y += (tmpf2 / tmpf4) * 5.0f;
@@ -358,6 +360,8 @@ void EnExItem_FairyMagic(EnExItem* this, PlayState* play) {
 }
 
 void EnExItem_TargetPrizeApproach(EnExItem* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 tmpf1;
     f32 tmpf2;
     f32 tmpf3;
@@ -378,18 +382,18 @@ void EnExItem_TargetPrizeApproach(EnExItem* this, PlayState* play) {
 
     if (!gSaveContext.n64ddFlag && this->timer != 0) {
         if (this->prizeRotateTimer != 0) {
-            tmpf1 = play->view.lookAt.x - play->view.eye.x;
-            tmpf2 = play->view.lookAt.y - 10.0f - play->view.eye.y;
-            tmpf3 = play->view.lookAt.z + 10.0f - play->view.eye.z;
+            tmpf1 = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+            tmpf2 = play->views[playerIndex].lookAt.y - 10.0f - play->views[playerIndex].eye.y;
+            tmpf3 = play->views[playerIndex].lookAt.z + 10.0f - play->views[playerIndex].eye.z;
             tmpf4 = sqrtf(SQ(tmpf1) + SQ(tmpf2) + SQ(tmpf3));
 
             tmpf5 = (tmpf1 / tmpf4) * 5.0f;
             tmpf6 = (tmpf2 / tmpf4) * 5.0f;
             tmpf7 = (tmpf3 / tmpf4) * 5.0f;
 
-            tmpf1 = play->view.eye.x + tmpf5 - this->actor.world.pos.x;
-            tmpf2 = play->view.eye.y - 10.0f + tmpf6 - this->actor.world.pos.y;
-            tmpf3 = play->view.eye.z + 10.0f + tmpf7 - this->actor.world.pos.z;
+            tmpf1 = play->views[playerIndex].eye.x + tmpf5 - this->actor.world.pos.x;
+            tmpf2 = play->views[playerIndex].eye.y - 10.0f + tmpf6 - this->actor.world.pos.y;
+            tmpf3 = play->views[playerIndex].eye.z + 10.0f + tmpf7 - this->actor.world.pos.z;
 
             this->actor.world.pos.x += (tmpf1 / tmpf4) * 5.0f;
             this->actor.world.pos.y += (tmpf2 / tmpf4) * 5.0f;
@@ -400,10 +404,10 @@ void EnExItem_TargetPrizeApproach(EnExItem* this, PlayState* play) {
         s32 getItemId;
 
         this->actor.draw = NULL;
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actor.parent = NULL;
         if (gSaveContext.n64ddFlag) {
-            GET_PLAYER(play)->stateFlags1 &= ~(PLAYER_STATE1_10 | PLAYER_STATE1_11);
+            player->stateFlags1 &= ~(PLAYER_STATE1_10 | PLAYER_STATE1_11);
             getItemEntry = Randomizer_GetItemFromKnownCheck(RC_LW_TARGET_IN_WOODS, GI_BULLET_BAG_50);
             getItemId = getItemEntry.getItemId;
         } else {

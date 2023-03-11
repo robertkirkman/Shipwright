@@ -121,7 +121,7 @@ void func_80AE7590(EnRl* this, PlayState* play) {
     if (gSaveContext.sceneSetupIndex == 4 && sceneNum == SCENE_KENJYANOMA && play->csCtx.state != CS_STATE_IDLE &&
         play->csCtx.npcActions[6] != NULL && play->csCtx.npcActions[6]->action == 2 &&
         !this->lightMedallionGiven) {
-        player = GET_PLAYER(play);
+        player = Player_NearestToActor(&this->actor, play);
         pos.x = player->actor.world.pos.x;
         pos.y = player->actor.world.pos.y + 80.0f;
         pos.z = player->actor.world.pos.z;
@@ -132,7 +132,7 @@ void func_80AE7590(EnRl* this, PlayState* play) {
 }
 
 void func_80AE7668(EnRl* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->drawConfig = 1;
     this->action = 1;

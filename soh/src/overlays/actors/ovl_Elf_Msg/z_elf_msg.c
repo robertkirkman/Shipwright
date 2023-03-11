@@ -118,7 +118,7 @@ s32 ElfMsg_GetMessageId(ElfMsg* this) {
 }
 
 void ElfMsg_CallNaviCuboid(ElfMsg* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnElf* navi = (EnElf*)player->naviActor;
 
     if ((fabsf(player->actor.world.pos.x - this->actor.world.pos.x) < (100.0f * this->actor.scale.x)) &&
@@ -135,7 +135,7 @@ s32 ElfMsg_WithinXZDistance(Vec3f* pos1, Vec3f* pos2, f32 distance) {
 }
 
 void ElfMsg_CallNaviCylinder(ElfMsg* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnElf* navi = (EnElf*)player->naviActor;
 
     // This fixes a crash when using a grotto exit when you never properly entered

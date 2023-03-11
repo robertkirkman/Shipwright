@@ -29,10 +29,12 @@ const ActorInit Oceff_Wipe4_InitVars = {
 
 void OceffWipe4_Init(Actor* thisx, PlayState* play) {
     OceffWipe4* this = (OceffWipe4*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Actor_SetScale(&this->actor, 0.1f);
     this->timer = 0;
-    this->actor.world.pos = GET_ACTIVE_CAM(play)->eye;
+    this->actor.world.pos = GET_ACTIVE_CAM(playerIndex, play)->eye;
     osSyncPrintf(VT_FGCOL(CYAN) " WIPE4 arg_data = %d\n" VT_RST, this->actor.params);
 }
 
@@ -44,8 +46,10 @@ void OceffWipe4_Destroy(Actor* thisx, PlayState* play) {
 
 void OceffWipe4_Update(Actor* thisx, PlayState* play) {
     OceffWipe4* this = (OceffWipe4*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
-    this->actor.world.pos = GET_ACTIVE_CAM(play)->eye;
+    this->actor.world.pos = GET_ACTIVE_CAM(playerIndex, play)->eye;
     if (this->timer < 50) {
         this->timer++;
     } else {
@@ -58,6 +62,8 @@ void OceffWipe4_Update(Actor* thisx, PlayState* play) {
 void OceffWipe4_Draw(Actor* thisx, PlayState* play) {
     u32 scroll = play->state.frames & 0xFFF;
     OceffWipe4* this = (OceffWipe4*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 z;
     u8 alpha;
     s32 pad[2];
@@ -65,8 +71,8 @@ void OceffWipe4_Draw(Actor* thisx, PlayState* play) {
     Vtx* vtxPtr;
     Vec3f vec;
 
-    eye = GET_ACTIVE_CAM(play)->eye;
-    Camera_GetSkyboxOffset(&vec, GET_ACTIVE_CAM(play));
+    eye = GET_ACTIVE_CAM(playerIndex, play)->eye;
+    Camera_GetSkyboxOffset(&vec, GET_ACTIVE_CAM(playerIndex, play));
     
     int fastOcarinaPlayback = (CVarGetInteger("gFastOcarinaPlayback", 0) != 0);
     if (this->timer < 16) {

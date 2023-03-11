@@ -258,13 +258,14 @@ void EnSyatekiMan_Talk(EnSyatekiMan* this, PlayState* play) {
 }
 
 void EnSyatekiMan_StopTalk(EnSyatekiMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->cameraHold) {
         play->shootingGalleryStatus = -2;
     }
     if ((this->numTextBox == Message_GetState(&play->msgCtx)) && Message_ShouldAdvance(play)) {
         if (this->cameraHold) {
-            OnePointCutscene_EndCutscene(play, this->csCam);
+            OnePointCutscene_EndCutscene(play, player, this->csCam);
             this->csCam = SUBCAM_NONE;
             this->cameraHold = false;
         }
@@ -274,6 +275,7 @@ void EnSyatekiMan_StopTalk(EnSyatekiMan* this, PlayState* play) {
 }
 
 void EnSyatekiMan_StartGame(EnSyatekiMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnSyatekiItm* gallery;
 
     SkelAnime_Update(&this->skelAnime);
@@ -282,7 +284,7 @@ void EnSyatekiMan_StartGame(EnSyatekiMan* this, PlayState* play) {
     }
     if ((this->numTextBox == Message_GetState(&play->msgCtx)) && Message_ShouldAdvance(play)) {
         if (this->cameraHold) {
-            OnePointCutscene_EndCutscene(play, this->csCam);
+            OnePointCutscene_EndCutscene(play, player, this->csCam);
             this->csCam = SUBCAM_NONE;
             this->cameraHold = false;
         }
@@ -301,12 +303,13 @@ void EnSyatekiMan_StartGame(EnSyatekiMan* this, PlayState* play) {
 }
 
 void EnSyatekiMan_WaitForGame(EnSyatekiMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnSyatekiItm* gallery;
 
     SkelAnime_Update(&this->skelAnime);
     gallery = ((EnSyatekiItm*)this->actor.parent);
     if ((gallery->actor.update != NULL) && (gallery->signal == ENSYATEKI_END)) {
-        this->csCam = OnePointCutscene_Init(play, 8002, -99, &this->actor, MAIN_CAM);
+        this->csCam = OnePointCutscene_Init(play, player, 8002, -99, &this->actor, MAIN_CAM);
         switch (gallery->hitCount) {
             case 10:
                 this->gameResult = SYATEKI_RESULT_WINNER;
@@ -333,12 +336,13 @@ void EnSyatekiMan_WaitForGame(EnSyatekiMan* this, PlayState* play) {
 }
 
 void EnSyatekiMan_EndGame(EnSyatekiMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnSyatekiItm* gallery;
 
     SkelAnime_Update(&this->skelAnime);
     if ((this->numTextBox == Message_GetState(&play->msgCtx)) && Message_ShouldAdvance(play)) {
         if (this->gameResult != SYATEKI_RESULT_FAILURE) {
-            OnePointCutscene_EndCutscene(play, this->csCam);
+            OnePointCutscene_EndCutscene(play, player, this->csCam);
             this->csCam = SUBCAM_NONE;
         }
         Message_CloseTextbox(play);

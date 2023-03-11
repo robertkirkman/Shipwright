@@ -123,6 +123,8 @@ void ObjBombiwa_Break(ObjBombiwa* this, PlayState* play) {
 
 void ObjBombiwa_Update(Actor* thisx, PlayState* play) {
     ObjBombiwa* this = (ObjBombiwa*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     if ((func_80033684(play, &this->actor) != NULL) ||
@@ -136,7 +138,7 @@ void ObjBombiwa_Update(Actor* thisx, PlayState* play) {
         Actor_Kill(&this->actor);
     } else {
         this->collider.base.acFlags &= ~AC_HIT;
-        if (this->actor.xzDistToPlayer < 800.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 800.0f) {
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
         }

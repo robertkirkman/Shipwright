@@ -167,7 +167,7 @@ s32 EnRiverSound_GetSoundPos(Vec3s* points, s32 numPoints, Vec3f* hearPos, Vec3f
 void EnRiverSound_Update(Actor* thisx, PlayState* play) {
     Path* path;
     Vec3f* pos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     EnRiverSound* this = (EnRiverSound*)thisx;
     s32 sp34;
 
@@ -205,6 +205,8 @@ void EnRiverSound_Update(Actor* thisx, PlayState* play) {
 }
 
 void EnRiverSound_Draw(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static s16 soundEffects[] = {
         0,
         NA_SE_EV_WATER_WALL - SFX_FLAG,
@@ -240,7 +242,7 @@ void EnRiverSound_Draw(Actor* thisx, PlayState* play) {
     } else if (this->actor.params == RS_UNK_11) {
         func_800F4A54(90);
     } else if (this->actor.params == RS_SARIAS_SONG) {
-        func_800F4E30(&this->actor.projectedPos, this->actor.xzDistToPlayer);
+        func_800F4E30(&this->actor.projectedPos, this->actor.xzDistToPlayer[playerIndex]);
     } else if (this->actor.params == RS_UNK_13) {
         Audio_PlaySariaBgm(&this->actor.home.pos, NA_BGM_SARIA_THEME, 1000);
     } else if (this->actor.params == RS_UNK_19) {

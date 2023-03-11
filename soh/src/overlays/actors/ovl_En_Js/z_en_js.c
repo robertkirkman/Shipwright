@@ -84,10 +84,12 @@ u8 func_80A88F64(EnJs* this, PlayState* play, u16 textId) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         return 1;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.textId = textId;
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-        if (ABS(yawDiff) <= 0x1800 && this->actor.xzDistToPlayer < 100.0f) {
+        if (ABS(yawDiff) <= 0x1800 && this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
             this->unk_284 |= 1;
             func_8002F2CC(&this->actor, play, 100.0f);
         }

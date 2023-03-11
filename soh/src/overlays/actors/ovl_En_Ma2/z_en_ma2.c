@@ -123,7 +123,7 @@ s16 func_80AA1A38(PlayState* play, Actor* thisx) {
 }
 
 void func_80AA1AE4(EnMa2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode;
 
     if ((this->interactInfo.talkState == NPC_TALK_STATE_IDLE) && (this->skelAnime.animation == &gMalonAdultSingAnim)) {
@@ -263,21 +263,20 @@ void func_80AA2018(EnMa2* this, PlayState* play) {
 }
 
 void func_80AA204C(EnMa2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (player->stateFlags2 & 0x1000000) {
         player->unk_6A8 = &this->actor;
         player->stateFlags2 |= 0x2000000;
         func_8010BD58(play, OCARINA_ACTION_CHECK_EPONA);
         this->actionFunc = func_80AA20E4;
-    } else if (this->actor.xzDistToPlayer < 30.0f + (f32)this->collider.dim.radius) {
+    } else if (this->actor.xzDistToPlayer[playerIndex] < 30.0f + (f32)this->collider.dim.radius) {
         player->stateFlags2 |= 0x800000;
     }
 }
 
 void func_80AA20E4(EnMa2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (play->msgCtx.ocarinaMode >= OCARINA_MODE_04) {
         this->actionFunc = func_80AA204C;
         play->msgCtx.ocarinaMode = OCARINA_MODE_04;
@@ -288,14 +287,14 @@ void func_80AA20E4(EnMa2* this, PlayState* play) {
         this->actionFunc = func_80AA21C8;
         play->msgCtx.ocarinaMode = OCARINA_MODE_04;
     } else {
+        Player* player = Player_NearestToActor(&this->actor, play);
         player->stateFlags2 |= 0x800000;
     }
 }
 
 void func_80AA21C8(EnMa2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (DECR(this->unk_208)) {
+        Player* player = Player_NearestToActor(&this->actor, play);
         player->stateFlags2 |= 0x800000;
     } else {
         if (this->interactInfo.talkState == NPC_TALK_STATE_IDLE) {
@@ -373,13 +372,15 @@ void EnMa2_Draw(Actor* thisx, PlayState* play) {
     static void* sEyeTextures[] = { gMalonAdultEyeOpenTex, gMalonAdultEyeHalfTex, gMalonAdultEyeClosedTex };
 
     EnMa2* this = (EnMa2*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera;
     f32 someFloat;
     s32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     someFloat = Math_Vec3f_DistXZ(&this->actor.world.pos, &camera->eye);
     func_800F6268(someFloat, NA_BGM_LONLON);
     Gfx_SetupDL_25Opa(play->state.gfxCtx);

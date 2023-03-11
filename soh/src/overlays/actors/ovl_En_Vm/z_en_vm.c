@@ -175,7 +175,8 @@ void EnVm_SetupWait(EnVm* this) {
 }
 
 void EnVm_Wait(EnVm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 dist;
     s16 headRot;
     s16 pad;
@@ -184,19 +185,19 @@ void EnVm_Wait(EnVm* this, PlayState* play) {
     switch (this->unk_25E) {
         case 0:
             Math_SmoothStepToS(&this->beamRot.x, 0, 10, 1500, 0);
-            headRot = this->actor.yawTowardsPlayer - this->headRotY - this->actor.shape.rot.y;
+            headRot = this->actor.yawTowardsPlayer[playerIndex] - this->headRotY - this->actor.shape.rot.y;
             pitch = Math_Vec3f_Pitch(&this->beamPos1, &player->actor.world.pos);
 
             if (pitch > 0x1B91) {
                 pitch = 0x1B91;
             }
 
-            dist = this->beamSightRange - this->actor.xzDistToPlayer;
+            dist = this->beamSightRange - this->actor.xzDistToPlayer[playerIndex];
 
-            if (this->actor.xzDistToPlayer <= this->beamSightRange && ABS(headRot) <= 0x2710 && pitch >= 0xE38 &&
-                this->actor.yDistToPlayer <= 80.0f && this->actor.yDistToPlayer >= -160.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] <= this->beamSightRange && ABS(headRot) <= 0x2710 && pitch >= 0xE38 &&
+                this->actor.yDistToPlayer[playerIndex] <= 80.0f && this->actor.yDistToPlayer[playerIndex] >= -160.0f) {
                 Math_SmoothStepToS(&this->beamRot.x, pitch, 10, 0xFA0, 0);
-                if (Math_SmoothStepToS(&this->headRotY, this->actor.yawTowardsPlayer - this->actor.shape.rot.y, 1,
+                if (Math_SmoothStepToS(&this->headRotY, this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y, 1,
                                        (ABS((s16)(dist * 180.0f)) / 3) + 0xFA0, 0) <= 5460) {
                     this->timer--;
                     if (this->timer == 0) {
@@ -219,7 +220,7 @@ void EnVm_Wait(EnVm* this, PlayState* play) {
             return;
     }
 
-    Math_SmoothStepToS(&this->headRotY, this->actor.yawTowardsPlayer - this->actor.shape.rot.y, 1, 0x1F40, 0);
+    Math_SmoothStepToS(&this->headRotY, this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y, 1, 0x1F40, 0);
 
     if (SkelAnime_Update(&this->skelAnime)) {
         this->unk_260++;
@@ -227,7 +228,7 @@ void EnVm_Wait(EnVm* this, PlayState* play) {
     }
 
     if (this->unk_260 == 2) {
-        this->beamRot.y = this->actor.yawTowardsPlayer;
+        this->beamRot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->beamRot.x = Math_Vec3f_Pitch(&this->beamPos1, &player->actor.world.pos);
 
         if (this->beamRot.x > 0x1B91) {
@@ -259,7 +260,8 @@ void EnVm_SetupAttack(EnVm* this) {
 }
 
 void EnVm_Attack(EnVm* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 pitch = Math_Vec3f_Pitch(&this->beamPos1, &player->actor.world.pos);
     f32 dist;
     Vec3f playerPos;
@@ -290,8 +292,8 @@ void EnVm_Attack(EnVm* this, PlayState* play) {
             return;
         }
 
-        Math_SmoothStepToS(&this->headRotY, -this->actor.shape.rot.y + this->actor.yawTowardsPlayer, 10, 0xDAC, 0);
-        Math_SmoothStepToS(&this->beamRot.y, this->actor.yawTowardsPlayer, 10, 0xDAC, 0);
+        Math_SmoothStepToS(&this->headRotY, -this->actor.shape.rot.y + this->actor.yawTowardsPlayer[playerIndex], 10, 0xDAC, 0);
+        Math_SmoothStepToS(&this->beamRot.y, this->actor.yawTowardsPlayer[playerIndex], 10, 0xDAC, 0);
         Math_SmoothStepToS(&this->beamRot.x, pitch, 10, 0xDAC, 0);
         playerPos = player->actor.world.pos;
 

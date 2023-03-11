@@ -64,6 +64,8 @@ u32 EffectSsEnFire_Init(PlayState* play, u32 index, EffectSs* this, void* initPa
 }
 
 void EffectSsEnFire_Draw(PlayState* play, u32 index, EffectSs* this) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     GraphicsContext* gfxCtx = play->state.gfxCtx;
     f32 scale;
     s16 camYaw;
@@ -73,7 +75,7 @@ void EffectSsEnFire_Draw(PlayState* play, u32 index, EffectSs* this) {
     OPEN_DISPS(gfxCtx);
 
     Matrix_Translate(this->pos.x, this->pos.y, this->pos.z, MTXMODE_NEW);
-    camYaw = (Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000);
+    camYaw = (Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000);
     Matrix_RotateY(camYaw * (M_PI / 0x8000), MTXMODE_APPLY);
 
     scale = Math_SinS(this->life * 0x333) * (this->rScale * 0.00005f);

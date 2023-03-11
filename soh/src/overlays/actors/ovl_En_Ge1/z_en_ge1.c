@@ -206,6 +206,8 @@ void EnGe1_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 EnGe1_SetTalkAction(EnGe1* this, PlayState* play, u16 textId, f32 arg3, EnGe1ActionFunc actionFunc) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->actionFunc = actionFunc;
         this->animFunc = EnGe1_StopFidget;
@@ -218,7 +220,7 @@ s32 EnGe1_SetTalkAction(EnGe1* this, PlayState* play, u16 textId, f32 arg3, EnGe
 
     this->actor.textId = textId;
 
-    if (this->actor.xzDistToPlayer < arg3) {
+    if (this->actor.xzDistToPlayer[playerIndex] < arg3) {
         func_8002F2CC(&this->actor, play, arg3);
     }
 
@@ -277,17 +279,20 @@ void EnGe1_KickPlayer(EnGe1* this, PlayState* play) {
 }
 
 void EnGe1_SpotPlayer(EnGe1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->cutsceneTimer = 30;
     this->actionFunc = EnGe1_KickPlayer;
-    func_8002DF54(play, &this->actor, 0x5F);
+    func_8002DF54(play, player, &this->actor, 0x5F);
     func_80078884(NA_SE_SY_FOUND);
     Message_StartTextbox(play, 0x6000, &this->actor);
 }
 
 void EnGe1_WatchForPlayerFrontOnly(EnGe1* this, PlayState* play) {
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         EnGe1_SpotPlayer(this, play);
     }
 
@@ -328,9 +333,11 @@ void EnGe1_SetNormalText(EnGe1* this, PlayState* play) {
 }
 
 void EnGe1_WatchForAndSensePlayer(EnGe1* this, PlayState* play) {
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((this->actor.xzDistToPlayer < 50.0f) || ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer < 400.0f))) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 50.0f) || ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer[playerIndex] < 400.0f))) {
         EnGe1_SpotPlayer(this, play);
     }
 
@@ -639,7 +646,8 @@ void EnGe1_WaitDoNothing(EnGe1* this, PlayState* play) {
 }
 
 void EnGe1_BeginGame_Archery(EnGe1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* horse;
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play)) {
@@ -660,7 +668,7 @@ void EnGe1_BeginGame_Archery(EnGe1* this, PlayState* play) {
                     gSaveContext.eventChkInf[6] |= 0x100;
 
                     if (!(player->stateFlags1 & 0x800000)) {
-                        func_8002DF54(play, &this->actor, 1);
+                        func_8002DF54(play, player, &this->actor, 1);
                     } else {
                         horse = Actor_FindNearby(play, &player->actor, ACTOR_EN_HORSE, ACTORCAT_BG, 1200.0f);
                         player->actor.freezeTimer = 1200;
@@ -736,7 +744,7 @@ void EnGe1_TalkNoHorse_Archery(EnGe1* this, PlayState* play) {
 }
 
 void EnGe1_Wait_Archery(EnGe1* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     u16 textId;
 
     if (!(player->stateFlags1 & 0x800000)) {
@@ -758,11 +766,13 @@ void EnGe1_Wait_Archery(EnGe1* this, PlayState* play) {
 // General functions
 
 void EnGe1_TurnToFacePlayer(EnGe1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (ABS(angleDiff) <= 0x4000) {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 6, 4000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 6, 4000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2A2, this->actor.focus.pos);
     } else {
@@ -772,15 +782,17 @@ void EnGe1_TurnToFacePlayer(EnGe1* this, PlayState* play) {
             Math_SmoothStepToS(&this->headRot.y, 0x2000, 6, 6200, 0x100);
         }
 
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 12, 1000, 100);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 12, 1000, 100);
         this->actor.world.rot.y = this->actor.shape.rot.y;
     }
 }
 
 void EnGe1_LookAtPlayer(EnGe1* this, PlayState* play) {
-    s16 angleDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 angleDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-    if ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer < 100.0f)) {
+    if ((ABS(angleDiff) <= 0x4300) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         func_80038290(play, &this->actor, &this->headRot, &this->unk_2A2, this->actor.focus.pos);
     } else {
         Math_SmoothStepToS(&this->headRot.x, 0, 6, 6200, 100);

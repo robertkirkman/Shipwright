@@ -78,11 +78,11 @@ void LaunchBridgeCutscene(BgGjyoBridge* this, PlayState* play) {
 u8 CheckPlayerPosition(Player* player, PlayState* play) {
     return (player->actor.world.pos.x > -70.0f) && (player->actor.world.pos.x < 300.0f) &&
            (player->actor.world.pos.y > 1340.0f) && (player->actor.world.pos.z > 1340.0f) &&
-           (player->actor.world.pos.z < 1662.0f) && !Play_InCsMode(play);
+           (player->actor.world.pos.z < 1662.0f) && !Play_InCsMode(play, player);
 }
 
 void BgGjyoBridge_TriggerCutscene(BgGjyoBridge* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (!gSaveContext.n64ddFlag) {
         if (CHECK_QUEST_ITEM(QUEST_MEDALLION_SPIRIT) && CHECK_QUEST_ITEM(QUEST_MEDALLION_SHADOW) &&

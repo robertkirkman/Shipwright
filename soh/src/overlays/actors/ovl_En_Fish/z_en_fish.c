@@ -166,13 +166,14 @@ void EnFish_SetYOffset(EnFish* this) {
 
 s32 EnFish_InBottleRange(EnFish* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f sp1C;
 
-    if (this->actor.xzDistToPlayer < 32.0f) {
-        sp1C.x = (Math_SinS(this->actor.yawTowardsPlayer + 0x8000) * 16.0f) + player->actor.world.pos.x;
+    if (this->actor.xzDistToPlayer[playerIndex] < 32.0f) {
+        sp1C.x = (Math_SinS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 16.0f) + player->actor.world.pos.x;
         sp1C.y = player->actor.world.pos.y;
-        sp1C.z = (Math_CosS(this->actor.yawTowardsPlayer + 0x8000) * 16.0f) + player->actor.world.pos.z;
+        sp1C.z = (Math_CosS(this->actor.yawTowardsPlayer[playerIndex] + 0x8000) * 16.0f) + player->actor.world.pos.z;
 
         //! @bug: this check is superfluous: it is automatically satisfied if the coarse check is satisfied. It may have
         //! been intended to check the actor is in front of Player, but yawTowardsPlayer does not depend on Player's
@@ -186,7 +187,9 @@ s32 EnFish_InBottleRange(EnFish* this, PlayState* play) {
 }
 
 s32 EnFish_CheckXZDistanceToPlayer(EnFish* this, PlayState* play) {
-    return (this->actor.xzDistToPlayer < 60.0f);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    return (this->actor.xzDistToPlayer[playerIndex] < 60.0f);
 }
 
 // Respawning type functions
@@ -281,7 +284,9 @@ void EnFish_Respawning_FleePlayer(EnFish* this, PlayState* play) {
         yaw = Math_Vec3f_Yaw(&this->actor.world.pos, &this->actor.child->world.pos);
         Math_StepToAngleS(&this->actor.world.rot.y, yaw, 2000);
     } else if (playerClose) {
-        yaw = this->actor.yawTowardsPlayer + 0x8000;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        yaw = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         frames = play->state.frames;
 
         if (frames & 0x10) {
@@ -320,7 +325,8 @@ void EnFish_Respawning_SetupApproachPlayer(EnFish* this) {
 
 void EnFish_Respawning_ApproachPlayer(EnFish* this, PlayState* play) {
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad2;
     Vec3f sp38;
     s16 yaw;
@@ -334,9 +340,9 @@ void EnFish_Respawning_ApproachPlayer(EnFish* this, PlayState* play) {
         Math_StepToAngleS(&this->actor.world.rot.y, yaw, 3000);
     } else {
         if ((s16)play->state.frames & 0x40) {
-            temp_a0_2 = (this->actor.yawTowardsPlayer + 0x9000);
+            temp_a0_2 = (this->actor.yawTowardsPlayer[playerIndex] + 0x9000);
         } else {
-            temp_a0_2 = (this->actor.yawTowardsPlayer + 0x7000);
+            temp_a0_2 = (this->actor.yawTowardsPlayer[playerIndex] + 0x7000);
         }
 
         sp38.x = player->actor.world.pos.x + (Math_SinS(temp_a0_2) * 20.0f);
@@ -533,6 +539,8 @@ void EnFish_Unique_SetupSwimIdle(EnFish* this) {
 }
 
 void EnFish_Unique_SwimIdle(EnFish* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static f32 speedStopping[] = { 0.0f, 0.04f, 0.09f };
     static f32 speedMoving[] = { 0.5f, 0.1f, 0.15f };
     f32 playSpeed;
@@ -542,7 +550,7 @@ void EnFish_Unique_SwimIdle(EnFish* this, PlayState* play) {
     f32 extraPlaySpeed;
     s32 pad3;
 
-    if (this->actor.xzDistToPlayer < 60.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 60.0f) {
         if (this->timer < 12) {
             speed = speedMoving;
         } else {
@@ -689,13 +697,15 @@ void EnFish_OrdinaryUpdate(EnFish* this, PlayState* play) {
     }
 
     if ((this->actionFunc == NULL) || (this->actionFunc(this, play), (this->actor.update != NULL))) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         Actor_MoveForward(&this->actor);
 
         if (this->unk_250 != 0) {
             Actor_UpdateBgCheckInfo(play, &this->actor, 17.5f, 4.0f, 0.0f, this->unk_250);
         }
 
-        if (this->actor.xzDistToPlayer < 70.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 70.0f) {
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
         }
 

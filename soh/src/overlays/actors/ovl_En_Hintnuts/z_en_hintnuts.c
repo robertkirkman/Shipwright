@@ -218,6 +218,8 @@ void EnHintnuts_SetupFreeze(EnHintnuts* this) {
 }
 
 void EnHintnuts_Wait(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 hasSlowPlaybackSpeed = false;
 
     if (this->skelAnime.playSpeed < 0.5f) {
@@ -233,42 +235,46 @@ void EnHintnuts_Wait(EnHintnuts* this, PlayState* play) {
     }
 
     this->collider.dim.height = 5.0f + ((CLAMP(this->skelAnime.curFrame, 9.0f, 12.0f) - 9.0f) * 9.0f);
-    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer < 120.0f)) {
+    if (!hasSlowPlaybackSpeed && (this->actor.xzDistToPlayer[playerIndex] < 120.0f)) {
         EnHintnuts_SetupBurrow(this);
     } else if (SkelAnime_Update(&this->skelAnime)) {
-        if (this->actor.xzDistToPlayer < 120.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
             EnHintnuts_SetupBurrow(this);
-        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer > 320.0f)) {
+        } else if ((this->animFlagAndTimer == 0) && (this->actor.xzDistToPlayer[playerIndex] > 320.0f)) {
             EnHintnuts_SetupLookAround(this);
         } else {
             EnHintnuts_SetupStand(this);
         }
     }
-    if (hasSlowPlaybackSpeed && 160.0f < this->actor.xzDistToPlayer && fabsf(this->actor.yDistToPlayer) < 120.0f &&
-        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer < 480.0f))) {
+    if (hasSlowPlaybackSpeed && 160.0f < this->actor.xzDistToPlayer[playerIndex] && fabsf(this->actor.yDistToPlayer[playerIndex]) < 120.0f &&
+        ((this->animFlagAndTimer == 0) || (this->actor.xzDistToPlayer[playerIndex] < 480.0f))) {
         this->skelAnime.playSpeed = 1.0f;
     }
 }
 
 void EnHintnuts_LookAround(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && this->animFlagAndTimer != 0) {
         this->animFlagAndTimer--;
     }
-    if ((this->actor.xzDistToPlayer < 120.0f) || (this->animFlagAndTimer == 0)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 120.0f) || (this->animFlagAndTimer == 0)) {
         EnHintnuts_SetupBurrow(this);
     }
 }
 
 void EnHintnuts_Stand(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (Animation_OnFrame(&this->skelAnime, 0.0f) && this->animFlagAndTimer != 0) {
         this->animFlagAndTimer--;
     }
     if (!(this->animFlagAndTimer & 0x1000)) {
-        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+        Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
     }
-    if (this->actor.xzDistToPlayer < 120.0f || this->animFlagAndTimer == 0x1000) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f || this->animFlagAndTimer == 0x1000) {
         EnHintnuts_SetupBurrow(this);
     } else if (this->animFlagAndTimer == 0) {
         EnHintnuts_SetupThrowScrubProjectile(this);
@@ -276,10 +282,12 @@ void EnHintnuts_Stand(EnHintnuts* this, PlayState* play) {
 }
 
 void EnHintnuts_ThrowNut(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f nutPos;
 
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
-    if (this->actor.xzDistToPlayer < 120.0f) {
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
+    if (this->actor.xzDistToPlayer[playerIndex] < 120.0f) {
         EnHintnuts_SetupBurrow(this);
     } else if (SkelAnime_Update(&this->skelAnime)) {
         EnHintnuts_SetupStand(this);
@@ -309,11 +317,13 @@ void EnHintnuts_Burrow(EnHintnuts* this, PlayState* play) {
 }
 
 void EnHintnuts_BeginRun(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (SkelAnime_Update(&this->skelAnime)) {
-        this->unk_196 = this->actor.yawTowardsPlayer + 0x8000;
+        this->unk_196 = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
         EnHintnuts_SetupRun(this);
     }
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 2, 0xE38);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 2, 0xE38);
 }
 
 void EnHintnuts_BeginFreeze(EnHintnuts* this, PlayState* play) {
@@ -324,12 +334,14 @@ void EnHintnuts_BeginFreeze(EnHintnuts* this, PlayState* play) {
 
 void EnHintnuts_CheckProximity(EnHintnuts* this, PlayState* play) {
     if (this->actor.category != ACTORCAT_ENEMY) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if ((this->collider.base.ocFlags1 & OC1_HIT) || this->actor.isTargeted) {
             this->actor.flags |= ACTOR_FLAG_16;
         } else {
             this->actor.flags &= ~ACTOR_FLAG_16;
         }
-        if (this->actor.xzDistToPlayer < 130.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 130.0f) {
             this->actor.textId = this->textIdCopy;
             func_8002F2F4(&this->actor, play);
         }
@@ -353,21 +365,23 @@ void EnHintnuts_Run(EnHintnuts* this, PlayState* play) {
 
     Math_StepToF(&this->actor.speedXZ, 7.5f, 1.0f);
     if (Math_SmoothStepToS(&this->actor.world.rot.y, this->unk_196, 1, 0xE38, 0xB6) == 0) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if (this->actor.bgCheckFlags & 0x20) {
             this->unk_196 = Actor_WorldYawTowardPoint(&this->actor, &this->actor.home.pos);
         } else if (this->actor.bgCheckFlags & 8) {
             this->unk_196 = this->actor.wallYaw;
         } else if (this->animFlagAndTimer == 0) {
             diffRotInit = Actor_WorldYawTowardPoint(&this->actor, &this->actor.home.pos);
-            diffRot = diffRotInit - this->actor.yawTowardsPlayer;
+            diffRot = diffRotInit - this->actor.yawTowardsPlayer[playerIndex];
             if (ABS(diffRot) >= 0x2001) {
                 this->unk_196 = diffRotInit;
             } else {
                 phi_f0 = (0.0f <= (f32)diffRot) ? 1.0f : -1.0f;
-                this->unk_196 = (s16)((phi_f0 * -8192.0f) + (f32)this->actor.yawTowardsPlayer);
+                this->unk_196 = (s16)((phi_f0 * -8192.0f) + (f32)this->actor.yawTowardsPlayer[playerIndex]);
             }
         } else {
-            this->unk_196 = (s16)(this->actor.yawTowardsPlayer + 0x8000);
+            this->unk_196 = (s16)(this->actor.yawTowardsPlayer[playerIndex] + 0x8000);
         }
     }
 
@@ -389,8 +403,10 @@ void EnHintnuts_Run(EnHintnuts* this, PlayState* play) {
 }
 
 void EnHintnuts_Talk(EnHintnuts* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0x3, 0x400, 0x100);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0x3, 0x400, 0x100);
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) {
         EnHintnuts_SetupLeave(this, play);
     }
@@ -409,11 +425,13 @@ void EnHintnuts_Leave(EnHintnuts* this, PlayState* play) {
     if (this->actor.bgCheckFlags & 8) {
         temp_a1 = this->actor.wallYaw;
     } else {
-        temp_a1 = this->actor.yawTowardsPlayer - Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - 0x8000;
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        temp_a1 = this->actor.yawTowardsPlayer[playerIndex] - Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - 0x8000;
         if (ABS(temp_a1) >= 0x4001) {
-            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000;
+            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000;
         } else {
-            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - (temp_a1 >> 1) + 0x8000;
+            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - (temp_a1 >> 1) + 0x8000;
         }
     }
     Math_ScaledStepToS(&this->actor.shape.rot.y, temp_a1, 0x800);

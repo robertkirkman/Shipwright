@@ -112,6 +112,7 @@ void func_80A6D8D0(unknownStruct* data, s32 index, Vec3f* vec) {
 }
 
 void func_80A6D918(EnHorseZelda* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
     Vec3f sp28;
     s16 yawDiff;
@@ -134,7 +135,7 @@ void func_80A6D918(EnHorseZelda* this, PlayState* play) {
     }
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
-    if (Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor) <= 300.0f) {
+    if (Actor_WorldDistXZToActor(&this->actor, &player->actor) <= 300.0f) {
         if (this->actor.speedXZ < 12.0f) {
             this->actor.speedXZ += 1.0f;
         } else {

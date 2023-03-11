@@ -527,8 +527,9 @@ void EnDodongo_SwallowBomb(EnDodongo* this, PlayState* play) {
 void EnDodongo_Walk(EnDodongo* this, PlayState* play) {
     s32 pad;
     f32 playbackSpeed;
-    Player* player = GET_PLAYER(play);
-    s16 yawDiff = (s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 yawDiff = (s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y);
 
     yawDiff = ABS(yawDiff);
 
@@ -562,9 +563,9 @@ void EnDodongo_Walk(EnDodongo* this, PlayState* play) {
     }
 
     if (Math_Vec3f_DistXZ(&this->actor.home.pos, &player->actor.world.pos) < 400.0f) {
-        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 1, 0x1F4, 0);
+        Math_SmoothStepToS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x1F4, 0);
         this->actor.flags |= ACTOR_FLAG_0;
-        if ((this->actor.xzDistToPlayer < 100.0f) && (yawDiff < 0x1388) && (this->actor.yDistToPlayer < 60.0f)) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 100.0f) && (yawDiff < 0x1388) && (this->actor.yDistToPlayer[playerIndex] < 60.0f)) {
             EnDodongo_SetupBreatheFire(this);
         }
     } else {
@@ -601,7 +602,9 @@ void EnDodongo_SetupSweepTail(EnDodongo* this) {
 }
 
 void EnDodongo_SweepTail(EnDodongo* this, PlayState* play) {
-    s16 yawDiff1 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 yawDiff1 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
     if (SkelAnime_Update(&this->skelAnime)) {
         if ((this->timer != 0) || (ABS(yawDiff1) < 0x4000)) {
@@ -615,11 +618,11 @@ void EnDodongo_SweepTail(EnDodongo* this, PlayState* play) {
             EnDodongo_SetupBreatheFire(this);
             this->timer = Rand_S16Offset(5, 10);
         } else {
-            s16 yawDiff2 = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+            s16 yawDiff2 = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
             AnimationHeader* animation;
 
             this->tailSwipeSpeed = (0xFFFF - ABS(yawDiff2)) / 0xF;
-            if ((s16)(this->actor.yawTowardsPlayer - this->actor.shape.rot.y) >= 0) {
+            if ((s16)(this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y) >= 0) {
                 this->tailSwipeSpeed = -this->tailSwipeSpeed;
                 animation = &gDodongoSweepTailLeftAnim;
             } else {
@@ -648,8 +651,6 @@ void EnDodongo_SweepTail(EnDodongo* this, PlayState* play) {
         Actor_SpawnFloorDustRing(play, &this->actor, &tailPos, 5.0f, 2, 2.0f, 100, 15, false);
 
         if (this->colliderBody.base.atFlags & AT_HIT) {
-            Player* player = GET_PLAYER(play);
-
             if (this->colliderBody.base.at == &player->actor) {
                 Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
             }

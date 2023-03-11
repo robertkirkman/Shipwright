@@ -191,7 +191,9 @@ void func_80ABCE38(EnNy* this) {
 }
 
 void func_80ABCE50(EnNy* this, PlayState* play) {
-    if (this->actor.xyzDistToPlayerSq <= 25600.0f) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xyzDistToPlayerSq[playerIndex] <= 25600.0f) {
         func_80ABCD94(this);
     }
 }
@@ -224,6 +226,8 @@ void func_80ABCEEC(EnNy* this, PlayState* play) {
 }
 
 void EnNy_Move(EnNy* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 yawDiff;
     s32 stoneTimer;
 
@@ -236,10 +240,10 @@ void EnNy_Move(EnNy* this, PlayState* play) {
     if ((stoneTimer <= 0) || (this->hitPlayer != false)) {
         EnNy_SetupTurnToStone(this);
     } else {
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 0xA, this->unk_1F4, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 0xA, this->unk_1F4, 0);
         Math_ApproachF(&this->unk_1F4, 2000.0f, 1.0f, 100.0f);
         this->actor.world.rot.y = this->actor.shape.rot.y;
-        yawDiff = Math_FAtan2F(this->actor.yDistToPlayer, this->actor.xzDistToPlayer);
+        yawDiff = Math_FAtan2F(this->actor.yDistToPlayer[playerIndex], this->actor.xzDistToPlayer[playerIndex]);
         this->actor.speedXZ = fabsf(cosf(yawDiff) * this->unk_1E8);
         if (this->unk_1F0 < this->actor.yDistToWater) {
             this->unk_1EC = sinf(yawDiff) * this->unk_1E8;
@@ -295,9 +299,11 @@ s32 EnNy_CollisionCheck(EnNy* this, PlayState* play) {
     sp3F = 0;
     this->hitPlayer = 0;
     if (this->collider.base.atFlags & 4) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->collider.base.atFlags &= ~4;
         this->hitPlayer = 1;
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actor.speedXZ = -4.0f;
         return 0;
     }

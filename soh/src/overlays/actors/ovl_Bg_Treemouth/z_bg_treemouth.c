@@ -143,10 +143,11 @@ void func_808BC864(BgTreemouth* this, PlayState* play) {
 }
 
 void func_808BC8B8(BgTreemouth* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if ((!(Flags_GetEventChkInf(5))) || LINK_IS_ADULT) {
         if (!LINK_IS_ADULT) {
             if (Flags_GetEventChkInf(0xC)) {
-                if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 1658.0f, 0x7530)) {
+                if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 1658.0f, 0x7530, player, play)) {
                     this->dyna.actor.flags |= ACTOR_FLAG_0;
                     if (this->dyna.actor.isTargeted) {
                         this->dyna.actor.flags &= ~ACTOR_FLAG_0;
@@ -155,7 +156,7 @@ void func_808BC8B8(BgTreemouth* this, PlayState* play) {
                         BgTreemouth_SetupAction(this, func_808BC9EC);
                     }
                 }
-            } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 1658.0f, 0x4E20)) {
+            } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 1658.0f, 0x4E20, player, play)) {
                 Flags_SetEventChkInf(0xC);
                 play->csCtx.segment = D_808BCE20;
                 gSaveContext.cutsceneTrigger = 1;
@@ -168,10 +169,10 @@ void func_808BC8B8(BgTreemouth* this, PlayState* play) {
 }
 
 void func_808BC9EC(BgTreemouth* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (play->csCtx.state == CS_STATE_UNSKIPPABLE_INIT) {
-        if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 350.0f, 0x7530)) {
+        if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 350.0f, 0x7530, player, play)) {
             player->actor.world.pos.x = 3827.0f;
             player->actor.world.pos.y = -161.0f;
             player->actor.world.pos.z = -1142.0f;

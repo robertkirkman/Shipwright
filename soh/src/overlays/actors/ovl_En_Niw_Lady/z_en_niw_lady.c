@@ -361,7 +361,7 @@ void func_80ABA778(EnNiwLady* this, PlayState* play) {
 }
 
 void func_80ABA878(EnNiwLady* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 playerExchangeItemId;
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_NONE) ||
@@ -369,7 +369,7 @@ void func_80ABA878(EnNiwLady* this, PlayState* play) {
         this->unk_26E = 11;
     }
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        playerExchangeItemId = func_8002F368(play);
+        playerExchangeItemId = func_8002F368(play, player);
         if ((playerExchangeItemId == 6) && (gSaveContext.eventChkInf[6] & 0x400)) {
             func_80078884(NA_SE_SY_TRE_BOX_APPEAR);
             player->actor.textId = sTradeItemTextIds[5];
@@ -524,7 +524,7 @@ void func_80ABAD7C(EnNiwLady* this, PlayState* play) {
 void EnNiwLady_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnNiwLady* this = (EnNiwLady*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     Actor_SetFocus(thisx, 60.0f);
     this->interactInfo.trackPos = player->actor.world.pos;

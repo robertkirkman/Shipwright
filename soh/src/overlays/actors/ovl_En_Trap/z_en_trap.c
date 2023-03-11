@@ -121,6 +121,8 @@ void EnTrap_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnTrap_Update(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnTrap* this = (EnTrap*)thisx;
     Vec3f posTemp;
     s16 angleToKnockPlayer;
@@ -164,17 +166,17 @@ void EnTrap_Update(Actor* thisx, PlayState* play) {
         DECR(this->playerDmgTimer);
         // Handles damaging player:
         //! @bug there is no yDistToPlayer check for player being below. Therefore hitbox extends down infinitely
-        if ((thisx->xzDistToPlayer <= 40.0f) && (this->playerDmgTimer == 0) && (thisx->yDistToPlayer <= 20.0f)) {
+        if ((thisx->xzDistToPlayer[playerIndex] <= 40.0f) && (this->playerDmgTimer == 0) && (thisx->yDistToPlayer[playerIndex] <= 20.0f)) {
             if (!(thisx->params & (SPIKETRAP_MODE_LINEAR | SPIKETRAP_MODE_CIRCULAR))) { // if in 4-way mode:
-                if ((s16)(this->vClosestDirection - thisx->yawTowardsPlayer) >= 0) {
+                if ((s16)(this->vClosestDirection - thisx->yawTowardsPlayer[playerIndex]) >= 0) {
                     angleToKnockPlayer = this->vClosestDirection - 0x4000;
                 } else {
                     angleToKnockPlayer = this->vClosestDirection + 0x4000;
                 }
             } else {
-                angleToKnockPlayer = thisx->yawTowardsPlayer;
+                angleToKnockPlayer = thisx->yawTowardsPlayer[playerIndex];
             }
-            play->damagePlayer(play, -4);
+            play->damagePlayer(play, player, -4);
             func_8002F7A0(play, thisx, 6.0f, angleToKnockPlayer, 6.0f);
             this->playerDmgTimer = 15;
         }
@@ -313,9 +315,9 @@ void EnTrap_Update(Actor* thisx, PlayState* play) {
                 // if in initial position:
             } else if ((thisx->world.pos.x == thisx->home.pos.x) && (thisx->world.pos.z == thisx->home.pos.z)) {
                 // of the available 4-way directions, get the one which is closest to the direction of player:
-                this->vClosestDirection = ((thisx->yawTowardsPlayer - thisx->world.rot.y) + 0x2000) & 0xC000;
+                this->vClosestDirection = ((thisx->yawTowardsPlayer[playerIndex] - thisx->world.rot.y) + 0x2000) & 0xC000;
                 this->vMovementMetric = 0.0f;
-                if (thisx->xzDistToPlayer < 200.0f) {
+                if (thisx->xzDistToPlayer[playerIndex] < 200.0f) {
                     this->vMovementMetric = BEGIN_MOVE_OUT;
                 }
                 // If returning to origin:

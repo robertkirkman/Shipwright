@@ -79,9 +79,10 @@ void func_80899880(BgJyaKanaami* this) {
 }
 
 void func_80899894(BgJyaKanaami* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->dyna.actor.params & 0x3F) || this->unk_16A > 0) {
         if (this->dyna.actor.world.pos.x > -1000.0f && this->unk_16A == 0) {
-            OnePointCutscene_Init(play, 3450, -99, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3450, -99, &this->dyna.actor, MAIN_CAM);
         }
         this->unk_16A += 1;
         if (this->unk_16A >= 0xA) {
@@ -96,6 +97,8 @@ void func_8089993C(BgJyaKanaami* this) {
 }
 
 void func_80899950(BgJyaKanaami* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad[2];
     s32 quakeId;
 
@@ -103,7 +106,7 @@ void func_80899950(BgJyaKanaami* this, PlayState* play) {
     if (Math_ScaledStepToS(&this->dyna.actor.world.rot.x, 0x4000, this->unk_168)) {
         func_80899A08(this);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_TRAP_BOUND);
-        quakeId = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        quakeId = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
         Quake_SetSpeed(quakeId, 25000);
         Quake_SetQuakeValues(quakeId, 2, 0, 0, 0);
         Quake_SetCountdown(quakeId, 16);

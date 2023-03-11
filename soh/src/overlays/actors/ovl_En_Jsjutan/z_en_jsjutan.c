@@ -112,7 +112,7 @@ void func_80A89A6C(EnJsjutan* this, PlayState* play) {
     f32 maxOffset;
     f32 maxAmp;
     f32 waveform;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* parent = this->dyna.actor.parent;
     Actor* actorExplosive = play->actorCtx.actorLists[ACTORCAT_EXPLOSIVE].head;
     u8 isInCreditsScene = false; // sp8B

@@ -165,7 +165,7 @@ void EnReeba_Destroy(Actor* thisx, PlayState* play) {
 
 void func_80AE4F40(EnReeba* this, PlayState* play) {
     f32 frames = Animation_GetLastFrame(&object_reeba_Anim_0001E4);
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 playerSpeed;
 
     Animation_Change(&this->skelanime, &object_reeba_Anim_0001E4, 2.0f, 0.0f, frames, ANIMMODE_LOOP, -10.0f);
@@ -192,7 +192,8 @@ void func_80AE4F40(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE5054(EnReeba* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 playerLinearVel;
 
     SkelAnime_Update(&this->skelanime);
@@ -214,19 +215,19 @@ void func_80AE5054(EnReeba* this, PlayState* play) {
 
             switch (this->unk_280) {
                 case 0:
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
                     break;
                 case 1:
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer + (800.0f * playerLinearVel);
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + (800.0f * playerLinearVel);
                     break;
                 case 2:
                 case 3:
                     this->actor.world.rot.y =
-                        this->actor.yawTowardsPlayer +
-                        (player->actor.shape.rot.y - this->actor.yawTowardsPlayer) * (playerLinearVel * 0.15f);
+                        this->actor.yawTowardsPlayer[playerIndex] +
+                        (player->actor.shape.rot.y - this->actor.yawTowardsPlayer[playerIndex]) * (playerLinearVel * 0.15f);
                     break;
                 case 4:
-                    this->actor.world.rot.y = this->actor.yawTowardsPlayer - (800.0f * playerLinearVel);
+                    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] - (800.0f * playerLinearVel);
                     break;
             }
 
@@ -242,6 +243,8 @@ void func_80AE5054(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE5270(EnReeba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 surfaceType;
 
     SkelAnime_Update(&this->skelanime);
@@ -255,7 +258,7 @@ void func_80AE5270(EnReeba* this, PlayState* play) {
     if ((surfaceType != 4) && (surfaceType != 7)) {
         this->actor.speedXZ = 0.0f;
         this->actionfunc = func_80AE5688;
-    } else if ((this->unk_272 == 0) || (this->actor.xzDistToPlayer < 30.0f) || (this->actor.xzDistToPlayer > 400.0f) ||
+    } else if ((this->unk_272 == 0) || (this->actor.xzDistToPlayer[playerIndex] < 30.0f) || (this->actor.xzDistToPlayer[playerIndex] > 400.0f) ||
                (this->actor.bgCheckFlags & 8)) {
         this->actionfunc = func_80AE5688;
     } else if (this->unk_274 == 0) {
@@ -270,6 +273,8 @@ void func_80AE538C(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE53AC(EnReeba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 speed;
     s16 yawDiff;
     s16 yaw;
@@ -283,15 +288,15 @@ void func_80AE53AC(EnReeba* this, PlayState* play) {
 
     surfaceType = func_80041D4C(&play->colCtx, this->actor.floorPoly, this->actor.floorBgId);
 
-    if (((surfaceType != 4) && (surfaceType != 7)) || (this->actor.xzDistToPlayer > 400.0f) ||
+    if (((surfaceType != 4) && (surfaceType != 7)) || (this->actor.xzDistToPlayer[playerIndex] > 400.0f) ||
         (this->actor.bgCheckFlags & 8)) {
         this->actionfunc = func_80AE5688;
     } else {
-        if ((this->actor.xzDistToPlayer < 70.0f) && (this->unk_270 == 0)) {
+        if ((this->actor.xzDistToPlayer[playerIndex] < 70.0f) && (this->unk_270 == 0)) {
             this->unk_270 = 30;
         }
 
-        speed = (this->actor.xzDistToPlayer - 20.0f) / ((Rand_ZeroOne() * 50.0f) + 150.0f);
+        speed = (this->actor.xzDistToPlayer[playerIndex] - 20.0f) / ((Rand_ZeroOne() * 50.0f) + 150.0f);
         this->actor.speedXZ += speed * 1.8f;
         if (this->actor.speedXZ >= 3.0f) {
             this->actor.speedXZ = 3.0f;
@@ -300,7 +305,7 @@ void func_80AE53AC(EnReeba* this, PlayState* play) {
             this->actor.speedXZ = -3.0f;
         }
 
-        yawDiff = (this->unk_270 == 0) ? this->actor.yawTowardsPlayer : -this->actor.yawTowardsPlayer;
+        yawDiff = (this->unk_270 == 0) ? this->actor.yawTowardsPlayer[playerIndex] : -this->actor.yawTowardsPlayer[playerIndex];
         yawDiff -= this->actor.world.rot.y;
         yaw = (yawDiff > 0) ? ((yawDiff / 31.0f) + 10.0f) : ((yawDiff / 31.0f) - 10.0f);
         this->actor.world.rot.y += yaw * 2.0f;
@@ -351,9 +356,11 @@ void func_80AE56E0(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE57F0(EnReeba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unk_276 = 14;
     this->actor.speedXZ = -8.0f;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0, 8);
     this->actionfunc = func_80AE5854;
 }
@@ -376,8 +383,10 @@ void func_80AE5854(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE58EC(EnReeba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unk_278 = 14;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     this->actor.speedXZ = -8.0f;
     this->actor.flags |= ACTOR_FLAG_27;
     this->actor.flags &= ~(ACTOR_FLAG_0 | ACTOR_FLAG_2);
@@ -444,8 +453,10 @@ void func_80AE5A9C(EnReeba* this, PlayState* play) {
 }
 
 void func_80AE5BC4(EnReeba* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.speedXZ = -8.0f;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     Actor_SetColorFilter(&this->actor, 0x4000, 0xFF, 0, 8);
     this->unk_278 = 14;
     this->actor.flags &= ~ACTOR_FLAG_0;
@@ -582,7 +593,7 @@ void func_80AE5EDC(EnReeba* this, PlayState* play) {
 void EnReeba_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnReeba* this = (EnReeba*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     func_80AE5EDC(this, play);
     this->actionfunc(this, play);

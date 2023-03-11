@@ -532,14 +532,15 @@ void EnMd_UpdateEyes(EnMd* this) {
 }
 
 void func_80AAB158(EnMd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 absYawDiff;
     s16 trackingMode;
     s16 temp2;
     s16 yawDiff;
 
-    if (this->actor.xzDistToPlayer < 170.0f) {
-        yawDiff = (f32)this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+    if (this->actor.xzDistToPlayer[playerIndex] < 170.0f) {
+        yawDiff = (f32)this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         absYawDiff = ABS(yawDiff);
 
         trackingMode =
@@ -564,7 +565,7 @@ void func_80AAB158(EnMd* this, PlayState* play) {
     }
 
     if ((play->csCtx.state != CS_STATE_IDLE) || gDbgCamEnabled) {
-        this->interactInfo.trackPos = play->view.eye;
+        this->interactInfo.trackPos = play->views[playerIndex].eye;
         this->interactInfo.yOffset = 40.0f;
         trackingMode = NPC_TRACKING_HEAD_AND_TORSO;
     } else {
@@ -714,16 +715,17 @@ void func_80AAB8F8(EnMd* this, PlayState* play) {
 }
 
 void func_80AAB948(EnMd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 temp;
-    Actor* actorToBlock = &GET_PLAYER(play)->actor;
+    Actor* actorToBlock = &player->actor;
     s16 yaw;
 
     func_80AAAA24(this);
 
     if (this->interactInfo.talkState == NPC_TALK_STATE_IDLE) {
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
-        this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
+        this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
 
         yaw = Math_Vec3f_Yaw(&this->actor.home.pos, &actorToBlock->world.pos);
 
@@ -733,7 +735,7 @@ void func_80AAB948(EnMd* this, PlayState* play) {
         this->actor.world.pos.z = this->actor.home.pos.z;
         this->actor.world.pos.z += 60.0f * Math_CosS(yaw);
 
-        temp = fabsf((f32)this->actor.yawTowardsPlayer - yaw) * 0.001f * 3.0f;
+        temp = fabsf((f32)this->actor.yawTowardsPlayer[playerIndex] - yaw) * 0.001f * 3.0f;
         this->skelAnime.playSpeed = CLAMP(temp, 1.0f, 3.0f);
     }
 
@@ -772,14 +774,14 @@ void func_80AAB948(EnMd* this, PlayState* play) {
             return;
         }
 
-        if (this->actor.xzDistToPlayer < (30.0f + this->collider.dim.radius)) {
+        if (this->actor.xzDistToPlayer[playerIndex] < (30.0f + this->collider.dim.radius)) {
             player->stateFlags2 |= 0x800000;
         }
     }
 }
 
 void func_80AABC10(EnMd* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (play->msgCtx.ocarinaMode >= OCARINA_MODE_04) {
         this->actionFunc = func_80AAB948;

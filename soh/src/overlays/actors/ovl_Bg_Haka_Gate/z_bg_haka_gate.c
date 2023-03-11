@@ -150,7 +150,7 @@ void BgHakaGate_DoNothing(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueInactive(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -159,16 +159,17 @@ void BgHakaGate_StatueInactive(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueIdle(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 linkDirection;
     f32 forceDirection;
 
     if (this->dyna.unk_150 != 0.0f) {
         if (this->vTimer == 0) {
-            this->vInitTurnAngle = this->dyna.actor.shape.rot.y - this->dyna.actor.yawTowardsPlayer;
-            sStatueDistToPlayer = this->dyna.actor.xzDistToPlayer;
+            this->vInitTurnAngle = this->dyna.actor.shape.rot.y - this->dyna.actor.yawTowardsPlayer[playerIndex];
+            sStatueDistToPlayer = this->dyna.actor.xzDistToPlayer[playerIndex];
             forceDirection = (this->dyna.unk_150 >= 0.0f) ? 1.0f : -1.0f;
-            linkDirection = ((s16)(this->dyna.actor.yawTowardsPlayer - player->actor.shape.rot.y) > 0) ? -1 : 1;
+            linkDirection = ((s16)(this->dyna.actor.yawTowardsPlayer[playerIndex] - player->actor.shape.rot.y) > 0) ? -1 : 1;
             this->vTurnDirection = linkDirection * forceDirection;
             this->actionFunc = BgHakaGate_StatueTurn;
         } else {
@@ -188,7 +189,7 @@ void BgHakaGate_StatueIdle(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_StatueTurn(BgHakaGate* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 turnFinished;
     s16 turnAngle;
 
@@ -222,7 +223,7 @@ void BgHakaGate_StatueTurn(BgHakaGate* this, PlayState* play) {
 
 void BgHakaGate_FloorClosed(BgHakaGate* this, PlayState* play) {
     if ((sStatueDistToPlayer > 1.0f) && (sStatueRotY != 0)) {
-        Player* player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->dyna.actor, play);
         f32 radialDist;
         f32 angDist;
         f32 cos = Math_CosS(sStatueRotY);
@@ -267,8 +268,9 @@ void BgHakaGate_FloorOpen(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_GateWait(BgHakaGate* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->switchFlag)) {
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = BgHakaGate_GateOpen;
     }
 }
@@ -312,6 +314,8 @@ void BgHakaGate_Update(Actor* thisx, PlayState* play) {
 
 void BgHakaGate_DrawFlame(BgHakaGate* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 scale;
 
     if (this->vFlameScale > 0) {
@@ -325,7 +329,7 @@ void BgHakaGate_DrawFlame(BgHakaGate* this, PlayState* play) {
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
 
         Matrix_Translate(thisx->world.pos.x, thisx->world.pos.y + 15.0f, thisx->world.pos.z, MTXMODE_NEW);
-        Matrix_RotateY(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) * (M_PI / 0x8000), MTXMODE_APPLY);
         scale = this->vFlameScale * 0.00001f;
         Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
         gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),

@@ -73,7 +73,7 @@ static AnimationFrameCountInfo sAnimationInfo[] = {
 };
 
 u16 func_80AA2AA0(PlayState* play, Actor* thisx) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s16* timer1ValuePtr; // weirdness with this necessary to match
 
     if (!(gSaveContext.infTable[11] & 0x100)) {
@@ -180,7 +180,7 @@ s16 func_80AA2BD4(PlayState* play, Actor* thisx) {
 }
 
 void func_80AA2E54(EnMa3* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 trackingMode;
 
     if ((this->interactInfo.talkState == NPC_TALK_STATE_IDLE) && (this->skelAnime.animation == &gMalonAdultSingAnim)) {
@@ -353,13 +353,15 @@ void EnMa3_Draw(Actor* thisx, PlayState* play) {
     static void* sMouthTextures[] = { gMalonAdultMouthNeutralTex, gMalonAdultMouthSadTex, gMalonAdultMouthHappyTex };
     static void* sEyeTextures[] = { gMalonAdultEyeOpenTex, gMalonAdultEyeHalfTex, gMalonAdultEyeClosedTex };
     EnMa3* this = (EnMa3*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera;
     f32 someFloat;
     s32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     someFloat = Math_Vec3f_DistXZ(&this->actor.world.pos, &camera->eye);
     func_800F6268(someFloat, NA_BGM_LONLON);
     Gfx_SetupDL_25Opa(play->state.gfxCtx);

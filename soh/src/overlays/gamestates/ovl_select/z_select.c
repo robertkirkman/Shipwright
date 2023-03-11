@@ -1489,7 +1489,7 @@ void Select_Init(GameState* thisx) {
     this->pageDownIndex = 0;
     this->opt = 0;
     this->count = CVarGetInteger("gBetterDebugWarpScreen", 0) ? ARRAY_COUNT(sBetterScenes) : ARRAY_COUNT(sScenes);
-    View_Init(&this->view, this->state.gfxCtx);
+    View_Init(&this->view, this->state.gfxCtx, 0);
     this->view.flags = (0x08 | 0x02);
     this->verticalInputAccumulator = 0;
     this->verticalInput = 0;

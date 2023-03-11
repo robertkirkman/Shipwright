@@ -144,24 +144,40 @@ void Message_UpdateOcarinaGame(PlayState* play) {
 }
 
 u8 Message_ShouldAdvance(PlayState* play) {
-    Input* input = &play->state.input[0];
+    // magi multiplayer: for now, make it so any player can advance text boxes
+    u8 newRet = 0, origRet = 0;
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        Input* input = &play->state.input[i];
 
-    bool isB_Held = CVarGetInteger("gSkipText", 0) != 0 ? CHECK_BTN_ALL(input->cur.button, BTN_B)
-                                                     : CHECK_BTN_ALL(input->press.button, BTN_B);
+        bool isB_Held = CVarGetInteger("gSkipText", 0) != 0 ? CHECK_BTN_ALL(input->cur.button, BTN_B)
+                                                        : CHECK_BTN_ALL(input->press.button, BTN_B);
 
-    if (CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP)) {
-        Audio_PlaySoundGeneral(NA_SE_SY_MESSAGE_PASS, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        if (CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP)) {
+            Audio_PlaySoundGeneral(NA_SE_SY_MESSAGE_PASS, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        }
+        origRet = CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP);
+        if (origRet) {
+            newRet = origRet;
+        }
     }
-    return CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP);
+    return newRet;
 }
 
 u8 Message_ShouldAdvanceSilent(PlayState* play) {
-    Input* input = &play->state.input[0];
+    // magi multiplayer: for now, make it so any player can advance text boxes
+    u8 newRet = 0, origRet = 0;
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        Input* input = &play->state.input[i];
 
-    bool isB_Held = CVarGetInteger("gSkipText", 0) != 0 ? CHECK_BTN_ALL(input->cur.button, BTN_B)
-                                                     : CHECK_BTN_ALL(input->press.button, BTN_B);
+        bool isB_Held = CVarGetInteger("gSkipText", 0) != 0 ? CHECK_BTN_ALL(input->cur.button, BTN_B)
+                                                        : CHECK_BTN_ALL(input->press.button, BTN_B);
 
-    return CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP);
+        origRet = CHECK_BTN_ALL(input->press.button, BTN_A) || isB_Held || CHECK_BTN_ALL(input->press.button, BTN_CUP);
+        if (origRet) {
+            newRet = origRet;
+        }
+    }
+    return newRet;
 }
 
 /**
@@ -3324,13 +3340,13 @@ void Message_Update(PlayState* play) {
             }
             if (play->csCtx.state == 0) {
                 osSyncPrintf(VT_FGCOL(GREEN));
-                osSyncPrintf("day_time=%x  active_camera=%d  ", gSaveContext.cutsceneIndex, play->activeCamera);
+                osSyncPrintf("day_time=%x  active_camera=%d  ", gSaveContext.cutsceneIndex, play->activeCameras[0]);
 
                 if (msgCtx->textId != 0x2061 && msgCtx->textId != 0x2025 && msgCtx->textId != 0x208C &&
                     ((msgCtx->textId < 0x88D || msgCtx->textId >= 0x893) || msgCtx->choiceIndex != 0) &&
                     (msgCtx->textId != 0x3055 && gSaveContext.cutsceneIndex < 0xFFF0)) {
                     osSyncPrintf("=== day_time=%x ", ((void)0, gSaveContext.cutsceneIndex));
-                    if (play->activeCamera == MAIN_CAM) {
+                    if (play->activeCameras[0] == MAIN_CAM) {
                         if (gSaveContext.unk_13EE == 0 || gSaveContext.unk_13EE == 1 || gSaveContext.unk_13EE == 2) {
                             gSaveContext.unk_13EE = 0x32;
                         }

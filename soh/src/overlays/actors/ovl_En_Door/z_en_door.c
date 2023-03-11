@@ -10,6 +10,7 @@
 #include "objects/object_hidan_objects/object_hidan_objects.h"
 #include "objects/object_mizu_objects/object_mizu_objects.h"
 #include "objects/object_haka_door/object_haka_door.h"
+#include "global.h"
 
 #define FLAGS ACTOR_FLAG_4
 
@@ -146,6 +147,7 @@ void EnDoor_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnDoor_SetupType(EnDoor* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 doorType;
 
     if (Object_IsLoaded(&play->objectCtx, this->requiredObjBankIndex)) {
@@ -163,7 +165,7 @@ void EnDoor_SetupType(EnDoor* this, PlayState* play) {
                 this->lockTimer = 10;
             }
         } else if (doorType == DOOR_AJAR) {
-            if (Actor_WorldDistXZToActor(&this->actor, &GET_PLAYER(play)->actor) > DOOR_AJAR_SLAM_RANGE) {
+            if (Actor_WorldDistXZToActor(&this->actor, &player->actor) > DOOR_AJAR_SLAM_RANGE) {
                 this->actionFunc = EnDoor_AjarWait;
                 this->actor.world.rot.y = -0x1800;
             }
@@ -186,7 +188,8 @@ void EnDoor_SetupType(EnDoor* this, PlayState* play) {
 }
 
 void EnDoor_Idle(EnDoor* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 doorType;
     Vec3f playerPosRelToDoor;
     s16 phi_v0;
@@ -202,7 +205,7 @@ void EnDoor_Idle(EnDoor* this, PlayState* play) {
             Flags_SetSwitch(play, this->actor.params & 0x3F);
             Audio_PlayActorSound2(&this->actor, NA_SE_EV_CHAIN_KEY_UNLOCK);
         }
-    } else if (!Player_InCsMode(play)) {
+    } else if (!Player_InCsMode(play, player)) {
         if (fabsf(playerPosRelToDoor.y) < 20.0f && fabsf(playerPosRelToDoor.x) < 20.0f &&
             fabsf(playerPosRelToDoor.z) < 50.0f) {
             phi_v0 = player->actor.shape.rot.y - this->actor.shape.rot.y;
@@ -212,7 +215,7 @@ void EnDoor_Idle(EnDoor* this, PlayState* play) {
             if (ABS(phi_v0) < 0x3000) {
                 if (this->lockTimer != 0) {
                     if (gSaveContext.inventory.dungeonKeys[gSaveContext.mapIndex] <= 0) {
-                        Player* player2 = GET_PLAYER(play);
+                        Player* player2 = Player_NearestToActor(&this->actor, play);
 
                         player2->naviTextId = -0x203;
                         return;
@@ -224,7 +227,7 @@ void EnDoor_Idle(EnDoor* this, PlayState* play) {
                 player->doorDirection = (playerPosRelToDoor.z >= 0.0f) ? 1.0f : -1.0f;
                 player->doorActor = &this->actor;
             }
-        } else if (doorType == DOOR_AJAR && this->actor.xzDistToPlayer > DOOR_AJAR_OPEN_RANGE) {
+        } else if (doorType == DOOR_AJAR && this->actor.xzDistToPlayer[playerIndex] > DOOR_AJAR_OPEN_RANGE) {
             this->actionFunc = EnDoor_AjarOpen;
         }
     }
@@ -245,13 +248,17 @@ void EnDoor_Check(EnDoor* this, PlayState* play) {
 }
 
 void EnDoor_AjarWait(EnDoor* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < DOOR_AJAR_SLAM_RANGE) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < DOOR_AJAR_SLAM_RANGE) {
         this->actionFunc = EnDoor_AjarClose;
     }
 }
 
 void EnDoor_AjarOpen(EnDoor* this, PlayState* play) {
-    if (this->actor.xzDistToPlayer < DOOR_AJAR_SLAM_RANGE) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (this->actor.xzDistToPlayer[playerIndex] < DOOR_AJAR_SLAM_RANGE) {
         this->actionFunc = EnDoor_AjarClose;
     } else if (Math_ScaledStepToS(&this->actor.world.rot.y, -0x1800, 0x100)) {
         this->actionFunc = EnDoor_AjarWait;
@@ -308,6 +315,8 @@ s32 EnDoor_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* 
     s16 phi_v0_2;
     s32 phi_v0;
     EnDoor* this = (EnDoor*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (limbIndex == 4) {
         temp_a2 = D_809FCEE4[this->dListIndex];
@@ -316,7 +325,7 @@ s32 EnDoor_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* 
         if ((play->roomCtx.prevRoom.num >= 0) ||
             (transitionEntry->sides[0].room == transitionEntry->sides[1].room)) {
             phi_v0_2 = ((this->actor.shape.rot.y + this->skelAnime.jointTable[3].z) + rot->z) -
-                       Math_Vec3f_Yaw(&play->view.eye, &this->actor.world.pos);
+                       Math_Vec3f_Yaw(&play->views[playerIndex].eye, &this->actor.world.pos);
             *dList = (ABS(phi_v0_2) < 0x4000) ? temp_a2[0] : temp_a2[1];
         } else {
             phi_v0 = this->unk_192;

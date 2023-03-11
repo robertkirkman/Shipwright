@@ -182,6 +182,8 @@ void BgSpot08Bakudankabe_Destroy(Actor* thisx, PlayState* play) {
 
 void BgSpot08Bakudankabe_Update(Actor* thisx, PlayState* play) {
     BgSpot08Bakudankabe* this = (BgSpot08Bakudankabe*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->collider.base.acFlags & AC_HIT) {
         func_808B0324(this, play);
@@ -189,7 +191,7 @@ void BgSpot08Bakudankabe_Update(Actor* thisx, PlayState* play) {
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 40, NA_SE_EV_WALL_BROKEN);
         func_80078884(NA_SE_SY_CORRECT_CHIME);
         Actor_Kill(&this->dyna.actor);
-    } else if (this->dyna.actor.xzDistToPlayer < 800.0f) {
+    } else if (this->dyna.actor.xzDistToPlayer[playerIndex] < 800.0f) {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }
 }

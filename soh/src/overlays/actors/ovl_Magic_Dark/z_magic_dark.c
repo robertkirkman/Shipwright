@@ -38,7 +38,7 @@ static Color_RGBA8 D_80B88B10[] = { { 50, 100, 150, 200 }, { 255, 200, 150, 100 
 
 void MagicDark_Init(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (!LINK_IS_ADULT) {
         this->scale = 0.4f;
@@ -72,7 +72,8 @@ void MagicDark_Destroy(Actor* thisx, PlayState* play) {
 void MagicDark_DiamondUpdate(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
     u8 phi_a0;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 pad;
     s16 nayrusLoveTimer = gSaveContext.nayrusLoveTimer;
     s32 msgMode = play->msgCtx.msgMode;
@@ -121,7 +122,7 @@ void MagicDark_DiamondUpdate(Actor* thisx, PlayState* play) {
     }
 
     thisx->world.rot.y += 0x3E8;
-    thisx->shape.rot.y = thisx->world.rot.y + Camera_GetCamDirYaw(GET_ACTIVE_CAM(play));
+    thisx->shape.rot.y = thisx->world.rot.y + Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play));
     this->timer++;
     gSaveContext.nayrusLoveTimer = nayrusLoveTimer + 1;
 
@@ -169,7 +170,7 @@ void MagicDark_DimLighting(PlayState* play, f32 intensity) {
 void MagicDark_OrbUpdate(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     func_8002F974(&this->actor, NA_SE_PL_MAGIC_SOUL_BALL - SFX_FLAG);
     if (this->timer < 35) {
@@ -196,6 +197,7 @@ void MagicDark_OrbUpdate(Actor* thisx, PlayState* play) {
 
 void MagicDark_DiamondDraw(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad;
     u16 gameplayFrames = play->gameplayFrames;
     Color_RGB8 Spell_env_ori = {0, 100, 255};
@@ -208,7 +210,6 @@ void MagicDark_DiamondDraw(Actor* thisx, PlayState* play) {
     Gfx_SetupDL_25Xlu(play->state.gfxCtx);
 
     {
-        Player* player = GET_PLAYER(play);
         f32 heightDiff;
 
         this->actor.world.pos.x = player->bodyPartsPos[0].x;
@@ -244,7 +245,8 @@ void MagicDark_DiamondDraw(Actor* thisx, PlayState* play) {
 void MagicDark_OrbDraw(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
     Vec3f pos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     f32 sp6C = play->state.frames & 0x1F;
 
@@ -262,11 +264,11 @@ void MagicDark_OrbDraw(Actor* thisx, PlayState* play) {
         return;
     }
 
-    pos.x -= (this->actor.scale.x * 300.0f * Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))) *
-              Math_CosS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(play))));
-    pos.y -= (this->actor.scale.x * 300.0f * Math_SinS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(play))));
-    pos.z -= (this->actor.scale.x * 300.0f * Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play))) *
-              Math_CosS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(play))));
+    pos.x -= (this->actor.scale.x * 300.0f * Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))) *
+              Math_CosS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(playerIndex, play))));
+    pos.y -= (this->actor.scale.x * 300.0f * Math_SinS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(playerIndex, play))));
+    pos.z -= (this->actor.scale.x * 300.0f * Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play))) *
+              Math_CosS(Camera_GetCamDirPitch(GET_ACTIVE_CAM(playerIndex, play))));
 
     OPEN_DISPS(play->state.gfxCtx);
 

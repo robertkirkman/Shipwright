@@ -143,10 +143,10 @@ void EnBombf_SetupGrowBomb(EnBombf* this, s16 params) {
 }
 
 void EnBombf_GrowBomb(EnBombf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     EnBombf* bombFlower;
     s32 pad;
     s32 pad1;
-    Player* player = GET_PLAYER(play);
     s32 pad2;
 
     if (this->flowerBombScale >= 1.0f) {
@@ -182,7 +182,7 @@ void EnBombf_GrowBomb(EnBombf* this, PlayState* play) {
                 }
             }
         } else {
-            if (Player_IsBurningStickInRange(play, &this->actor.world.pos, 30.0f, 50.0f)) {
+            if (Player_IsBurningStickInRange(play, player, &this->actor.world.pos, 30.0f, 50.0f)) {
                 bombFlower =
                     (EnBombf*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_BOMBF, this->actor.world.pos.x,
                                           this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0, true);
@@ -260,11 +260,12 @@ void EnBombf_WaitForRelease(EnBombf* this, PlayState* play) {
 }
 
 void EnBombf_Explode(EnBombf* this, PlayState* play) {
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->explosionCollider.elements[0].dim.modelSphere.radius == 0) {
         this->actor.flags |= ACTOR_FLAG_5;
-        func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
+        func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
     }
 
     this->explosionCollider.elements[0].dim.modelSphere.radius += 8;
@@ -300,8 +301,6 @@ void EnBombf_Explode(EnBombf* this, PlayState* play) {
     }
 
     if (this->timer == 0) {
-        player = GET_PLAYER(play);
-
         if ((player->stateFlags1 & 0x800) && (player->heldActor == &this->actor)) {
             player->actor.child = NULL;
             player->heldActor = NULL;
@@ -322,13 +321,15 @@ void EnBombf_Update(Actor* thisx, PlayState* play) {
     Color_RGBA8 dustColor = { 255, 255, 255, 255 };
     s32 pad[2];
     EnBombf* this = (EnBombf*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((this->unk_200 != 0) && (this->timer != 0)) {
         this->timer--;
     }
 
     if ((!this->bumpOn) && (!Actor_HasParent(thisx, play)) &&
-        ((thisx->xzDistToPlayer >= 20.0f) || (ABS(thisx->yDistToPlayer) >= 80.0f))) {
+        ((thisx->xzDistToPlayer[playerIndex] >= 20.0f) || (ABS(thisx->yDistToPlayer[playerIndex]) >= 80.0f))) {
         this->bumpOn = true;
     }
 
@@ -371,7 +372,7 @@ void EnBombf_Update(Actor* thisx, PlayState* play) {
             this->timer = 0;
         } else {
             // if a lit stick touches the bomb, set timer to 100
-            if ((this->timer > 100) && Player_IsBurningStickInRange(play, &thisx->world.pos, 30.0f, 50.0f)) {
+            if ((this->timer > 100) && Player_IsBurningStickInRange(play, player, &thisx->world.pos, 30.0f, 50.0f)) {
                 this->timer = 100;
             }
         }
@@ -427,7 +428,7 @@ void EnBombf_Update(Actor* thisx, PlayState* play) {
                     play->envCtx.adjLight1Color[2] = 250;
                 play->envCtx.adjAmbientColor[0] = play->envCtx.adjAmbientColor[1] =
                     play->envCtx.adjAmbientColor[2] = 250;
-                Camera_AddQuake(&play->mainCamera, 2, 0xB, 8);
+                Camera_AddQuake(&play->mainCameras[playerIndex], 2, 0xB, 8);
                 thisx->params = BOMBFLOWER_EXPLOSION;
                 this->timer = 10;
                 thisx->flags |= ACTOR_FLAG_5;

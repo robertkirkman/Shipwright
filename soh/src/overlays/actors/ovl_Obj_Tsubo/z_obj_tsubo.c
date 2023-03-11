@@ -238,6 +238,8 @@ void ObjTsubo_SetupIdle(ObjTsubo* this) {
 }
 
 void ObjTsubo_Idle(ObjTsubo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s16 temp_v0;
     s32 phi_v1;
@@ -256,16 +258,16 @@ void ObjTsubo_Idle(ObjTsubo* this, PlayState* play) {
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 20, NA_SE_EV_POT_BROKEN);
         Actor_Kill(&this->actor);
     } else {
-        if (this->actor.xzDistToPlayer < 600.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
             Collider_UpdateCylinder(&this->actor, &this->collider);
             this->collider.base.acFlags &= ~AC_HIT;
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
-            if (this->actor.xzDistToPlayer < 150.0f) {
+            if (this->actor.xzDistToPlayer[playerIndex] < 150.0f) {
                 CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
             }
         }
-        if (this->actor.xzDistToPlayer < 100.0f) {
-            temp_v0 = this->actor.yawTowardsPlayer - GET_PLAYER(play)->actor.world.rot.y;
+        if (this->actor.xzDistToPlayer[playerIndex] < 100.0f) {
+            temp_v0 = this->actor.yawTowardsPlayer[playerIndex] - player->actor.world.rot.y;
             phi_v1 = ABS(temp_v0);
             if (phi_v1 >= 0x5556) {
                 // GI_NONE in this case allows the player to lift the actor

@@ -207,6 +207,8 @@ void BgSpot00Hanebasi_SetTorchLightInfo(BgSpot00Hanebasi* this, PlayState* play)
 
 void BgSpot00Hanebasi_Update(Actor* thisx, PlayState* play) {
     BgSpot00Hanebasi* this = (BgSpot00Hanebasi*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     this->actionFunc(this, play);
@@ -215,20 +217,20 @@ void BgSpot00Hanebasi_Update(Actor* thisx, PlayState* play) {
         if (play->sceneNum == SCENE_SPOT00) {
             if (CHECK_QUEST_ITEM(QUEST_KOKIRI_EMERALD) && CHECK_QUEST_ITEM(QUEST_GORON_RUBY) &&
                 CHECK_QUEST_ITEM(QUEST_ZORA_SAPPHIRE) && !(gSaveContext.eventChkInf[8] & 1) && LINK_IS_CHILD) {
-                Player* player = GET_PLAYER(play);
+                Player* player = Player_NearestToActor(thisx, play);
 
                 if ((player->actor.world.pos.x > -450.0f) && (player->actor.world.pos.x < 450.0f) &&
                     (player->actor.world.pos.z > 1080.0f) && (player->actor.world.pos.z < 1700.0f) &&
-                    (!(Play_InCsMode(play)))) {
+                    (!(Play_InCsMode(play, player)))) {
                     gSaveContext.eventChkInf[8] |= 1;
                     Flags_SetEventChkInf(0x82);
                     this->actionFunc = BgSpot00Hanebasi_DoNothing;
-                    func_8002DF54(play, &player->actor, 8);
+                    func_8002DF54(play, player, &player->actor, 8);
                     play->nextEntranceIndex = 0x00CD;
                     gSaveContext.nextCutsceneIndex = 0xFFF1;
                     play->sceneLoadFlag = 0x14;
                     play->fadeTransition = 4;
-                } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 3000.0f, 0x7530)) {
+                } else if (Actor_IsFacingAndNearPlayer(&this->dyna.actor, 3000.0f, 0x7530, player, play)) {
                     play->envCtx.gloomySkyMode = 1;
                 }
             }
@@ -259,6 +261,8 @@ void BgSpot00Hanebasi_Update(Actor* thisx, PlayState* play) {
 
 void BgSpot00Hanebasi_DrawTorches(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 angle;
     s32 i;
 
@@ -272,7 +276,7 @@ void BgSpot00Hanebasi_DrawTorches(Actor* thisx, PlayState* play2) {
         sTorchFlameScale = ((thisx->shape.rot.x * -1) - 0x2000) * (1.0f / 1024000.0f);
     }
 
-    angle = (s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * (M_PI / 32768.0f);
+    angle = (s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * (M_PI / 32768.0f);
     gDPSetPrimColor(POLY_XLU_DISP++, 128, 128, 255, 255, 0, 255);
     gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
 

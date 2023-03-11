@@ -184,13 +184,14 @@ void BgHidanSekizou_Destroy(Actor* thisx, PlayState* play2) {
 }
 
 void func_8088D434(BgHidanSekizou* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 isAligned[2];
     s32 isClose;
     s32 phi_s4;
 
-    isClose = this->dyna.actor.xzDistToPlayer < 300.0f;
+    isClose = this->dyna.actor.xzDistToPlayer[playerIndex] < 300.0f;
     isAligned[0] = fabsf(this->dyna.actor.world.pos.x - player->actor.world.pos.x) < 80.0f;
     isAligned[1] = fabsf(this->dyna.actor.world.pos.z - player->actor.world.pos.z) < 80.0f;
     phi_s4 = 0;
@@ -199,7 +200,7 @@ void func_8088D434(BgHidanSekizou* this, PlayState* play) {
         s16* temp = &this->unk_168[i];
 
         DECR(*temp);
-        diff = this->dyna.actor.yawTowardsPlayer - i * 0x4000;
+        diff = this->dyna.actor.yawTowardsPlayer[playerIndex] - i * 0x4000;
         if (isAligned[i % 2] && isClose) {
             if (ABS(diff) <= 0x4000) {
                 if (*temp < 4) {
@@ -224,12 +225,14 @@ void func_8088D720(BgHidanSekizou* this, PlayState* play) {
 }
 
 void func_8088D750(BgHidanSekizou* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 phi_a3;
 
-    if (this->dyna.actor.xzDistToPlayer > 200.0f) {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer;
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] > 200.0f) {
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex];
     } else if (this->dyna.actor.params == 0) {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer - this->dyna.actor.shape.rot.y;
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.shape.rot.y;
         if (phi_a3 > 0x2000) {
             phi_a3 = this->dyna.actor.shape.rot.y + 0x6000;
         } else if (phi_a3 < -0x2000) {
@@ -240,7 +243,7 @@ void func_8088D750(BgHidanSekizou* this, PlayState* play) {
             phi_a3 = this->dyna.actor.shape.rot.y + 0x2000;
         }
     } else {
-        phi_a3 = this->dyna.actor.yawTowardsPlayer;
+        phi_a3 = this->dyna.actor.yawTowardsPlayer[playerIndex];
         if (phi_a3 > 0x6000) {
             phi_a3 = 0x4000;
         } else if (phi_a3 > 0x4000) {
@@ -329,6 +332,8 @@ Gfx* func_8088D9F4(PlayState* play, BgHidanSekizou* this, s16 arg2, MtxF* arg3, 
 }
 
 Gfx* func_8088DC50(PlayState* play, BgHidanSekizou* this, s16 arg2, s16 arg3, Gfx* arg4) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s16 temp_v1;
     s32 phi_s1;
@@ -349,7 +354,7 @@ Gfx* func_8088DC50(PlayState* play, BgHidanSekizou* this, s16 arg2, s16 arg3, Gf
     temp_f20 = Math_SinS(arg2);
     temp_f22 = Math_CosS(arg2);
     Matrix_MtxFCopy(&sp68, &gMtxFClear);
-    temp_v1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - arg2;
+    temp_v1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - arg2;
 
     if (ABS(temp_v1) < 0x4000) {
         for (i = phi_s2 - 1; i >= phi_s1; i--) {
@@ -392,6 +397,8 @@ void func_8088DE08(s16 arg0, s16 arg1, s32 arg2[]) {
 void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     BgHidanSekizou* this = (BgHidanSekizou*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 sp6C[4];
 
@@ -407,7 +414,7 @@ void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
     POLY_XLU_DISP = Gfx_SetupDL(POLY_XLU_DISP, 0x14);
     if (this->dyna.actor.params == 0) {
         if (this->unk_168[0] > 0) {
-            if ((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->dyna.actor.shape.rot.y) >= 0) {
+            if ((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->dyna.actor.shape.rot.y) >= 0) {
                 POLY_XLU_DISP = func_8088DC50(play, this, this->dyna.actor.shape.rot.y + 0x2000, this->unk_168[0],
                                               POLY_XLU_DISP);
                 POLY_XLU_DISP = func_8088DC50(play, this, this->dyna.actor.shape.rot.y - 0x2000, this->unk_168[0],
@@ -420,7 +427,7 @@ void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
             }
         }
     } else {
-        func_8088DE08(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)), this->dyna.actor.shape.rot.y, sp6C);
+        func_8088DE08(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)), this->dyna.actor.shape.rot.y, sp6C);
         for (i = 0; i < 4; i++) {
             s32 index = sp6C[i];
 

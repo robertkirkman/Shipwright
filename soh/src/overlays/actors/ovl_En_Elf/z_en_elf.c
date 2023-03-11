@@ -210,7 +210,7 @@ s32 func_80A01F90(Vec3f* this, Vec3f* arg1, f32 arg2) {
 }
 
 void func_80A01FE0(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (!func_80A01F90(&this->actor.world.pos, &player->actor.world.pos, 30.0f)) {
         this->unk_2B8 = 0.5f;
@@ -230,7 +230,7 @@ void func_80A01FE0(EnElf* this, PlayState* play) {
 }
 
 void func_80A020A4(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (func_80A01F90(&this->actor.world.pos, &player->actor.world.pos, 50.0f)) {
         if (this->unk_2C0 > 0) {
@@ -246,12 +246,14 @@ void func_80A020A4(EnElf* this, PlayState* play) {
 }
 
 void func_80A0214C(EnElf* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 xzDistToPlayer;
 
     if (this->unk_2C0 > 0) {
         this->unk_2C0--;
     } else {
-        xzDistToPlayer = this->actor.xzDistToPlayer;
+        xzDistToPlayer = this->actor.xzDistToPlayer[playerIndex];
         if (xzDistToPlayer < 50.0f) {
             if (Rand_ZeroOne() < 0.2f) {
                 this->unk_2A8 = 2;
@@ -315,7 +317,7 @@ f32 EnElf_GetColorValue(s32 colorFlag) {
 void EnElf_Init(Actor* thisx, PlayState* play) {
     EnElf* this = (EnElf*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     s32 colorConfig;
     s32 i;
 
@@ -461,7 +463,7 @@ void func_80A02AA4(EnElf* this, PlayState* play) {
 }
 
 void func_80A02B38(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->unk_2AA = (this->unk_2AC * 2) & 0xFFFF;
     this->unk_28C.x = Math_SinS(this->unk_2AC) * this->unk_2B8;
@@ -537,7 +539,7 @@ void func_80A02F2C(EnElf* this, Vec3f* targetPos) {
 
 void func_80A03018(EnElf* this, PlayState* play) {
     s32 pad[2];
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 targetYaw;
     Vec3f* unk_28C = &this->unk_28C;
 
@@ -597,9 +599,8 @@ void func_80A03148(EnElf* this, Vec3f* arg1, f32 arg2, f32 arg3, f32 arg4) {
 }
 
 void func_80A0329C(EnElf* this, PlayState* play) {
-    Player* refActor = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
-    Player* player = GET_PLAYER(play);
     f32 heightDiff;
 
     SkelAnime_Update(&this->skelAnime);
@@ -623,11 +624,11 @@ void func_80A0329C(EnElf* this, PlayState* play) {
         return;
     }
 
-    if (!Player_InCsMode(play)) {
-        heightDiff = this->actor.world.pos.y - refActor->actor.world.pos.y;
+    if (!Player_InCsMode(play, player)) {
+        heightDiff = this->actor.world.pos.y - player->actor.world.pos.y;
 
         if ((heightDiff > 0.0f) && (heightDiff < 60.0f)) {
-            if (!func_80A01F90(&this->actor.world.pos, &refActor->actor.world.pos, 10.0f)) {
+            if (!func_80A01F90(&this->actor.world.pos, &player->actor.world.pos, 10.0f)) {
                 if (CVarGetInteger("gFairyEffect", 0) && !(this->fairyFlags & FAIRY_FLAG_BIG))
                 {
                     if (CVarGetInteger("gFairyPercentRestore", 0))
@@ -647,7 +648,7 @@ void func_80A0329C(EnElf* this, PlayState* play) {
                     Magic_Fill(play);
                 }
                 this->unk_2B8 = 50.0f;
-                this->unk_2AC = refActor->actor.shape.rot.y;
+                this->unk_2AC = player->actor.shape.rot.y;
                 this->unk_2B0 = -0x1000;
                 this->unk_28C.y = 30.0f;
                 this->unk_2B4 = 0.0f;
@@ -702,7 +703,7 @@ void func_80A03604(EnElf* this, PlayState* play) {
 }
 
 void func_80A03610(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     SkelAnime_Update(&this->skelAnime);
     Math_SmoothStepToF(&this->unk_2B8, 30.0f, 0.1f, 4.0f, 1.0f);
@@ -745,7 +746,7 @@ void func_80A03610(EnElf* this, PlayState* play) {
 }
 
 void func_80A03814(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     SkelAnime_Update(&this->skelAnime);
 
@@ -780,7 +781,7 @@ void func_80A03814(EnElf* this, PlayState* play) {
 }
 
 void func_80A03990(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     SkelAnime_Update(&this->skelAnime);
 
@@ -829,7 +830,7 @@ void EnElf_UpdateLights(EnElf* this, PlayState* play) {
     }
 
     if (this->fairyFlags & 0x20) {
-        player = GET_PLAYER(play);
+        Player* player = Player_NearestToActor(&this->actor, play);
         Lights_PointNoGlowSetInfo(&this->lightInfoNoGlow, player->actor.world.pos.x,
                                   (s16)(player->actor.world.pos.y) + 60.0f, player->actor.world.pos.z, 255, 255, 255,
                                   200);
@@ -849,7 +850,8 @@ void EnElf_UpdateLights(EnElf* this, PlayState* play) {
 void func_80A03CF8(EnElf* this, PlayState* play) {
     Vec3f nextPos;
     Vec3f prevPos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Actor* arrowPointedActor;
     f32 xScale;
     f32 distFromLinksHead;
@@ -939,15 +941,15 @@ void func_80A03CF8(EnElf* this, PlayState* play) {
                 }
                 break;
             case 12:
-                nextPos = GET_ACTIVE_CAM(play)->eye;
+                nextPos = GET_ACTIVE_CAM(playerIndex, play)->eye;
                 nextPos.y += (-2000.0f * this->actor.scale.y);
                 func_80A03148(this, &nextPos, 0.0f, 20.0f, 0.2f);
                 break;
             default:
                 func_80A029A8(this, 1);
-                nextPos = play->actorCtx.targetCtx.naviRefPos;
+                nextPos = play->actorCtx.targetCtxs[playerIndex].naviRefPos;
                 nextPos.y += (1500.0f * this->actor.scale.y);
-                arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
+                arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
 
                 if (arrowPointedActor != NULL) {
                     func_80A03148(this, &nextPos, 0.0f, 20.0f, 0.2f);
@@ -1010,12 +1012,13 @@ void EnElf_ChangeColor(Color_RGBAf* dest, Color_RGBAf* newColor, Color_RGBAf* cu
 }
 
 void func_80A04414(EnElf* this, PlayState* play) {
-    Actor* arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Actor* arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
     f32 transitionRate;
     u16 targetSound;
 
-    if (play->actorCtx.targetCtx.unk_40 != 0.0f) {
+    if (play->actorCtx.targetCtxs[playerIndex].unk_40 != 0.0f) {
         this->unk_2C6 = 0;
         this->unk_29C = 1.0f;
 
@@ -1026,18 +1029,18 @@ void func_80A04414(EnElf* this, PlayState* play) {
     } else {
         if (this->unk_2C6 == 0) {
             if ((arrowPointedActor == NULL) ||
-                (Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->actorCtx.targetCtx.naviRefPos) < 50.0f)) {
+                (Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->actorCtx.targetCtxs[playerIndex].naviRefPos) < 50.0f)) {
                 this->unk_2C6 = 1;
             }
         } else if (this->unk_29C != 0.0f) {
             if (Math_StepToF(&this->unk_29C, 0.0f, 0.25f) != 0) {
-                this->innerColor = play->actorCtx.targetCtx.naviInner;
-                this->outerColor = play->actorCtx.targetCtx.naviOuter;
+                this->innerColor = play->actorCtx.targetCtxs[playerIndex].naviInner;
+                this->outerColor = play->actorCtx.targetCtxs[playerIndex].naviOuter;
             } else {
                 transitionRate = 0.25f / this->unk_29C;
-                EnElf_ChangeColor(&this->innerColor, &play->actorCtx.targetCtx.naviInner, &this->innerColor,
+                EnElf_ChangeColor(&this->innerColor, &play->actorCtx.targetCtxs[playerIndex].naviInner, &this->innerColor,
                                   transitionRate);
-                EnElf_ChangeColor(&this->outerColor, &play->actorCtx.targetCtx.naviOuter, &this->outerColor,
+                EnElf_ChangeColor(&this->outerColor, &play->actorCtx.targetCtxs[playerIndex].naviOuter, &this->outerColor,
                                   transitionRate);
             }
         }
@@ -1068,7 +1071,8 @@ void func_80A04414(EnElf* this, PlayState* play) {
 void func_80A0461C(EnElf* this, PlayState* play) {
     s32 temp;
     Actor* arrowPointedActor;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         if (play->csCtx.npcActions[8] != NULL) {
@@ -1092,7 +1096,7 @@ void func_80A0461C(EnElf* this, PlayState* play) {
         }
 
     } else {
-        arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
+        arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
 
         if ((player->stateFlags1 & 0x400) || ((YREG(15) & 0x10) && func_800BC56C(play, 2))) {
             temp = 12;
@@ -1223,11 +1227,12 @@ void func_80A04D90(EnElf* this, PlayState* play) {
 // move to talk to player
 void func_80A04DE4(EnElf* this, PlayState* play) {
     Vec3f headCopy;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f naviRefPos;
 
     if (this->fairyFlags & 0x10) {
-        naviRefPos = play->actorCtx.targetCtx.naviRefPos;
+        naviRefPos = play->actorCtx.targetCtxs[playerIndex].naviRefPos;
 
         if ((player->unk_664 == NULL) || (&player->actor == player->unk_664) || (&this->actor == player->unk_664)) {
             naviRefPos.x = player->bodyPartsPos[7].x + (Math_SinS(player->actor.shape.rot.y) * 20.0f);
@@ -1254,7 +1259,7 @@ void func_80A04DE4(EnElf* this, PlayState* play) {
 
 // move after talking to player
 void func_80A04F94(EnElf* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     Math_SmoothStepToS(&this->actor.shape.rot.y, this->unk_2BC, 5, 0x1000, 0x400);
     this->timer++;
@@ -1377,7 +1382,7 @@ void func_80A052F4(Actor* thisx, PlayState* play) {
 void func_80A053F0(Actor* thisx, PlayState* play) {
     u8 unk2C7;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     EnElf* this = (EnElf*)thisx;
 
     if (player->naviTextId == 0) {
@@ -1425,7 +1430,7 @@ void func_80A053F0(Actor* thisx, PlayState* play) {
             }
         }
 
-        if (!Play_InCsMode(play)) {
+        if (!Play_InCsMode(play, player)) {
             if (gSaveContext.naviTimer < 25800) {
                 gSaveContext.naviTimer++;
             } else if (!(this->fairyFlags & 0x80)) {
@@ -1508,7 +1513,7 @@ void EnElf_Draw(Actor* thisx, PlayState* play) {
     EnElf* this = (EnElf*)thisx;
     s32 pad1;
     Gfx* dListHead;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((this->unk_2A8 != 8) && !(this->fairyFlags & 8)) {
         if (!(player->stateFlags1 & 0x100000) || (kREG(90) < this->actor.projectedPos.z)) {

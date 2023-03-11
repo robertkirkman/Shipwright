@@ -86,7 +86,7 @@ s32 func_80AFB748(EnSi* this, PlayState* play) {
 }
 
 void func_80AFB768(EnSi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_13)) {
         this->actionFunc = func_80AFB89C;
@@ -95,7 +95,7 @@ void func_80AFB768(EnSi* this, PlayState* play) {
         Actor_SetScale(&this->actor, this->actor.scale.x);
         this->actor.shape.rot.y += 0x400;
 
-        if (!Player_InCsMode(play)) {
+        if (!Player_InCsMode(play, player)) {
             func_80AFB748(this, play);
 
             if (this->collider.base.ocFlags2 & OC2_HIT_PLAYER) {
@@ -141,7 +141,7 @@ void func_80AFB768(EnSi* this, PlayState* play) {
 }
 
 void func_80AFB89C(EnSi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Math_SmoothStepToF(&this->actor.scale.x, 0.25f, 0.4f, 1.0f, 0.0f);
     Actor_SetScale(&this->actor, this->actor.scale.x);
     this->actor.shape.rot.y += 0x400;
@@ -173,7 +173,7 @@ void func_80AFB89C(EnSi* this, PlayState* play) {
 }
 
 void func_80AFB950(EnSi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Message_GetState(&play->msgCtx) != TEXT_STATE_CLOSING &&
         (!CVarGetInteger("gSkulltulaFreeze", 0) || getItemId == RG_ICE_TRAP || giveItemId != ITEM_SKULL_TOKEN)) {
@@ -214,7 +214,7 @@ void EnSi_Draw(Actor* thisx, PlayState* play) {
 }
 
 void Randomizer_UpdateSkullReward(EnSi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     getItem = Randomizer_GetItemFromActor(this->actor.id, play->sceneNum, this->actor.params, GI_SKULL_TOKEN);
     getItemId = getItem.getItemId;
@@ -228,8 +228,6 @@ void Randomizer_UpdateSkullReward(EnSi* this, PlayState* play) {
 }
 
 void Randomizer_GiveSkullReward(EnSi* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-
     if (getItem.modIndex == MOD_NONE) {
         // RANDOTOD: Move this into Item_Give() or some other more central location
         if (getItem.getItemId == GI_SWORD_BGS) {

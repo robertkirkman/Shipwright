@@ -283,16 +283,20 @@ s32 EnGo2_SpawnDust(EnGo2* this, u8 initialTimer, f32 scale, f32 scaleStep, s32 
 }
 
 void EnGo2_GetItem(EnGo2* this, PlayState* play, s32 getItemId) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->getItemId = getItemId;
-    func_8002F434(&this->actor, play, getItemId, this->actor.xzDistToPlayer + 1.0f,
-                  fabsf(this->actor.yDistToPlayer) + 1.0f);
+    func_8002F434(&this->actor, play, getItemId, this->actor.xzDistToPlayer[playerIndex] + 1.0f,
+                  fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
 }
 
 void EnGo2_GetItemEntry(EnGo2* this, PlayState* play, GetItemEntry getItemEntry) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->getItemId = getItemEntry.getItemId;
     this->getItemEntry = getItemEntry;
-    GiveItemEntryFromActor(&this->actor, play, getItemEntry, this->actor.xzDistToPlayer + 1.0f,
-                  fabsf(this->actor.yDistToPlayer) + 1.0f);
+    GiveItemEntryFromActor(&this->actor, play, getItemEntry, this->actor.xzDistToPlayer[playerIndex] + 1.0f,
+                  fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
 }
 
 s32 EnGo2_GetDialogState(EnGo2* this, PlayState* play) {
@@ -594,7 +598,7 @@ s16 EnGo2_UpdateTalkStateGoronCityLink(PlayState* play, EnGo2* this) {
 }
 
 u16 EnGo2_GetTextIdGoronDmtBiggoron(PlayState* play, EnGo2* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (!gSaveContext.n64ddFlag && gSaveContext.bgsFlag) {
         player->exchangeItemId = EXCH_ITEM_CLAIM_CHECK;
@@ -613,6 +617,7 @@ u16 EnGo2_GetTextIdGoronDmtBiggoron(PlayState* play, EnGo2* this) {
 
 s16 EnGo2_UpdateTalkStateGoronDmtBiggoron(PlayState* play, EnGo2* this) {
     s32 unusedPad;
+    Player* player = Player_NearestToActor(&this->actor, play);
     u8 dialogState = this->dialogState;
 
     switch (EnGo2_GetDialogState(this, play)) {
@@ -636,7 +641,7 @@ s16 EnGo2_UpdateTalkStateGoronDmtBiggoron(PlayState* play, EnGo2* this) {
         case TEXT_STATE_DONE_FADING:
             switch (this->actor.textId) {
                 case 0x305E:
-                    if (func_8002F368(play) != EXCH_ITEM_CLAIM_CHECK) {
+                    if (func_8002F368(play, player) != EXCH_ITEM_CLAIM_CHECK) {
                         break;
                     }
                 case 0x3059:
@@ -913,7 +918,8 @@ void EnGo2_SwapInitialFrameAnimFrameCount(EnGo2* this) {
 }
 
 s32 func_80A44AB0(EnGo2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 arg2;
 
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
@@ -940,8 +946,8 @@ s32 func_80A44AB0(EnGo2* this, PlayState* play) {
 
                 arg2 = this->actionFunc == EnGo2_ContinueRolling ? 1.5f : this->actor.speedXZ * 1.5f;
 
-                play->damagePlayer(play, -4);
-                func_8002F71C(play, &this->actor, arg2, this->actor.yawTowardsPlayer, 6.0f);
+                play->damagePlayer(play, player, -4);
+                func_8002F71C(play, &this->actor, arg2, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
                 Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
                 this->collider.base.ocFlags1 &= ~0x8;
             }
@@ -993,7 +999,7 @@ s32 func_80A44D84(EnGo2* this) {
     return 1;
 }
 
-s32 EnGo2_IsWakingUp(EnGo2* this) {
+s32 EnGo2_IsWakingUp(EnGo2* this, u16 playerIndex) {
     s16 yawDiff;
     f32 xyzDist = (this->actor.params & 0x1F) == GORON_DMT_BIGGORON ? 800.0f : 200.0f;
     f32 yDist = (this->actor.params & 0x1F) == GORON_DMT_BIGGORON ? 400.0f : 60.0f;
@@ -1010,9 +1016,9 @@ s32 EnGo2_IsWakingUp(EnGo2* this) {
     }
 
     xyzDist = SQ(xyzDist);
-    yawDiff = (f32)this->actor.yawTowardsPlayer - (f32)this->actor.shape.rot.y;
+    yawDiff = (f32)this->actor.yawTowardsPlayer[playerIndex] - (f32)this->actor.shape.rot.y;
     yawDiffAbs = ABS(yawDiff);
-    if (this->actor.xyzDistToPlayerSq <= xyzDist && fabsf(this->actor.yDistToPlayer) < yDist && yawDiffAbs < 0x2AA8) {
+    if (this->actor.xyzDistToPlayerSq[playerIndex] <= xyzDist && fabsf(this->actor.yDistToPlayer[playerIndex]) < yDist && yawDiffAbs < 0x2AA8) {
         return true;
     } else {
         return false;
@@ -1061,8 +1067,10 @@ void EnGo2_BiggoronSetTextId(EnGo2* this, PlayState* play, Player* player) {
     u16 textId;
 
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         if ((!gSaveContext.n64ddFlag && gSaveContext.bgsFlag)) {
-            if (func_8002F368(play) == EXCH_ITEM_CLAIM_CHECK) {
+            if (func_8002F368(play, player) == EXCH_ITEM_CLAIM_CHECK) {
                 this->actor.textId = 0x3003;
             } else {
                 this->actor.textId = 0x305E;
@@ -1070,7 +1078,7 @@ void EnGo2_BiggoronSetTextId(EnGo2* this, PlayState* play, Player* player) {
             player->actor.textId = this->actor.textId;
 
         } else if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_CLAIM_CHECK) {
-            if (func_8002F368(play) == EXCH_ITEM_CLAIM_CHECK) {
+            if (func_8002F368(play, player) == EXCH_ITEM_CLAIM_CHECK) {
                 if (gSaveContext.n64ddFlag && Flags_GetTreasure(play, 0x1F)) {
                     textId = 0x3003;
                 } else if (Environment_GetBgsDayCount() >= CVarGetInteger("gForgeTime", 3)) {
@@ -1093,7 +1101,7 @@ void EnGo2_BiggoronSetTextId(EnGo2* this, PlayState* play, Player* player) {
 
         } else if ((INV_CONTENT(ITEM_TRADE_ADULT) >= ITEM_PRESCRIPTION) &&
                    (INV_CONTENT(ITEM_TRADE_ADULT) <= ITEM_CLAIM_CHECK)) {
-            if (func_8002F368(play) == EXCH_ITEM_EYEDROPS) {
+            if (func_8002F368(play, player) == EXCH_ITEM_EYEDROPS) {
                 this->actor.textId = 0x3059;
             } else {
                 this->actor.textId = 0x3058;
@@ -1104,7 +1112,7 @@ void EnGo2_BiggoronSetTextId(EnGo2* this, PlayState* play, Player* player) {
             player->actor.textId = this->actor.textId;
 
         } else if (INV_CONTENT(ITEM_TRADE_ADULT) <= ITEM_SWORD_BROKEN) {
-            if (func_8002F368(play) == EXCH_ITEM_SWORD_BROKEN) {
+            if (func_8002F368(play, player) == EXCH_ITEM_SWORD_BROKEN) {
                 if (gSaveContext.infTable[11] & 0x10) {
                     textId = 0x3055;
                 } else {
@@ -1123,7 +1131,7 @@ void EnGo2_BiggoronSetTextId(EnGo2* this, PlayState* play, Player* player) {
 }
 
 void func_80A45288(EnGo2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 linkAge;
 
     if (this->actionFunc != EnGo2_GoronFireGenericAction) {
@@ -1181,12 +1189,12 @@ void func_80A454CC(EnGo2* this) {
     }
 }
 
-f32 EnGo2_GetTargetXZSpeed(EnGo2* this) {
+f32 EnGo2_GetTargetXZSpeed(EnGo2* this, u16 playerIndex) {
     f32 yDist = (this->actor.params & 0x1F) == GORON_DMT_BIGGORON ? 400.0f : 60.0f;
     s32 index = this->actor.params & 0x1F;
 
-    if (index == GORON_CITY_LINK && (fabsf(this->actor.yDistToPlayer) < yDist) &&
-        (this->actor.xzDistToPlayer < 400.0f)) {
+    if (index == GORON_CITY_LINK && (fabsf(this->actor.yDistToPlayer[playerIndex]) < yDist) &&
+        (this->actor.xzDistToPlayer[playerIndex] < 400.0f)) {
         return 9.0f;
     } else {
         return index == GORON_CITY_ROLLING_BIG ? 3.6000001f : 6.0f;
@@ -1194,13 +1202,15 @@ f32 EnGo2_GetTargetXZSpeed(EnGo2* this) {
 }
 
 s32 EnGo2_IsCameraModified(EnGo2* this, PlayState* play) {
-    Camera* camera = play->cameraPtrs[MAIN_CAM];
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* camera = play->cameraPtrs[playerIndex][MAIN_CAM];
 
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
-        if (EnGo2_IsWakingUp(this)) {
+        if (EnGo2_IsWakingUp(this, playerIndex)) {
             Camera_ChangeSetting(camera, CAM_SET_DIRECTED_YAW);
             func_8005AD1C(camera, 4);
-        } else if (!EnGo2_IsWakingUp(this) && (camera->setting == CAM_SET_DIRECTED_YAW)) {
+        } else if (!EnGo2_IsWakingUp(this, playerIndex) && (camera->setting == CAM_SET_DIRECTED_YAW)) {
             Camera_ChangeSetting(camera, CAM_SET_DUNGEON1);
             func_8005ACFC(camera, 4);
         }
@@ -1217,8 +1227,8 @@ s32 EnGo2_IsCameraModified(EnGo2* this, PlayState* play) {
     }
 }
 
-void EnGo2_DefaultWakingUp(EnGo2* this) {
-    if (EnGo2_IsWakingUp(this)) {
+void EnGo2_DefaultWakingUp(EnGo2* this, u16 playerIndex) {
+    if (EnGo2_IsWakingUp(this, playerIndex)) {
         this->trackingMode = NPC_TRACKING_HEAD_AND_TORSO;
     } else {
         this->trackingMode = NPC_TRACKING_NONE;
@@ -1231,21 +1241,21 @@ void EnGo2_DefaultWakingUp(EnGo2* this) {
     this->isAwake = true;
 }
 
-void EnGo2_WakingUp(EnGo2* this) {
+void EnGo2_WakingUp(EnGo2* this, u16 playerIndex) {
     f32 xyzDist = (this->actor.params & 0x1F) == GORON_DMT_BIGGORON ? 800.0f : 200.0f;
     s32 isTrue = true;
 
     xyzDist = SQ(xyzDist);
     this->trackingMode = NPC_TRACKING_NONE;
-    if ((this->actor.xyzDistToPlayerSq <= xyzDist) || (this->interactInfo.talkState != NPC_TALK_STATE_IDLE)) {
+    if ((this->actor.xyzDistToPlayerSq[playerIndex] <= xyzDist) || (this->interactInfo.talkState != NPC_TALK_STATE_IDLE)) {
         this->trackingMode = NPC_TRACKING_FULL_BODY;
     }
 
     this->isAwake = isTrue;
 }
 
-void EnGo2_BiggoronWakingUp(EnGo2* this) {
-    if (EnGo2_IsWakingUp(this) || this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
+void EnGo2_BiggoronWakingUp(EnGo2* this, u16 playerIndex) {
+    if (EnGo2_IsWakingUp(this, playerIndex) || this->interactInfo.talkState != NPC_TALK_STATE_IDLE) {
         this->trackingMode = NPC_TRACKING_HEAD_AND_TORSO;
         this->isAwake = true;
     } else {
@@ -1254,25 +1264,25 @@ void EnGo2_BiggoronWakingUp(EnGo2* this) {
     }
 }
 
-void EnGo2_SelectGoronWakingUp(EnGo2* this) {
+void EnGo2_SelectGoronWakingUp(EnGo2* this, u16 playerIndex) {
     switch (this->actor.params & 0x1F) {
         case GORON_DMT_BOMB_FLOWER:
             this->isAwake = true;
-            this->trackingMode = EnGo2_IsWakingUp(this) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE;
+            this->trackingMode = EnGo2_IsWakingUp(this, playerIndex) ? NPC_TRACKING_HEAD_AND_TORSO : NPC_TRACKING_NONE;
             break;
         case GORON_FIRE_GENERIC:
-            EnGo2_WakingUp(this);
+            EnGo2_WakingUp(this, playerIndex);
             break;
         case GORON_DMT_BIGGORON:
-            EnGo2_BiggoronWakingUp(this);
+            EnGo2_BiggoronWakingUp(this, playerIndex);
             break;
         case GORON_CITY_LINK:
             if (!CHECK_QUEST_ITEM(QUEST_MEDALLION_FIRE) && CHECK_OWNED_EQUIP(EQUIP_TUNIC, 1)) {
-                EnGo2_WakingUp(this);
+                EnGo2_WakingUp(this, playerIndex);
                 break;
             }
         default:
-            EnGo2_DefaultWakingUp(this);
+            EnGo2_DefaultWakingUp(this, playerIndex);
     }
 }
 
@@ -1350,6 +1360,7 @@ void EnGo2_RollingAnimation(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_WakeUp(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (CVarGetInteger("gUnfixGoronSpin", 0)) {
         // Trick SkelAnime into thinking the current animation is changing so that it morphs between the same position,
         // making the goron do a spin
@@ -1363,7 +1374,7 @@ void EnGo2_WakeUp(EnGo2* this, PlayState* play) {
         }
     }
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
-        OnePointCutscene_Init(play, 4200, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4200, -99, &this->actor, MAIN_CAM);
         // There is an issue interpolating between ENGO2_ANIM_0 and ENGO2_ANIM_1/10, the goron
         // is technically in the same position at the end of ANIM_0 and beginning of ANIM_1/10
         // but something isn't getting translated correctly causing the 360 degree spin before
@@ -1479,9 +1490,9 @@ s32 EnGo2_IsGoronFireGeneric(EnGo2* this) {
     return true;
 }
 
-s32 EnGo2_IsGoronLinkReversing(EnGo2* this) {
+s32 EnGo2_IsGoronLinkReversing(EnGo2* this, u16 playerIndex) {
     if ((this->actor.params & 0x1F) != GORON_CITY_LINK || (this->waypoint >= this->unk_216) ||
-        !EnGo2_IsWakingUp(this)) {
+        !EnGo2_IsWakingUp(this, playerIndex)) {
         return false;
     }
     return true;
@@ -1533,11 +1544,12 @@ void EnGo2_GoronLinkAnimation(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_GoronFireCamera(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 yaw;
 
-    this->camId = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->camId, CAM_STAT_ACTIVE);
+    this->camId = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->camId, CAM_STAT_ACTIVE);
     Path_CopyLastPoint(this->path, &this->at);
     yaw = Math_Vec3f_Yaw(&this->actor.world.pos, &this->at) + 0xE38;
     this->eye.x = Math_SinS(yaw) * 100.0f + this->actor.world.pos.x;
@@ -1546,12 +1558,13 @@ void EnGo2_GoronFireCamera(EnGo2* this, PlayState* play) {
     this->at.x = this->actor.world.pos.x;
     this->at.y = this->actor.world.pos.y + 40.0f;
     this->at.z = this->actor.world.pos.z;
-    Play_CameraSetAtEye(play, this->camId, &this->at, &this->eye);
+    Play_CameraSetAtEye(play, player, this->camId, &this->at, &this->eye);
 }
 
 void EnGo2_GoronFireClearCamera(EnGo2* this, PlayState* play) {
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-    Play_ClearCamera(play, this->camId);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->camId);
 }
 
 void EnGo2_BiggoronAnimation(EnGo2* this) {
@@ -1679,13 +1692,15 @@ void EnGo2_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnGo2_CurledUp(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u8 index = this->actor.params & 0x1F;
     s16 height;
     s32 quake;
 
     if (Animation_OnFrame(&this->skelAnime, this->skelAnime.endFrame)) {
         if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
-            quake = Quake_Add(GET_ACTIVE_CAM(play), 3);
+            quake = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
             Quake_SetSpeed(quake, -0x3CB0);
             Quake_SetQuakeValues(quake, 8, 0, 0, 0);
             Quake_SetCountdown(quake, 16);
@@ -1707,19 +1722,21 @@ void EnGo2_CurledUp(EnGo2* this, PlayState* play) {
         this->isAwake = false;
         EnGo2_WakeUp(this, play);
     }
-    if (((this->actor.params & 0x1F) != GORON_FIRE_GENERIC) && EnGo2_IsWakingUp(this)) {
+    if (((this->actor.params & 0x1F) != GORON_FIRE_GENERIC) && EnGo2_IsWakingUp(this, playerIndex)) {
         EnGo2_WakeUp(this, play);
     }
 }
 
 void func_80A46B40(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u8 index = (this->actor.params & 0x1F);
     f32 height;
 
     if (this->unk_211 == true) {
         EnGo2_BiggoronAnimation(this);
         EnGo2_GoronLinkAnimation(this, play);
-        EnGo2_SelectGoronWakingUp(this);
+        EnGo2_SelectGoronWakingUp(this, playerIndex);
 
         if (!EnGo2_IsGoronRollingBig(this, play) && !EnGo2_IsGoronFireGeneric(this)) {
             if (EnGo2_IsGoronDmtBombFlower(this)) {
@@ -1742,7 +1759,7 @@ void func_80A46B40(EnGo2* this, PlayState* play) {
                 (s16)((height * 0.4f * (this->skelAnime.curFrame / this->skelAnime.endFrame)) + (height * 0.6f));
         }
     }
-    if ((!EnGo2_IsCameraModified(this, play)) && (!EnGo2_IsWakingUp(this))) {
+    if ((!EnGo2_IsCameraModified(this, play)) && (!EnGo2_IsWakingUp(this, playerIndex))) {
         EnGo2_RollingAnimation(this, play);
     }
 }
@@ -1766,9 +1783,11 @@ void EnGo2_GoronRollingBigContinueRolling(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_ContinueRolling(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 float1 = 1000.0f;
 
-    if (((this->actor.params & 0x1F) != GORON_DMT_ROLLING_SMALL || !(this->actor.xyzDistToPlayerSq > SQ(float1))) &&
+    if (((this->actor.params & 0x1F) != GORON_DMT_ROLLING_SMALL || !(this->actor.xyzDistToPlayerSq[playerIndex] > SQ(float1))) &&
         DECR(this->animTimer) == 0) {
         this->actionFunc = EnGo2_SlowRolling;
         this->actor.speedXZ *= 0.5f; // slowdown
@@ -1777,12 +1796,14 @@ void EnGo2_ContinueRolling(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_SlowRolling(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 orientation;
     s32 index;
 
     if (!EnGo2_IsRolling(this)) {
         if (EnGo2_IsRollingOnGround(this, 4, 8.0f, 1) == true) {
-            if (EnGo2_IsGoronLinkReversing(this)) {
+            if (EnGo2_IsGoronLinkReversing(this, playerIndex)) {
                 this->actionFunc = EnGo2_ReverseRolling;
                 return;
             }
@@ -1799,7 +1820,7 @@ void EnGo2_SlowRolling(EnGo2* this, PlayState* play) {
             EnGo2_StopRolling(this, play);
             return;
         }
-        Math_ApproachF(&this->actor.speedXZ, EnGo2_GetTargetXZSpeed(this), 0.4f, 0.6f);
+        Math_ApproachF(&this->actor.speedXZ, EnGo2_GetTargetXZSpeed(this, playerIndex), 0.4f, 0.6f);
         this->actor.shape.rot = this->actor.world.rot;
     }
 }
@@ -1840,14 +1861,16 @@ void EnGo2_ReverseRolling(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_SetupGetItem(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (Actor_HasParent(&this->actor, play)) {
         this->actor.parent = NULL;
         this->actionFunc = EnGo2_SetGetItem;
     } else {
         if (!gSaveContext.n64ddFlag || this->getItemEntry.getItemId == GI_NONE) {
-            func_8002F434(&this->actor, play, this->getItemId, this->actor.xzDistToPlayer + 1.0f, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            func_8002F434(&this->actor, play, this->getItemId, this->actor.xzDistToPlayer[playerIndex] + 1.0f, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         } else {
-            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer + 1.0f, fabsf(this->actor.yDistToPlayer) + 1.0f);
+            GiveItemEntryFromActor(&this->actor, play, this->getItemEntry, this->actor.xzDistToPlayer[playerIndex] + 1.0f, fabsf(this->actor.yDistToPlayer[playerIndex]) + 1.0f);
         }
     }
 }
@@ -1887,6 +1910,8 @@ void EnGo2_SetGetItem(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_BiggoronEyedrops(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     switch (this->goronState) {
         case 0:
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENGO2_ANIM_5);
@@ -1899,13 +1924,13 @@ void EnGo2_BiggoronEyedrops(EnGo2* this, PlayState* play) {
             this->goronState++;
             func_800F483C(0x28, 5);
             if (!gSaveContext.n64ddFlag) {
-                OnePointCutscene_Init(play, 4190, -99, &this->actor, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 4190, -99, &this->actor, MAIN_CAM);
             }
             break;
         case 1:
             if (DECR(this->animTimer)) {
                 if (this->animTimer == 60 || this->animTimer == 120) {
-                    func_8005B1A4(GET_ACTIVE_CAM(play));
+                    func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
                     func_800F4524(&D_801333D4, NA_SE_EV_GORON_WATER_DROP, 60);
                 }
             } else {
@@ -1944,7 +1969,7 @@ void EnGo2_BiggoronEyedrops(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_GoronLinkStopRolling(EnGo2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     switch (this->goronState) {
         case 0:
@@ -1973,7 +1998,7 @@ void EnGo2_GoronLinkStopRolling(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_GoronFireGenericAction(EnGo2* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3s D_80A4854C = { 0x00, 0x00, 0x00 };
 
     switch (this->goronState) {
@@ -1999,7 +2024,7 @@ void EnGo2_GoronFireGenericAction(EnGo2* this, PlayState* play) {
                     (f32)((Math_SinS(this->actor.world.rot.y) * -30.0f) + this->actor.world.pos.x);
                 player->actor.world.pos.z =
                     (f32)((Math_CosS(this->actor.world.rot.y) * -30.0f) + this->actor.world.pos.z);
-                func_8002DF54(play, &this->actor, 8);
+                func_8002DF54(play, player, &this->actor, 8);
                 Audio_PlayFanfare(NA_BGM_APPEAR);
             }
             break;
@@ -2036,7 +2061,7 @@ void EnGo2_GoronFireGenericAction(EnGo2* this, PlayState* play) {
         case 4: // Finalize walking away
             Message_CloseTextbox(play);
             EnGo2_GoronFireClearCamera(this, play);
-            func_8002DF54(play, &this->actor, 7);
+            func_8002DF54(play, player, &this->actor, 7);
             Actor_Kill(&this->actor);
             break;
         case 1:

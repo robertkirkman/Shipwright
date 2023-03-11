@@ -170,7 +170,7 @@ void func_80AACCA0(EnMk* this, PlayState* play) {
 }
 
 void func_80AACD48(EnMk* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
@@ -243,11 +243,12 @@ void func_80AAD014(EnMk* this, PlayState* play) {
 void EnMk_Wait(EnMk* this, PlayState* play) {
     s16 angle;
     s32 swimFlag;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 playerExchangeItem;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        playerExchangeItem = func_8002F368(play);
+        playerExchangeItem = func_8002F368(play, player);
 
         if (this->actor.textId != 0x4018) {
             player->actor.textId = this->actor.textId;
@@ -303,9 +304,9 @@ void EnMk_Wait(EnMk* this, PlayState* play) {
             this->actor.textId = 0x4018;
         }
 
-        angle = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        angle = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
 
-        if ((ABS(angle) < 0x2151) && (this->actor.xzDistToPlayer < 100.0f)) {
+        if ((ABS(angle) < 0x2151) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
             func_8002F298(&this->actor, play, 100.0f, EXCH_ITEM_FROG);
             this->flags |= 1;
         }
@@ -316,7 +317,7 @@ void EnMk_Update(Actor* thisx, PlayState* play) {
     EnMk* this = (EnMk*)thisx;
     s32 pad;
     Vec3s vec;
-    Player* player;
+    Player* player = Player_NearestToActor(thisx, play);
     s16 swimFlag;
 
     Collider_UpdateCylinder(&this->actor, &this->collider);
@@ -336,8 +337,6 @@ void EnMk_Update(Actor* thisx, PlayState* play) {
         Math_SmoothStepToS(&this->headRotation.x, 0, 6, 6200, 100);
         Math_SmoothStepToS(&this->headRotation.y, 0, 6, 6200, 100);
     }
-
-    player = GET_PLAYER(play);
 
     if (this->flags & 8) {
         if (!(player->stateFlags2 & 0x400)) {

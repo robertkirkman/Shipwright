@@ -211,11 +211,13 @@ void func_8086ED50(BgBombwall* this, PlayState* play) {
 }
 
 void func_8086ED70(BgBombwall* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->collider.base.acFlags &= ~AC_HIT;
         func_8086EDFC(this, play);
         Flags_SetSwitch(play, this->dyna.actor.params & 0x3F);
-    } else if (this->dyna.actor.xzDistToPlayer < 600.0f) {
+    } else if (this->dyna.actor.xzDistToPlayer[playerIndex] < 600.0f) {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }
 }

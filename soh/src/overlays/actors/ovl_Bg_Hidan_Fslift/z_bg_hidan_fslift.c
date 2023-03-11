@@ -124,16 +124,18 @@ void func_808870D8(BgHidanFslift* this, PlayState* play) {
 
 void BgHidanFslift_Update(Actor* thisx, PlayState* play) {
     BgHidanFslift* this = (BgHidanFslift*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->actionFunc(this, play);
     if (func_8004356C(&this->dyna)) {
         if (this->unk_16A == 0) {
             this->unk_16A = 3;
         }
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_FIRE_PLATFORM);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_FIRE_PLATFORM);
     } else if (!func_8004356C(&this->dyna)) {
         if (this->unk_16A != 0) {
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
         }
         this->unk_16A = 0;
     }

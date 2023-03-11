@@ -146,12 +146,13 @@ void func_808BEFF4(BgYdanMaruta* this, PlayState* play) {
 }
 
 void func_808BF078(BgYdanMaruta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->unk_16A = 20;
         Flags_SetSwitch(play, this->switchFlag);
         func_80078884(NA_SE_SY_CORRECT_CHIME);
         this->actionFunc = func_808BF108;
-        OnePointCutscene_Init(play, 3010, 50, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3010, 50, &this->dyna.actor, MAIN_CAM);
     } else {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }

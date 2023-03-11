@@ -233,14 +233,14 @@ void BgGndIceblock_SetNextPosition(BgGndIceblock* this) {
 }
 
 void BgGndIceblock_Idle(BgGndIceblock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
         if (this->dyna.unk_150 > 0.0f) {
             BgGndIceblock_SetNextPosition(this);
             if (Actor_WorldDistXZToPoint(&this->dyna.actor, &this->targetPos) > 1.0f) {
-                func_8002DF54(play, &this->dyna.actor, 8);
+                func_8002DF54(play, player, &this->dyna.actor, 8);
                 this->actionFunc = BgGndIceblock_Slide;
             }
         }
@@ -249,7 +249,7 @@ void BgGndIceblock_Idle(BgGndIceblock* this, PlayState* play) {
 }
 
 void BgGndIceblock_Reset(BgGndIceblock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* thisx = &this->dyna.actor;
 
     if (this->dyna.unk_150 != 0.0f) {
@@ -273,6 +273,7 @@ void BgGndIceblock_Reset(BgGndIceblock* this, PlayState* play) {
 
 void BgGndIceblock_Fall(BgGndIceblock* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     thisx->velocity.y += 1.0f;
     if (Math_StepToF(&thisx->world.pos.y, thisx->home.pos.y - 300.0f, thisx->velocity.y)) {
@@ -280,8 +281,8 @@ void BgGndIceblock_Fall(BgGndIceblock* this, PlayState* play) {
         thisx->world.pos.x = thisx->home.pos.x;
         thisx->world.pos.y = thisx->home.pos.y - 100.0f;
         thisx->world.pos.z = thisx->home.pos.z;
-        if (Player_InCsMode(play)) {
-            func_8002DF54(play, thisx, 7);
+        if (Player_InCsMode(play, player)) {
+            func_8002DF54(play, player, thisx, 7);
         }
         this->actionFunc = BgGndIceblock_Reset;
     }
@@ -289,12 +290,13 @@ void BgGndIceblock_Fall(BgGndIceblock* this, PlayState* play) {
 
 void BgGndIceblock_Hole(BgGndIceblock* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     thisx->velocity.y += 1.0f;
     if (Math_StepToF(&thisx->world.pos.y, thisx->home.pos.y - 100.0f, thisx->velocity.y)) {
         thisx->velocity.y = 0.0f;
-        if (Player_InCsMode(play)) {
-            func_8002DF54(play, thisx, 7);
+        if (Player_InCsMode(play, player)) {
+            func_8002DF54(play, player, thisx, 7);
         }
         this->actionFunc = BgGndIceblock_Idle;
     }
@@ -306,6 +308,7 @@ void BgGndIceblock_Slide(BgGndIceblock* this, PlayState* play) {
     Vec3f velocity;
     f32 spread;
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     Math_StepToF(&thisx->speedXZ, 10.0f, 0.5f);
     atTarget = Math_StepToF(&thisx->world.pos.x, this->targetPos.x, thisx->speedXZ);
@@ -318,7 +321,7 @@ void BgGndIceblock_Slide(BgGndIceblock* this, PlayState* play) {
         switch (BgGndIceblock_NextAction(this)) {
             case GNDICE_IDLE:
                 this->actionFunc = BgGndIceblock_Idle;
-                func_8002DF54(play, thisx, 7);
+                func_8002DF54(play, player, thisx, 7);
                 break;
             case GNDICE_FALL:
                 this->actionFunc = BgGndIceblock_Fall;

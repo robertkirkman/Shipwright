@@ -225,6 +225,8 @@ Gfx* BgHidanRsekizou_DrawFireball(PlayState* play, BgHidanRsekizou* this, s16 fr
 
 void BgHidanRsekizou_Draw(Actor* thisx, PlayState* play) {
     BgHidanRsekizou* this = (BgHidanRsekizou*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 pad;
     MtxF mf;
@@ -241,7 +243,7 @@ void BgHidanRsekizou_Draw(Actor* thisx, PlayState* play) {
     POLY_XLU_DISP = Gfx_SetupDL(POLY_XLU_DISP, 0x14);
 
     // Strange original code. Add || 1 for frame interpolation to get correct.
-    if ((s16)((Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->dyna.actor.shape.rot.y) - 0x2E6C) >= 0 || 1) {
+    if ((s16)((Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->dyna.actor.shape.rot.y) - 0x2E6C) >= 0 || 1) {
         for (i = 3; i >= 0; i--) {
             POLY_XLU_DISP = BgHidanRsekizou_DrawFireball(play, this, i, &mf, 0, POLY_XLU_DISP);
         }

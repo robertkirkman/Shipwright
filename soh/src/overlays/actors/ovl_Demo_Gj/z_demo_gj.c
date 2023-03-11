@@ -547,7 +547,7 @@ void DemoGj_SetupMovement(DemoGj* this, PlayState* play) {
         }
 
         if (xDistance == 0.0f && zDistance == 0.0f) {
-            player = GET_PLAYER(play);
+            player = Player_NearestToActor(actor, play);
             xDistance = player->actor.world.pos.x - pos->x;
             zDistance = player->actor.world.pos.z - pos->z;
 

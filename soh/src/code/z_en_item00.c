@@ -638,6 +638,8 @@ void func_8001E1C8(EnItem00* this, PlayState* play) {
 }
 
 void func_8001E304(EnItem00* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f pos;
     s32 rotOffset;
@@ -653,9 +655,9 @@ void func_8001E304(EnItem00* this, PlayState* play) {
             }
             this->actor.home.rot.z += (s16)((this->actor.velocity.y + 3.0f) * 1000.0f);
             this->actor.world.pos.x +=
-                Math_CosS(this->actor.yawTowardsPlayer) * (-3.0f * Math_CosS(this->actor.home.rot.z));
+                Math_CosS(this->actor.yawTowardsPlayer[playerIndex]) * (-3.0f * Math_CosS(this->actor.home.rot.z));
             this->actor.world.pos.z +=
-                Math_SinS(this->actor.yawTowardsPlayer) * (-3.0f * Math_CosS(this->actor.home.rot.z));
+                Math_SinS(this->actor.yawTowardsPlayer[playerIndex]) * (-3.0f * Math_CosS(this->actor.home.rot.z));
         }
     }
 
@@ -694,7 +696,8 @@ void func_8001E304(EnItem00* this, PlayState* play) {
 }
 
 void func_8001E5C8(EnItem00* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->getItemId != GI_NONE) {
         if (!Actor_HasParent(&this->actor, play)) {
             if (!gSaveContext.n64ddFlag) {
@@ -739,6 +742,8 @@ void EnItem00_Update(Actor* thisx, PlayState* play) {
     s16 i;
     u32* temp;
     EnItem00* this = (EnItem00*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
 	// OTRTODO: remove special case for bombchu when its 2D drop is implemented
@@ -825,8 +830,8 @@ void EnItem00_Update(Actor* thisx, PlayState* play) {
         return;
     }
 
-    if (!((this->actor.xzDistToPlayer <= 30.0f) && (this->actor.yDistToPlayer >= -50.0f) &&
-          (this->actor.yDistToPlayer <= 50.0f))) {
+    if (!((this->actor.xzDistToPlayer[playerIndex] <= 30.0f) && (this->actor.yDistToPlayer[playerIndex] >= -50.0f) &&
+          (this->actor.yDistToPlayer[playerIndex] <= 50.0f))) {
         if (!Actor_HasParent(&this->actor, play)) {
             return;
         }

@@ -218,6 +218,7 @@ void BgBdanSwitch_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_8086D4B4(BgBdanSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
     s32 type;
 
@@ -225,18 +226,19 @@ void func_8086D4B4(BgBdanSwitch* this, PlayState* play) {
         type = this->dyna.actor.params & 0xFF;
         Flags_SetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F);
         if (type == BLUE || type == YELLOW_TALL_2) {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
         } else {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_CORRECT_CHIME);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_CORRECT_CHIME);
         }
     }
 }
 
 void func_8086D548(BgBdanSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F)) {
         Flags_UnsetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F);
         if ((this->dyna.actor.params & 0xFF) == YELLOW_TALL_2) {
-            OnePointCutscene_AttentionSetSfx(play, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->dyna.actor, NA_SE_SY_TRE_BOX_APPEAR);
         }
     }
 }
@@ -269,12 +271,14 @@ void func_8086D67C(BgBdanSwitch* this) {
 }
 
 void func_8086D694(BgBdanSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((func_8005B198() == this->dyna.actor.category) || (this->unk_1DA <= 0)) {
         this->unk_1C8 -= 0.2f;
         if (this->unk_1C8 <= 0.1f) {
             func_8086D730(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
-            func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 0x78, 0x14, 0xA);
+            func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 0x78, 0x14, 0xA);
         }
     }
 }
@@ -333,11 +337,13 @@ void func_8086D8BC(BgBdanSwitch* this) {
 }
 
 void func_8086D8CC(BgBdanSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->unk_1C8 -= 0.2f;
     if (this->unk_1C8 <= 0.6f) {
         func_8086D9F8(this);
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
-        func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 0x78, 0x14, 0xA);
+        func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 0x78, 0x14, 0xA);
     }
 }
 
@@ -347,12 +353,14 @@ void func_8086D944(BgBdanSwitch* this) {
 }
 
 void func_8086D95C(BgBdanSwitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if ((func_8005B198() == this->dyna.actor.category) || (this->unk_1DA <= 0)) {
         this->unk_1C8 -= 0.2f;
         if (this->unk_1C8 <= 0.1f) {
             func_8086DB24(this);
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_FOOT_SWITCH);
-            func_800AA000(this->dyna.actor.xyzDistToPlayerSq, 0x78, 0x14, 0xA);
+            func_800AA000(this->dyna.actor.xyzDistToPlayerSq[playerIndex], 0x78, 0x14, 0xA);
         }
     }
 }
@@ -364,7 +372,8 @@ void func_8086D9F8(BgBdanSwitch* this) {
 }
 
 void func_8086DA1C(BgBdanSwitch* this, PlayState* play) {
-    Actor* heldActor = GET_PLAYER(play)->heldActor;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    Actor* heldActor = player->heldActor;
 
     if (func_8004356C(&this->dyna)) {
         if (heldActor != NULL && heldActor->id == ACTOR_EN_RU1) {
@@ -482,6 +491,7 @@ void func_8086DDC0(BgBdanSwitch* this, PlayState* play) {
 }
 
 void BgBdanSwitch_Update(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
     s32 pad;
     BgBdanSwitch* this = (BgBdanSwitch*)thisx;
     s32 type;
@@ -495,7 +505,7 @@ void BgBdanSwitch_Update(Actor* thisx, PlayState* play) {
     if (type != 3 && type != 4) {
         this->unk_1D8--;
     } else {
-        if (!Player_InCsMode(play) && this->unk_1D8 > 0) {
+        if (!Player_InCsMode(play, player) && this->unk_1D8 > 0) {
             this->unk_1D8--;
         }
         this->unk_1DC = this->collider.base.acFlags;

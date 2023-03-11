@@ -64,6 +64,8 @@ void EnWallTubo_FindGirl(EnWallTubo* this, PlayState* play) {
 }
 
 void EnWallTubo_DetectChu(EnWallTubo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnBomChu* chu;
     s32 pad;
     Vec3f effAccel = { 0.0f, 0.1f, 0.0f };
@@ -72,7 +74,7 @@ void EnWallTubo_DetectChu(EnWallTubo* this, PlayState* play) {
     s16 quakeIndex;
 
     if (this->chuGirl->minigamePlayStatus != 0) {
-        if (play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_CHU_BOWLING) {
+        if (play->cameraPtrs[playerIndex][MAIN_CAM]->setting == CAM_SET_CHU_BOWLING) {
             chu = (EnBomChu*)play->actorCtx.actorLists[ACTORCAT_EXPLOSIVE].head;
 
             while (chu != NULL) {
@@ -92,7 +94,7 @@ void EnWallTubo_DetectChu(EnWallTubo* this, PlayState* play) {
                     func_80078884(NA_SE_SY_TRE_BOX_APPEAR);
                     this->timer = 60;
                     EffectSsBomb2_SpawnLayered(play, &this->explosionCenter, &effVelocity, &effAccel, 200, 40);
-                    quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 1);
+                    quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 1);
                     Quake_SetSpeed(quakeIndex, 0x7FFF);
                     Quake_SetQuakeValues(quakeIndex, 100, 0, 0, 0);
                     Quake_SetCountdown(quakeIndex, 100);

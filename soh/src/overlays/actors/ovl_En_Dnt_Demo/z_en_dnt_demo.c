@@ -111,6 +111,8 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
     s16 resultIdx;
     u8 ignore;
     s32 i;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->leaderSignal != DNT_SIGNAL_NONE) {
         for (i = 0; i < 9; i++) {
@@ -123,7 +125,7 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
         }
         this->leaderSignal = DNT_SIGNAL_NONE;
         this->actionFunc = EnDntDemo_Results;
-    } else if ((this->actor.xzDistToPlayer > 30.0f) || (Player_GetMask(play) == 0)) {
+    } else if ((this->actor.xzDistToPlayer[playerIndex] > 30.0f) || (Player_GetMask(play) == 0)) {
         this->debugArrowTimer++;
         if (this->subCamera != SUBCAM_FREE) {
             this->subCamera = SUBCAM_FREE;
@@ -156,7 +158,7 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
         }
 
         if ((Player_GetMask(play) != 0) && (this->subCamera == SUBCAM_FREE)) {
-            this->subCamera = OnePointCutscene_Init(play, 2220, -99, &this->scrubs[3]->actor, MAIN_CAM);
+            this->subCamera = OnePointCutscene_Init(play, player, 2220, -99, &this->scrubs[3]->actor, MAIN_CAM);
         }
         this->debugArrowTimer = 0;
         if (this->judgeTimer == 40) {
@@ -193,7 +195,7 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
                         if (this->subCamera != SUBCAM_FREE) {
                             this->subCamera = SUBCAM_FREE;
                             reaction = DNT_SIGNAL_LOOK;
-                            OnePointCutscene_Init(play, 2340, -99, &this->leader->actor, MAIN_CAM);
+                            OnePointCutscene_Init(play, player, 2340, -99, &this->leader->actor, MAIN_CAM);
                         }
                         break;
                     }
@@ -232,7 +234,7 @@ void EnDntDemo_Judge(EnDntDemo* this, PlayState* play) {
                             case DNT_ACTION_ATTACK:
                                 if (this->subCamera != SUBCAM_FREE) {
                                     this->subCamera = SUBCAM_FREE;
-                                    OnePointCutscene_Init(play, 2350, -99, &this->scrubs[3]->actor, MAIN_CAM);
+                                    OnePointCutscene_Init(play, player, 2350, -99, &this->scrubs[3]->actor, MAIN_CAM);
                                 }
                                 Audio_QueueSeqCmd(SEQ_PLAYER_BGM_MAIN << 24 | NA_BGM_ENEMY | 0x800);
                                 break;

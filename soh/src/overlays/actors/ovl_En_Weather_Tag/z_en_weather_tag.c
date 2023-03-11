@@ -132,7 +132,7 @@ u8 WeatherTag_CheckEnableWeatherEffect(EnWeatherTag* this, PlayState* play, u8 a
                                        u16 arg6, u8 weatherMode) {
     s32 pad;
     u8 ret = false;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_WorldDistXZToActor(&player->actor, &this->actor) < WEATHER_TAG_RANGE100(this->actor.params)) {
         if ((play->envCtx.indoors != 0) || !gSkyboxBlendingEnabled ||
@@ -172,7 +172,7 @@ u8 WeatherTag_CheckRestoreWeather(EnWeatherTag* this, PlayState* play, u8 arg2, 
                                   u16 arg6) {
     s32 pad;
     u8 ret = false;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((WEATHER_TAG_RANGE100(this->actor.params) + 100.0f) < Actor_WorldDistXZToActor(&player->actor, &this->actor)) {
         if (play->envCtx.indoors != 0 || !gSkyboxBlendingEnabled ||
@@ -287,7 +287,7 @@ void EnWeatherTag_EnabledCloudyRainThunderKakariko(EnWeatherTag* this, PlayState
 }
 
 void EnWeatherTag_SetSandstormIntensity(EnWeatherTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_WorldDistXZToActor(&player->actor, &this->actor) < WEATHER_TAG_RANGE100(this->actor.params)) {
         Math_SmoothStepToS(&play->envCtx.adjFogNear, -0x50, 1, 2, 1);
@@ -299,7 +299,7 @@ void EnWeatherTag_SetSandstormIntensity(EnWeatherTag* this, PlayState* play) {
 }
 
 void EnWeatherTag_DisabledRainThunder(EnWeatherTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (Actor_WorldDistXZToActor(&player->actor, &this->actor) < WEATHER_TAG_RANGE100(this->actor.params)) {
         Environment_PlayStormNatureAmbience(play);
@@ -310,7 +310,7 @@ void EnWeatherTag_DisabledRainThunder(EnWeatherTag* this, PlayState* play) {
 }
 
 void EnWeatherTag_EnabledRainThunder(EnWeatherTag* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((WEATHER_TAG_RANGE100(this->actor.params) + 10.0f) < Actor_WorldDistXZToActor(&player->actor, &this->actor)) {
         Environment_StopStormNatureAmbience(play);

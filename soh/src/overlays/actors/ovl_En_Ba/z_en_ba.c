@@ -141,12 +141,13 @@ void EnBa_SetupIdle(EnBa* this) {
 }
 
 void EnBa_Idle(EnBa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 pad;
     Vec3s sp5C;
 
-    if ((this->actor.colChkInfo.mass == MASS_IMMOVABLE) && (this->actor.xzDistToPlayer > 175.0f)) {
+    if ((this->actor.colChkInfo.mass == MASS_IMMOVABLE) && (this->actor.xzDistToPlayer[playerIndex] > 175.0f)) {
         Math_SmoothStepToF(&this->actor.world.pos.y, this->actor.home.pos.y + 330.0f, 1.0f, 7.0f, 0.0f);
     } else {
         this->actor.flags |= ACTOR_FLAG_0;
@@ -187,7 +188,7 @@ void EnBa_Idle(EnBa* this, PlayState* play) {
     }
     this->unk_2A8[13].x = this->unk_2A8[12].x;
     this->unk_2A8[13].y = this->unk_2A8[12].y;
-    if (!(player->stateFlags1 & 0x4000000) && (this->actor.xzDistToPlayer <= 175.0f) &&
+    if (!(player->stateFlags1 & 0x4000000) && (this->actor.xzDistToPlayer[playerIndex] <= 175.0f) &&
         (this->actor.world.pos.y == this->actor.home.pos.y + 100.0f)) {
         EnBa_SetupSwingAtPlayer(this);
     }
@@ -231,14 +232,15 @@ void EnBa_SetupSwingAtPlayer(EnBa* this) {
 }
 
 void EnBa_SwingAtPlayer(EnBa* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 temp;
     s16 i;
     Vec3s sp58;
     s16 phi_fp;
 
     Math_SmoothStepToF(&this->actor.world.pos.y, this->actor.home.pos.y + 60.0f, 1.0f, 10.0f, 0.0f);
-    if ((this->actor.xzDistToPlayer <= 175.0f) || (this->unk_31A != 0)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] <= 175.0f) || (this->unk_31A != 0)) {
         if (this->unk_318 == 20) {
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_BALINADE_HAND_UP);
             this->unk_31C = 1500;
@@ -249,7 +251,7 @@ void EnBa_SwingAtPlayer(EnBa* this, PlayState* play) {
             if (this->unk_318 >= 11) {
                 this->unk_2FC = player->actor.world.pos;
                 this->unk_2FC.y += 30.0f;
-                phi_fp = this->actor.yawTowardsPlayer;
+                phi_fp = this->actor.yawTowardsPlayer[playerIndex];
             } else {
                 phi_fp = Math_Vec3f_Yaw(&this->actor.world.pos, &this->unk_2FC);
             }
@@ -293,7 +295,7 @@ void EnBa_SwingAtPlayer(EnBa* this, PlayState* play) {
                     Matrix_MultVec3f(&D_809B8080, &this->unk_158[i + 1]);
                 }
                 this->unk_31A--;
-            } else if ((this->actor.xzDistToPlayer > 175.0f) || (player->stateFlags1 & 0x4000000)) {
+            } else if ((this->actor.xzDistToPlayer[playerIndex] > 175.0f) || (player->stateFlags1 & 0x4000000)) {
                 EnBa_SetupIdle(this);
             } else {
                 EnBa_SetupSwingAtPlayer(this);
@@ -306,13 +308,13 @@ void EnBa_SwingAtPlayer(EnBa* this, PlayState* play) {
         if (this->collider.base.atFlags & 2) {
             this->collider.base.atFlags &= ~2;
             if (this->collider.base.at == &player->actor) {
-                func_8002F71C(play, &this->actor, 8.0f, this->actor.yawTowardsPlayer, 8.0f);
+                func_8002F71C(play, &this->actor, 8.0f, this->actor.yawTowardsPlayer[playerIndex], 8.0f);
             }
         }
         CollisionCheck_SetAT(play, &play->colChkCtx, &this->collider.base);
         return;
     }
-    if ((this->actor.xzDistToPlayer > 175.0f) || (player->stateFlags1 & 0x4000000)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] > 175.0f) || (player->stateFlags1 & 0x4000000)) {
         EnBa_SetupIdle(this);
     } else {
         EnBa_SetupSwingAtPlayer(this);
@@ -383,6 +385,8 @@ void func_809B75A0(EnBa* this, PlayState* play2) {
     s32 i;
     Vec3f sp74 = { 0.0f, 0.0f, 0.0f };
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->unk_31C = 2500;
     EffectSsDeadSound_SpawnStationary(play, &this->actor.projectedPos, NA_SE_EN_BALINADE_HAND_DEAD, 1, 1, 40);
@@ -393,7 +397,7 @@ void func_809B75A0(EnBa* this, PlayState* play2) {
                     this->unk_158[i].z, 0, 0, 0, EN_BA_DEAD_BLOB, true);
     }
     unk_temp = Math_Vec3f_Pitch(&this->actor.world.pos, &this->unk_158[0]) + 0x8000;
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, this->unk_31C, 0);
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, this->unk_31C, 0);
     Math_SmoothStepToS(&this->actor.shape.rot.x, unk_temp, 1, this->unk_31C, 0);
     Matrix_Translate(this->actor.world.pos.x, this->actor.world.pos.y, this->actor.world.pos.z, MTXMODE_NEW);
     Matrix_RotateZYX(this->actor.shape.rot.x - 0x8000, this->actor.shape.rot.y, 0, MTXMODE_APPLY);
@@ -416,11 +420,13 @@ void EnBa_Die(EnBa* this, PlayState* play) {
     s32 i;
 
     if (this->unk_31A != 0) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
         this->actor.speedXZ = 30.0f;
         this->unk_31C = 8000;
         this->actor.world.pos.y += 8.0f;
         temp = Math_Vec3f_Pitch(&this->actor.world.pos, &this->unk_158[0]) + 0x8000;
-        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 1, this->unk_31C, 0);
+        Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, this->unk_31C, 0);
         Math_SmoothStepToS(&this->actor.shape.rot.x, temp, 1, this->unk_31C, 0);
         Matrix_Translate(this->actor.world.pos.x, this->actor.world.pos.y, this->actor.world.pos.z, MTXMODE_NEW);
         Matrix_RotateZYX(this->actor.shape.rot.x - 0x8000, this->actor.shape.rot.y, 0, MTXMODE_APPLY);
@@ -428,7 +434,7 @@ void EnBa_Die(EnBa* this, PlayState* play) {
         for (i = 0; i < 5; i++) {
             temp = -Math_CosS(this->unk_31A * 0x444) * (i * 400);
             Math_SmoothStepToS(&this->unk_2A8[i].x, temp - 0x4000, 1, this->unk_31C, 0);
-            Math_SmoothStepToS(&this->unk_2A8[i].y, this->actor.yawTowardsPlayer, 1, this->unk_31C, 0);
+            Math_SmoothStepToS(&this->unk_2A8[i].y, this->actor.yawTowardsPlayer[playerIndex], 1, this->unk_31C, 0);
             Matrix_Translate(this->unk_158[i].x, this->unk_158[i].y, this->unk_158[i].z, MTXMODE_NEW);
             Matrix_RotateZYX(this->unk_2A8[i].x - 0x8000, this->unk_2A8[i].y, 0, MTXMODE_APPLY);
             Matrix_MultVec3f(&D_809B8080, &this->unk_158[i + 1]);

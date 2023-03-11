@@ -533,7 +533,9 @@ extern "C" s32 OTRfunc_800973FC(PlayState* play, RoomContext* roomCtx) {
             gSegments[3] = VIRTUAL_TO_PHYSICAL(roomCtx->unk_34);
 
             OTRScene_ExecuteCommands(play, (Ship::Scene*)roomCtx->roomToLoad);
-            Player_SetBootData(play, GET_PLAYER(play));
+            for (u16 i = 0; i < PLAYER_COUNT; i++) {
+                Player_SetBootData(play, Player_FromIndex(i, play));
+            }
             Actor_SpawnTransitionActors(play, &play->actorCtx);
 
             return 1;

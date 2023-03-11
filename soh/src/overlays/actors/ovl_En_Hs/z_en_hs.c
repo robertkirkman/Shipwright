@@ -119,6 +119,8 @@ void EnHs_Destroy(Actor* thisx, PlayState* play) {
 }
 
 s32 func_80A6E53C(EnHs* this, PlayState* play, u16 textId, EnHsActionFunc actionFunc) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
@@ -127,8 +129,8 @@ s32 func_80A6E53C(EnHs* this, PlayState* play, u16 textId, EnHsActionFunc action
     }
 
     this->actor.textId = textId;
-    yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
-    if ((ABS(yawDiff) <= 0x2150) && (this->actor.xzDistToPlayer < 100.0f)) {
+    yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
+    if ((ABS(yawDiff) <= 0x2150) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
         this->unk_2A8 |= 1;
         func_8002F2CC(&this->actor, play, 100.0f);
     }
@@ -220,7 +222,7 @@ void func_80A6E7BC(EnHs* this, PlayState* play) {
 }
 
 void func_80A6E8CC(EnHs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_ContinueTextbox(play, 0x10B3);
@@ -240,11 +242,12 @@ void func_80A6E8CC(EnHs* this, PlayState* play) {
 }
 
 void func_80A6E9AC(EnHs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 yawDiff;
 
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
-        if (func_8002F368(play) == 7) {
+        if (func_8002F368(play, player) == 7) {
             player->actor.textId = 0x10B2;
             func_80A6E3A0(this, func_80A6E8CC);
             Animation_Change(&this->skelAnime, &object_hs_Anim_000304, 1.0f, 0.0f,
@@ -256,9 +259,9 @@ void func_80A6E9AC(EnHs* this, PlayState* play) {
             func_80A6E3A0(this, func_80A6E6D8);
         }
     } else {
-        yawDiff = this->actor.yawTowardsPlayer - this->actor.shape.rot.y;
+        yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
         this->actor.textId = 0x10B1;
-        if ((ABS(yawDiff) <= 0x2150) && (this->actor.xzDistToPlayer < 100.0f)) {
+        if ((ABS(yawDiff) <= 0x2150) && (this->actor.xzDistToPlayer[playerIndex] < 100.0f)) {
             func_8002F298(&this->actor, play, 100.0f, 7);
         }
     }

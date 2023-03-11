@@ -30,7 +30,9 @@ u64 D_801614D0[0xA00];
 PlayState* gPlayState;
 
 void func_800BC450(PlayState* play) {
-    Camera_ChangeDataIdx(GET_ACTIVE_CAM(play), play->unk_1242B - 1);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        Camera_ChangeDataIdx(GET_ACTIVE_CAM(i, play), play->unk_1242B - 1);
+    }
 }
 
 void func_800BC490(PlayState* play, s16 point) {
@@ -412,7 +414,6 @@ void Play_Init(GameState* thisx) {
     size_t zAllocSize;
     Player* player;
     s32 playerStartCamId;
-    s32 i;
     u8 tempSetupIndex;
     s32 pad[2];
 
@@ -443,26 +444,30 @@ void Play_Init(GameState* thisx) {
     // This is potionally unavoidable due to struct size differences, but is x2 the right amount?
     GameState_Realloc(&play->state, 0x1D4790 * 2);
     KaleidoManager_Init(play);
-    View_Init(&play->view, gfxCtx);
     Audio_SetExtraFilter(0);
     Quake_Init();
 
-    for (i = 0; i < ARRAY_COUNT(play->cameraPtrs); i++) {
-        play->cameraPtrs[i] = NULL;
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        View_Init(&play->views[i], gfxCtx, i);
+
+        for (u16 j = 0; j < ARRAY_COUNT(play->cameraPtrs[i]); j++) {
+            play->cameraPtrs[i][j] = NULL;
+        }
+
+        Camera_Init(&play->mainCameras[i], &play->views[i], &play->colCtx, play, i);
+        Camera_ChangeStatus(&play->mainCameras[i], CAM_STAT_ACTIVE);
+
+        for (u16 j = 0; j < ARRAY_COUNT(play->subCameras[i]); j++) {
+            Camera_Init(&play->subCameras[i][j], &play->views[i], &play->colCtx, play, i);
+            Camera_ChangeStatus(&play->subCameras[i][j], CAM_STAT_UNK100);
+        }
+
+        play->cameraPtrs[i][MAIN_CAM] = &play->mainCameras[i];
+        play->cameraPtrs[i][MAIN_CAM]->uid = 0;
+        play->activeCameras[i] = MAIN_CAM;
+        func_8005AC48(&play->mainCameras[i], 0xFF);
     }
 
-    Camera_Init(&play->mainCamera, &play->view, &play->colCtx, play);
-    Camera_ChangeStatus(&play->mainCamera, CAM_STAT_ACTIVE);
-
-    for (i = 0; i < 3; i++) {
-        Camera_Init(&play->subCameras[i], &play->view, &play->colCtx, play);
-        Camera_ChangeStatus(&play->subCameras[i], CAM_STAT_UNK100);
-    }
-
-    play->cameraPtrs[MAIN_CAM] = &play->mainCamera;
-    play->cameraPtrs[MAIN_CAM]->uid = 0;
-    play->activeCamera = MAIN_CAM;
-    func_8005AC48(&play->mainCamera, 0xFF);
     func_80112098(play);
     Message_Init(play);
     GameOver_Init(play);
@@ -609,28 +614,29 @@ void Play_Init(GameState* thisx) {
     while (!func_800973FC(play, &play->roomCtx)) {
         ; // Empty Loop
     }
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        Camera_InitPlayerSettings(&play->mainCameras[i], player);
+        Camera_ChangeMode(&play->mainCameras[i], CAM_MODE_NORMAL);
 
-    player = GET_PLAYER(play);
-    Camera_InitPlayerSettings(&play->mainCamera, player);
-    Camera_ChangeMode(&play->mainCamera, CAM_MODE_NORMAL);
+        // OTRTODO: Bounds check cameraDataList to guard against scenes spawning the player with
+        // an out of bounds background camera index. This requires adding an extra field to the
+        // CollisionHeader struct to save the length of cameraDataList.
+        // Fixes Dodongo's Cavern blue warp crash.
+        {
+            CollisionHeader* colHeader = BgCheck_GetCollisionHeader(&play->colCtx, BGCHECK_SCENE);
 
-    // OTRTODO: Bounds check cameraDataList to guard against scenes spawning the player with
-    // an out of bounds background camera index. This requires adding an extra field to the
-    // CollisionHeader struct to save the length of cameraDataList.
-    // Fixes Dodongo's Cavern blue warp crash.
-    {
-        CollisionHeader* colHeader = BgCheck_GetCollisionHeader(&play->colCtx, BGCHECK_SCENE);
-
-        // If the player's start cam is out of bounds, set it to 0xFF so it isn't used.
-        if (colHeader != NULL && ((player->actor.params & 0xFF) >= colHeader->cameraDataListLen)) {
-            player->actor.params |= 0xFF;
+            // If the player's start cam is out of bounds, set it to 0xFF so it isn't used.
+            if (colHeader != NULL && ((player->actor.params & 0xFF) >= colHeader->cameraDataListLen)) {
+                player->actor.params |= 0xFF;
+            }
         }
-    }
 
-    playerStartCamId = player->actor.params & 0xFF;
-    if (playerStartCamId != 0xFF) {
-        osSyncPrintf("player has start camera ID (" VT_FGCOL(BLUE) "%d" VT_RST ")\n", playerStartCamId);
-        Camera_ChangeDataIdx(&play->mainCamera, playerStartCamId);
+        playerStartCamId = player->actor.params & 0xFF;
+        if (playerStartCamId != 0xFF) {
+            osSyncPrintf("player has start camera ID (" VT_FGCOL(BLUE) "%d" VT_RST ")\n", playerStartCamId);
+            Camera_ChangeDataIdx(&play->mainCameras[i], playerStartCamId);
+        }
     }
 
     if (YREG(15) == 32) {
@@ -645,7 +651,10 @@ void Play_Init(GameState* thisx) {
     Environment_PlaySceneSequence(play);
     gSaveContext.seqId = play->sequenceCtx.seqId;
     gSaveContext.natureAmbienceId = play->sequenceCtx.natureAmbienceId;
-    func_8002DF18(play, GET_PLAYER(play));
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        player = Player_FromIndex(i, play);
+        func_8002DF18(play, player);
+    }
     AnimationContext_Update(play, &play->animationCtx);
     gSaveContext.respawnFlag = 0;
     #if 0
@@ -661,8 +670,8 @@ void Play_Update(PlayState* play) {
     s32 pad1;
     s32 sp80;
     Input* input;
-    u32 i;
     s32 pad2;
+    bool csMode = false;
 
     input = play->state.input;
 
@@ -675,7 +684,7 @@ void Play_Update(PlayState* play) {
         HREG(81) = 0;
         osSyncPrintf("object_exchange_rom_address %u\n", gObjectTableSize);
         osSyncPrintf("RomStart RomEnd   Size\n");
-        for (i = 0; i < gObjectTableSize; i++) {
+        for (u32 i = 0; i < gObjectTableSize; i++) {
             ptrdiff_t size = gObjectTable[i].vromEnd - gObjectTable[i].vromStart;
 
             osSyncPrintf("%08x-%08x %08x(%8.3fKB)\n", gObjectTable[i].vromStart, gObjectTable[i].vromEnd, size,
@@ -689,7 +698,13 @@ void Play_Update(PlayState* play) {
         ActorOverlayTable_LogPrint();
     }
 
-    if (CVarGetInteger("gFreeCamera", 0) && Player_InCsMode(play)) {
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        if (Player_InCsMode(play, Player_FromIndex(i, play))) {
+            csMode = true;
+        }
+    }
+
+    if (CVarGetInteger("gFreeCamera", 0) && csMode) {
         play->manualCamera = false;
     }
 
@@ -1154,13 +1169,13 @@ void Play_Update(PlayState* play) {
                         LOG_NUM("1", 1);
                     }
 
-                    func_80064558(play, &play->csCtx);
+                    func_80064558(play, &play->csCtx); // cutscene sCsStateHandlers1
 
                     if (1 && HREG(63)) {
                         LOG_NUM("1", 1);
                     }
 
-                    func_800645A0(play, &play->csCtx);
+                    func_800645A0(play, &play->csCtx); // cutscene sCsStateHandlers2
 
                     if (1 && HREG(63)) {
                         LOG_NUM("1", 1);
@@ -1203,7 +1218,7 @@ void Play_Update(PlayState* play) {
                     if ((play->pauseCtx.state != 0) || (play->pauseCtx.debugState != 0)) {
                         // "Changing viewpoint is prohibited due to the kaleidoscope"
                         osSyncPrintf(VT_FGCOL(CYAN) "カレイドスコープ中につき視点変更を禁止しております\n" VT_RST);
-                    } else if (Player_InCsMode(play)) {
+                    } else if (Player_InCsMode(play, Player_FromIndex(0, play))) {
                         // "Changing viewpoint is prohibited during the cutscene"
                         osSyncPrintf(VT_FGCOL(CYAN) "デモ中につき視点変更を禁止しております\n" VT_RST);
                     } else if (YREG(15) == 0x10) {
@@ -1293,29 +1308,30 @@ skip:
     }
 
     if ((sp80 == 0) || (gDbgCamEnabled)) {
-        s32 pad3[5];
-        s32 i;
+        for (u16 i = 0; i < PLAYER_COUNT; i++) {
+            s32 pad3[5];
 
-        play->nextCamera = play->activeCamera;
+            play->nextCameras[i] = play->activeCameras[i];
 
-        if (1 && HREG(63)) {
-            LOG_NUM("1", 1);
-        }
-
-        for (i = 0; i < NUM_CAMS; i++) {
-            if ((i != play->nextCamera) && (play->cameraPtrs[i] != NULL)) {
-                if (1 && HREG(63)) {
-                    LOG_NUM("1", 1);
-                }
-
-                Camera_Update(play->cameraPtrs[i]);
+            if (1 && HREG(63)) {
+                LOG_NUM("1", 1);
             }
-        }
 
-        Camera_Update(play->cameraPtrs[play->nextCamera]);
+            for (u16 j = 0; j < NUM_CAMS; j++) {
+                if ((j != play->nextCameras[i]) && (play->cameraPtrs[i][j] != NULL)) {
+                    if (1 && HREG(63)) {
+                        LOG_NUM("1", 1);
+                    }
 
-        if (1 && HREG(63)) {
-            LOG_NUM("1", 1);
+                    Camera_Update(play->cameraPtrs[i][j]);
+                }
+            }
+
+            Camera_Update(play->cameraPtrs[i][play->nextCameras[i]]);
+
+            if (1 && HREG(63)) {
+                LOG_NUM("1", 1);
+            }
         }
     }
 
@@ -1380,256 +1396,257 @@ void Play_Draw(PlayState* play) {
 
     Gfx_SetupFrame(gfxCtx, 0, 0, 0);
 
-    if ((HREG(80) != 10) || (HREG(82) != 0)) {
-        POLY_OPA_DISP = Play_SetFog(play, POLY_OPA_DISP);
-        POLY_XLU_DISP = Play_SetFog(play, POLY_XLU_DISP);
-        POLY_KAL_DISP = Play_SetFog(play, POLY_KAL_DISP);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        if ((HREG(80) != 10) || (HREG(82) != 0)) {
+            POLY_OPA_DISP = Play_SetFog(play, POLY_OPA_DISP);
+            POLY_XLU_DISP = Play_SetFog(play, POLY_XLU_DISP);
+            POLY_KAL_DISP = Play_SetFog(play, POLY_KAL_DISP);
+            func_800AA460(&play->views[i], play->views[i].fovy, play->views[i].zNear, play->lightCtx.fogFar);
+            func_800AAA50(&play->views[i], 15);
 
-        func_800AA460(&play->view, play->view.fovy, play->view.zNear, play->lightCtx.fogFar);
-        func_800AAA50(&play->view, 15);
+            // The billboard matrix temporarily stores the viewing matrix
+            Matrix_MtxToMtxF(&play->views[i].viewing, &play->billboardMtxF);
+            Matrix_MtxToMtxF(&play->views[i].projection, &play->viewProjectionMtxF);
+            Matrix_Mult(&play->viewProjectionMtxF, MTXMODE_NEW);
+            // The billboard is still a viewing matrix at this stage
+            Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
+            Matrix_Get(&play->viewProjectionMtxF);
+            play->billboardMtxF.mf[0][3] = play->billboardMtxF.mf[1][3] = play->billboardMtxF.mf[2][3] =
+                play->billboardMtxF.mf[3][0] = play->billboardMtxF.mf[3][1] = play->billboardMtxF.mf[3][2] =
+                    0.0f;
+            // This transpose is where the viewing matrix is properly converted into a billboard matrix
+            Matrix_Transpose(&play->billboardMtxF);
+            play->billboardMtx = Matrix_MtxFToMtx(MATRIX_CHECKFLOATS(&play->billboardMtxF),
+                                                        Graph_Alloc(gfxCtx, sizeof(Mtx)));
 
-        // The billboard matrix temporarily stores the viewing matrix
-        Matrix_MtxToMtxF(&play->view.viewing, &play->billboardMtxF);
-        Matrix_MtxToMtxF(&play->view.projection, &play->viewProjectionMtxF);
-        Matrix_Mult(&play->viewProjectionMtxF, MTXMODE_NEW);
-        // The billboard is still a viewing matrix at this stage
-        Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
-        Matrix_Get(&play->viewProjectionMtxF);
-        play->billboardMtxF.mf[0][3] = play->billboardMtxF.mf[1][3] = play->billboardMtxF.mf[2][3] =
-            play->billboardMtxF.mf[3][0] = play->billboardMtxF.mf[3][1] = play->billboardMtxF.mf[3][2] =
-                0.0f;
-        // This transpose is where the viewing matrix is properly converted into a billboard matrix
-        Matrix_Transpose(&play->billboardMtxF);
-        play->billboardMtx = Matrix_MtxFToMtx(MATRIX_CHECKFLOATS(&play->billboardMtxF),
-                                                   Graph_Alloc(gfxCtx, sizeof(Mtx)));
+            gSPSegment(POLY_OPA_DISP++, 0x01, play->billboardMtx);
 
-        gSPSegment(POLY_OPA_DISP++, 0x01, play->billboardMtx);
+            if ((HREG(80) != 10) || (HREG(92) != 0)) {
+                Gfx* gfxP;
+                Gfx* sp1CC = POLY_OPA_DISP;
 
-        if ((HREG(80) != 10) || (HREG(92) != 0)) {
-            Gfx* gfxP;
-            Gfx* sp1CC = POLY_OPA_DISP;
+                gfxP = Graph_GfxPlusOne(sp1CC);
+                gSPDisplayList(OVERLAY_DISP++, gfxP);
+                gSPGrayscale(gfxP++, false);
 
-            gfxP = Graph_GfxPlusOne(sp1CC);
+                if ((play->transitionMode == 3) || (play->transitionMode == 11) ||
+                    (play->transitionCtx.transitionType >= 56)) {
+                    View view;
+
+                    View_Init(&view, gfxCtx, 0);
+                    view.flags = 2 | 8;
+
+                    SET_FULLSCREEN_VIEWPORT(&view); // todo
+
+                    func_800AB9EC(&view, 15, &gfxP);
+                    play->transitionCtx.draw(&play->transitionCtx.data, &gfxP);
+                }
+
+                TransitionFade_Draw(&play->transitionFade, &gfxP);
+
+                if (D_801614B0.a > 0) {
+                    gDPSetGrayscaleColor(gfxP++, D_801614B0.r, D_801614B0.g, D_801614B0.b, D_801614B0.a);
+                    gSPGrayscale(gfxP++, true);
+                }
+
+                gSPEndDisplayList(gfxP++);
+                Graph_BranchDlist(sp1CC, gfxP);
+                POLY_OPA_DISP = gfxP;
+            }
+
+            if (gTrnsnUnkState == 3) {
+                Gfx* sp88 = POLY_OPA_DISP;
+
+                TransitionUnk_Draw(&sTrnsnUnk, &sp88);
+                POLY_OPA_DISP = sp88;
+                goto Play_Draw_DrawOverlayElements;
+            } else {
+                PreRender_SetValues(&play->pauseBgPreRender, SCREEN_WIDTH, SCREEN_HEIGHT, gfxCtx->curFrameBuffer,
+                                    gZBuffer);
+
+                if (R_PAUSE_MENU_MODE == 2) {
+                    MsgEvent_SendNullTask();
+                    PreRender_Calc(&play->pauseBgPreRender);
+                    R_PAUSE_MENU_MODE = 3;
+                } else if (R_PAUSE_MENU_MODE >= 4) {
+                    R_PAUSE_MENU_MODE = 0;
+                }
+
+                if (R_PAUSE_MENU_MODE == 3) {
+                    Gfx* sp84 = POLY_OPA_DISP;
+
+                    //func_800C24BC(&play->pauseBgPreRender, &sp84);
+                    POLY_OPA_DISP = sp84;
+
+                    //goto Play_Draw_DrawOverlayElements;
+                }
+                //else
+                {
+                    s32 sp80;
+
+                    if ((HREG(80) != 10) || (HREG(83) != 0)) {
+                        if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) &&
+                            !play->envCtx.skyboxDisabled) {         
+                            if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
+                                (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
+                                Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
+
+                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
+                                                play->envCtx.skyboxBlend, play->views[i].eye.x, play->views[i].eye.y,
+                                                play->views[i].eye.z);
+                            } else if (play->skyboxCtx.unk_140 == 0) {
+                                SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                                play->views[i].eye.x, play->views[i].eye.y, play->views[i].eye.z);
+                            }
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(90) & 2)) {
+                        if (!play->envCtx.sunMoonDisabled) {
+                            Environment_DrawSunAndMoon(play, i);
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(90) & 1)) {
+                        Environment_DrawSkyboxFilters(play);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(90) & 4)) {
+                        Environment_UpdateLightningStrike(play);
+                        Environment_DrawLightning(play, i, 0);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(90) & 8)) {
+                        sp228 = LightContext_NewLights(&play->lightCtx, gfxCtx);
+                        Lights_BindAll(sp228, play->lightCtx.listHead, NULL);
+                        Lights_Draw(sp228, gfxCtx);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(84) != 0)) {
+                        if (VREG(94) == 0) {
+                            if (HREG(80) != 10) {
+                                sp80 = 3;
+                            } else {
+                                sp80 = HREG(84);
+                            }
+                            Scene_Draw(play);
+                            Room_Draw(play, i, &play->roomCtx.curRoom, sp80 & 3);
+                            Room_Draw(play, i, &play->roomCtx.prevRoom, sp80 & 3);
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(83) != 0)) {
+                        if ((play->skyboxCtx.unk_140 != 0) &&
+                            (GET_ACTIVE_CAM(i, play)->setting != CAM_SET_PREREND_FIXED)) {
+                            Vec3f sp74;
+
+                            Camera_GetSkyboxOffset(&sp74, GET_ACTIVE_CAM(i, play));
+                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
+                                            play->views[i].eye.x + sp74.x, play->views[i].eye.y + sp74.y,
+                                            play->views[i].eye.z + sp74.z);
+                        }
+                    }
+
+                    if (play->envCtx.unk_EE[1] != 0) {
+                        Environment_DrawRain(play, i, &play->views[i], gfxCtx);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(84) != 0)) {
+                        Environment_FillScreen(gfxCtx, 0, 0, 0, play->unk_11E18, FILL_SCREEN_OPA);
+                    }
+
+                    if ((play->pauseCtx.state != 0) && (HREG(80) != 10) || (HREG(89) != 0)) {
+                        Play_DrawOverlayElements(play); // todo
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(85) != 0)) {
+                        func_800315AC(play, i, &play->actorCtx);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(86) != 0)) {
+                        if (!play->envCtx.sunMoonDisabled) {
+                            sp21C.x = play->views[i].eye.x + play->envCtx.sunPos.x;
+                            sp21C.y = play->views[i].eye.y + play->envCtx.sunPos.y;
+                            sp21C.z = play->views[i].eye.z + play->envCtx.sunPos.z;
+                            Environment_DrawSunLensFlare(play, i, &play->envCtx, &play->views[i], gfxCtx, sp21C, 0);
+                        }
+                        Environment_DrawCustomLensFlare(play, i);
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(87) != 0)) {
+                        if (MREG(64) != 0) {
+                            Environment_FillScreen(gfxCtx, MREG(65), MREG(66), MREG(67), MREG(68),
+                                                FILL_SCREEN_OPA | FILL_SCREEN_XLU);
+                        }
+
+                        switch (play->envCtx.fillScreen) {
+                            case 1:
+                                Environment_FillScreen(
+                                    gfxCtx, play->envCtx.screenFillColor[0], play->envCtx.screenFillColor[1],
+                                    play->envCtx.screenFillColor[2], play->envCtx.screenFillColor[3],
+                                    FILL_SCREEN_OPA | FILL_SCREEN_XLU);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(88) != 0)) {
+                        if (play->envCtx.sandstormState != 0) {
+                            Environment_DrawSandstorm(play, play->envCtx.sandstormState);
+                        }
+                    }
+
+                    if ((HREG(80) != 10) || (HREG(93) != 0)) {
+                        DebugDisplay_DrawObjects(play);
+                    }
+
+                    if ((R_PAUSE_MENU_MODE == 1) || (gTrnsnUnkState == 1)) {
+                        Gfx* sp70 = OVERLAY_DISP;
+
+                        play->pauseBgPreRender.fbuf = gfxCtx->curFrameBuffer;
+                        play->pauseBgPreRender.fbufSave = (u16*)gZBuffer;
+                        func_800C1F20(&play->pauseBgPreRender, &sp70);
+                        if (R_PAUSE_MENU_MODE == 1) {
+                            play->pauseBgPreRender.cvgSave = (u8*)gfxCtx->curFrameBuffer;
+                            func_800C20B4(&play->pauseBgPreRender, &sp70);
+                            R_PAUSE_MENU_MODE = 2;
+                        } else {
+                            gTrnsnUnkState = 2;
+                        }
+                        OVERLAY_DISP = sp70;
+                        play->unk_121C7 = 2;
+                        SREG(33) |= 1;
+                    } else if (R_PAUSE_MENU_MODE != 3) {
+                    Play_Draw_DrawOverlayElements:
+                        if ((HREG(80) != 10) || (HREG(89) != 0)) {
+                            Play_DrawOverlayElements(play);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (play->views[i].unk_124 != 0) {
+            Camera_Update(GET_ACTIVE_CAM(i, play));
+            func_800AB944(&play->views[i]);
+            play->views[i].unk_124 = 0;
+            if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) && !play->envCtx.skyboxDisabled) {
+                SkyboxDraw_UpdateMatrix(&play->skyboxCtx, play->views[i].eye.x, play->views[i].eye.y,
+                                        play->views[i].eye.z);
+            }
+        }
+
+        Camera_Finish(GET_ACTIVE_CAM(i, play), i);
+
+        {
+            Gfx* prevDisplayList = POLY_OPA_DISP;
+            Gfx* gfxP = Graph_GfxPlusOne(POLY_OPA_DISP);
             gSPDisplayList(OVERLAY_DISP++, gfxP);
-            gSPGrayscale(gfxP++, false);
-
-            if ((play->transitionMode == 3) || (play->transitionMode == 11) ||
-                (play->transitionCtx.transitionType >= 56)) {
-                View view;
-
-                View_Init(&view, gfxCtx);
-                view.flags = 2 | 8;
-
-                SET_FULLSCREEN_VIEWPORT(&view);
-
-                func_800AB9EC(&view, 15, &gfxP);
-                play->transitionCtx.draw(&play->transitionCtx.data, &gfxP);
-            }
-
-            TransitionFade_Draw(&play->transitionFade, &gfxP);
-
-            if (D_801614B0.a > 0) {
-                gDPSetGrayscaleColor(gfxP++, D_801614B0.r, D_801614B0.g, D_801614B0.b, D_801614B0.a);
-                gSPGrayscale(gfxP++, true);
-            }
-
             gSPEndDisplayList(gfxP++);
-            Graph_BranchDlist(sp1CC, gfxP);
+            Graph_BranchDlist(prevDisplayList, gfxP);
             POLY_OPA_DISP = gfxP;
         }
-
-        if (gTrnsnUnkState == 3) {
-            Gfx* sp88 = POLY_OPA_DISP;
-
-            TransitionUnk_Draw(&sTrnsnUnk, &sp88);
-            POLY_OPA_DISP = sp88;
-            goto Play_Draw_DrawOverlayElements;
-        } else {
-            PreRender_SetValues(&play->pauseBgPreRender, SCREEN_WIDTH, SCREEN_HEIGHT, gfxCtx->curFrameBuffer,
-                                gZBuffer);
-
-            if (R_PAUSE_MENU_MODE == 2) {
-                MsgEvent_SendNullTask();
-                PreRender_Calc(&play->pauseBgPreRender);
-                R_PAUSE_MENU_MODE = 3;
-            } else if (R_PAUSE_MENU_MODE >= 4) {
-                R_PAUSE_MENU_MODE = 0;
-            }
-
-            if (R_PAUSE_MENU_MODE == 3) {
-                Gfx* sp84 = POLY_OPA_DISP;
-
-                //func_800C24BC(&play->pauseBgPreRender, &sp84);
-                POLY_OPA_DISP = sp84;
-
-                //goto Play_Draw_DrawOverlayElements;
-            }
-            //else
-            {
-                s32 sp80;
-
-                if ((HREG(80) != 10) || (HREG(83) != 0)) {
-                    if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) &&
-                        !play->envCtx.skyboxDisabled) {
-                        if ((play->skyboxId == SKYBOX_NORMAL_SKY) ||
-                            (play->skyboxId == SKYBOX_CUTSCENE_MAP)) {
-                            Environment_UpdateSkybox(play, play->skyboxId, &play->envCtx, &play->skyboxCtx);
-
-                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId,
-                                            play->envCtx.skyboxBlend, play->view.eye.x, play->view.eye.y,
-                                            play->view.eye.z);
-                        } else if (play->skyboxCtx.unk_140 == 0) {
-                            SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                            play->view.eye.x, play->view.eye.y, play->view.eye.z);
-                        }
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 2)) {
-                    if (!play->envCtx.sunMoonDisabled) {
-                        Environment_DrawSunAndMoon(play);
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 1)) {
-                    Environment_DrawSkyboxFilters(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 4)) {
-                    Environment_UpdateLightningStrike(play);
-                    Environment_DrawLightning(play, 0);
-                }
-
-                if ((HREG(80) != 10) || (HREG(90) & 8)) {
-                    sp228 = LightContext_NewLights(&play->lightCtx, gfxCtx);
-                    Lights_BindAll(sp228, play->lightCtx.listHead, NULL);
-                    Lights_Draw(sp228, gfxCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(84) != 0)) {
-                    if (VREG(94) == 0) {
-                        if (HREG(80) != 10) {
-                            sp80 = 3;
-                        } else {
-                            sp80 = HREG(84);
-                        }
-                        Scene_Draw(play);
-                        Room_Draw(play, &play->roomCtx.curRoom, sp80 & 3);
-                        Room_Draw(play, &play->roomCtx.prevRoom, sp80 & 3);
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(83) != 0)) {
-                    if ((play->skyboxCtx.unk_140 != 0) &&
-                        (GET_ACTIVE_CAM(play)->setting != CAM_SET_PREREND_FIXED)) {
-                        Vec3f sp74;
-
-                        Camera_GetSkyboxOffset(&sp74, GET_ACTIVE_CAM(play));
-                        SkyboxDraw_Draw(&play->skyboxCtx, gfxCtx, play->skyboxId, 0,
-                                        play->view.eye.x + sp74.x, play->view.eye.y + sp74.y,
-                                        play->view.eye.z + sp74.z);
-                    }
-                }
-
-                if (play->envCtx.unk_EE[1] != 0) {
-                    Environment_DrawRain(play, &play->view, gfxCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(84) != 0)) {
-                    Environment_FillScreen(gfxCtx, 0, 0, 0, play->unk_11E18, FILL_SCREEN_OPA);
-                }
-
-                if ((play->pauseCtx.state != 0) && (HREG(80) != 10) || (HREG(89) != 0)) {
-                    Play_DrawOverlayElements(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(85) != 0)) {
-                    func_800315AC(play, &play->actorCtx);
-                }
-
-                if ((HREG(80) != 10) || (HREG(86) != 0)) {
-                    if (!play->envCtx.sunMoonDisabled) {
-                        sp21C.x = play->view.eye.x + play->envCtx.sunPos.x;
-                        sp21C.y = play->view.eye.y + play->envCtx.sunPos.y;
-                        sp21C.z = play->view.eye.z + play->envCtx.sunPos.z;
-                        Environment_DrawSunLensFlare(play, &play->envCtx, &play->view, gfxCtx, sp21C, 0);
-                    }
-                    Environment_DrawCustomLensFlare(play);
-                }
-
-                if ((HREG(80) != 10) || (HREG(87) != 0)) {
-                    if (MREG(64) != 0) {
-                        Environment_FillScreen(gfxCtx, MREG(65), MREG(66), MREG(67), MREG(68),
-                                               FILL_SCREEN_OPA | FILL_SCREEN_XLU);
-                    }
-
-                    switch (play->envCtx.fillScreen) {
-                        case 1:
-                            Environment_FillScreen(
-                                gfxCtx, play->envCtx.screenFillColor[0], play->envCtx.screenFillColor[1],
-                                play->envCtx.screenFillColor[2], play->envCtx.screenFillColor[3],
-                                FILL_SCREEN_OPA | FILL_SCREEN_XLU);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(88) != 0)) {
-                    if (play->envCtx.sandstormState != 0) {
-                        Environment_DrawSandstorm(play, play->envCtx.sandstormState);
-                    }
-                }
-
-                if ((HREG(80) != 10) || (HREG(93) != 0)) {
-                    DebugDisplay_DrawObjects(play);
-                }
-
-                if ((R_PAUSE_MENU_MODE == 1) || (gTrnsnUnkState == 1)) {
-                    Gfx* sp70 = OVERLAY_DISP;
-
-                    play->pauseBgPreRender.fbuf = gfxCtx->curFrameBuffer;
-                    play->pauseBgPreRender.fbufSave = (u16*)gZBuffer;
-                    func_800C1F20(&play->pauseBgPreRender, &sp70);
-                    if (R_PAUSE_MENU_MODE == 1) {
-                        play->pauseBgPreRender.cvgSave = (u8*)gfxCtx->curFrameBuffer;
-                        func_800C20B4(&play->pauseBgPreRender, &sp70);
-                        R_PAUSE_MENU_MODE = 2;
-                    } else {
-                        gTrnsnUnkState = 2;
-                    }
-                    OVERLAY_DISP = sp70;
-                    play->unk_121C7 = 2;
-                    SREG(33) |= 1;
-                } else if (R_PAUSE_MENU_MODE != 3) {
-                Play_Draw_DrawOverlayElements:
-                    if ((HREG(80) != 10) || (HREG(89) != 0)) {
-                        Play_DrawOverlayElements(play);
-                    }
-                }
-            }
-        }
-    }
-
-    if (play->view.unk_124 != 0) {
-        Camera_Update(GET_ACTIVE_CAM(play));
-        func_800AB944(&play->view);
-        play->view.unk_124 = 0;
-        if (play->skyboxId && (play->skyboxId != SKYBOX_UNSET_1D) && !play->envCtx.skyboxDisabled) {
-            SkyboxDraw_UpdateMatrix(&play->skyboxCtx, play->view.eye.x, play->view.eye.y,
-                                    play->view.eye.z);
-        }
-    }
-
-    Camera_Finish(GET_ACTIVE_CAM(play));
-
-    {
-        Gfx* prevDisplayList = POLY_OPA_DISP;
-        Gfx* gfxP = Graph_GfxPlusOne(POLY_OPA_DISP);
-        gSPDisplayList(OVERLAY_DISP++, gfxP);
-        gSPEndDisplayList(gfxP++);
-        Graph_BranchDlist(prevDisplayList, gfxP);
-        POLY_OPA_DISP = gfxP;
     }
 
     CLOSE_DISPS(gfxCtx);
@@ -1722,8 +1739,8 @@ u8 PlayerGrounded(Player* player) {
 }
 
 // original name: "Game_play_demo_mode_check"
-s32 Play_InCsMode(PlayState* play) {
-    return (play->csCtx.state != CS_STATE_IDLE) || Player_InCsMode(play);
+s32 Play_InCsMode(PlayState* play, Player* player) {
+    return (play->csCtx.state != CS_STATE_IDLE) || Player_InCsMode(play, player);
 }
 
 f32 func_800BFCB8(PlayState* play, MtxF* mf, Vec3f* vec) {
@@ -1855,11 +1872,12 @@ void func_800C016C(PlayState* play, Vec3f* src, Vec3f* dest) {
     dest->y = 120.0f + ((dest->y / temp) * 120.0f);
 }
 
-s16 Play_CreateSubCamera(PlayState* play) {
+s16 Play_CreateSubCamera(PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 i;
 
     for (i = SUBCAM_FIRST; i < NUM_CAMS; i++) {
-        if (play->cameraPtrs[i] == NULL) {
+        if (play->cameraPtrs[playerIndex][i] == NULL) {
             break;
         }
     }
@@ -1873,37 +1891,40 @@ s16 Play_CreateSubCamera(PlayState* play) {
                      CYAN) " " VT_RST "\n",
                  i);
 
-    play->cameraPtrs[i] = &play->subCameras[i - SUBCAM_FIRST];
-    Camera_Init(play->cameraPtrs[i], &play->view, &play->colCtx, play);
-    play->cameraPtrs[i]->thisIdx = i;
+    play->cameraPtrs[playerIndex][i] = &play->subCameras[playerIndex][i - SUBCAM_FIRST];
+    Camera_Init(play->cameraPtrs[playerIndex][i], &play->views[playerIndex], &play->colCtx, play, playerIndex);
+    play->cameraPtrs[playerIndex][i]->thisIdx = i;
 
     return i;
 }
 
-s16 Play_GetActiveCamId(PlayState* play) {
-    return play->activeCamera;
+s16 Play_GetActiveCamId(PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play); // unused
+    return play->activeCameras[playerIndex];
 }
 
-s16 Play_ChangeCameraStatus(PlayState* play, s16 camId, s16 status) {
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
+s16 Play_ChangeCameraStatus(PlayState* play, Player* player, s16 camId, s16 status) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
 
     if (status == CAM_STAT_ACTIVE) {
-        play->activeCamera = camIdx;
+        play->activeCameras[playerIndex] = camIdx;
     }
 
-    return Camera_ChangeStatus(play->cameraPtrs[camIdx], status);
+    return Camera_ChangeStatus(play->cameraPtrs[playerIndex][camIdx], status);
 }
 
-void Play_ClearCamera(PlayState* play, s16 camId) {
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
+void Play_ClearCamera(PlayState* play, Player* player, s16 camId) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
 
     if (camIdx == MAIN_CAM) {
         osSyncPrintf(VT_COL(RED, WHITE) "camera control: error: never clear camera !!\n" VT_RST);
     }
 
-    if (play->cameraPtrs[camIdx] != NULL) {
-        Camera_ChangeStatus(play->cameraPtrs[camIdx], CAM_STAT_UNK100);
-        play->cameraPtrs[camIdx] = NULL;
+    if (play->cameraPtrs[playerIndex][camIdx] != NULL) {
+        Camera_ChangeStatus(play->cameraPtrs[playerIndex][camIdx], CAM_STAT_UNK100);
+        play->cameraPtrs[playerIndex][camIdx] = NULL;
         osSyncPrintf("camera control: " VT_BGCOL(CYAN) " " VT_COL(WHITE, BLUE) " clear sub camera [%d] " VT_BGCOL(
                          CYAN) " " VT_RST "\n",
                      camIdx);
@@ -1912,29 +1933,31 @@ void Play_ClearCamera(PlayState* play, s16 camId) {
     }
 }
 
-void Play_ClearAllSubCameras(PlayState* play) {
+void Play_ClearAllSubCameras(PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 i;
 
     for (i = SUBCAM_FIRST; i < NUM_CAMS; i++) {
-        if (play->cameraPtrs[i] != NULL) {
-            Play_ClearCamera(play, i);
+        if (play->cameraPtrs[playerIndex][i] != NULL) {
+            Play_ClearCamera(play, player, i);
         }
     }
 
-    play->activeCamera = MAIN_CAM;
+    play->activeCameras[playerIndex] = MAIN_CAM;
 }
 
-Camera* Play_GetCamera(PlayState* play, s16 camId) {
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
+Camera* Play_GetCamera(PlayState* play, Player* player, s16 camId) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
 
-    return play->cameraPtrs[camIdx];
+    return play->cameraPtrs[playerIndex][camIdx];
 }
 
-s32 Play_CameraSetAtEye(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye) {
+s32 Play_CameraSetAtEye(PlayState* play, Player* player, s16 camId, Vec3f* at, Vec3f* eye) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 ret = 0;
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
-    Camera* camera = play->cameraPtrs[camIdx];
-    Player* player;
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
+    Camera* camera = play->cameraPtrs[playerIndex][camIdx];
 
     ret |= Camera_SetParam(camera, 1, at);
     ret <<= 1;
@@ -1942,7 +1965,6 @@ s32 Play_CameraSetAtEye(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye) {
 
     camera->dist = Math3D_Vec3f_DistXYZ(at, eye);
 
-    player = camera->player;
     if (player != NULL) {
         camera->posOffset.x = at->x - player->actor.world.pos.x;
         camera->posOffset.y = at->y - player->actor.world.pos.y;
@@ -1956,11 +1978,11 @@ s32 Play_CameraSetAtEye(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye) {
     return ret;
 }
 
-s32 Play_CameraSetAtEyeUp(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye, Vec3f* up) {
+s32 Play_CameraSetAtEyeUp(PlayState* play, Player* player, s16 camId, Vec3f* at, Vec3f* eye, Vec3f* up) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 ret = 0;
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
-    Camera* camera = play->cameraPtrs[camIdx];
-    Player* player;
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
+    Camera* camera = play->cameraPtrs[playerIndex][camIdx];
 
     ret |= Camera_SetParam(camera, 1, at);
     ret <<= 1;
@@ -1970,7 +1992,6 @@ s32 Play_CameraSetAtEyeUp(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye, Vec
 
     camera->dist = Math3D_Vec3f_DistXYZ(at, eye);
 
-    player = camera->player;
     if (player != NULL) {
         camera->posOffset.x = at->x - player->actor.world.pos.x;
         camera->posOffset.y = at->y - player->actor.world.pos.y;
@@ -1984,66 +2005,72 @@ s32 Play_CameraSetAtEyeUp(PlayState* play, s16 camId, Vec3f* at, Vec3f* eye, Vec
     return ret;
 }
 
-s32 Play_CameraSetFov(PlayState* play, s16 camId, f32 fov) {
-    s32 ret = Camera_SetParam(play->cameraPtrs[camId], 0x20, &fov) & 1;
+s32 Play_CameraSetFov(PlayState* play, Player* player, s16 camId, f32 fov) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s32 ret = Camera_SetParam(play->cameraPtrs[playerIndex][camId], 0x20, &fov) & 1;
 
     return ret;
 }
 
-s32 Play_SetCameraRoll(PlayState* play, s16 camId, s16 roll) {
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
-    Camera* camera = play->cameraPtrs[camIdx];
+s32 Play_SetCameraRoll(PlayState* play, Player* player, s16 camId, s16 roll) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
+    Camera* camera = play->cameraPtrs[playerIndex][camIdx];
 
     camera->roll = roll;
 
     return 1;
 }
 
-void Play_CopyCamera(PlayState* play, s16 camId1, s16 camId2) {
-    s16 camIdx2 = (camId2 == SUBCAM_ACTIVE) ? play->activeCamera : camId2;
-    s16 camIdx1 = (camId1 == SUBCAM_ACTIVE) ? play->activeCamera : camId1;
+void Play_CopyCamera(PlayState* play, Player* player, s16 camId1, s16 camId2) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx2 = (camId2 == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId2;
+    s16 camIdx1 = (camId1 == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId1;
 
-    Camera_Copy(play->cameraPtrs[camIdx1], play->cameraPtrs[camIdx2]);
+    Camera_Copy(play->cameraPtrs[playerIndex][camIdx1], play->cameraPtrs[playerIndex][camIdx2]);
 }
 
 s32 func_800C0808(PlayState* play, s16 camId, Player* player, s16 setting) {
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera;
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
 
-    camera = play->cameraPtrs[camIdx];
+    camera = play->cameraPtrs[playerIndex][camIdx];
     Camera_InitPlayerSettings(camera, player);
     return Camera_ChangeSetting(camera, setting);
 }
 
-s32 Play_CameraChangeSetting(PlayState* play, s16 camId, s16 setting) {
-    return Camera_ChangeSetting(Play_GetCamera(play, camId), setting);
+s32 Play_CameraChangeSetting(PlayState* play, Player* player, s16 camId, s16 setting) {
+    return Camera_ChangeSetting(Play_GetCamera(play, player, camId), setting);
 }
 
-void func_800C08AC(PlayState* play, s16 camId, s16 arg2) {
-    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCamera : camId;
+void func_800C08AC(PlayState* play, Player* player, s16 camId, s16 arg2) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    s16 camIdx = (camId == SUBCAM_ACTIVE) ? play->activeCameras[playerIndex] : camId;
     s16 i;
 
-    Play_ClearCamera(play, camIdx);
+    Play_ClearCamera(play, player, camIdx);
 
     for (i = SUBCAM_FIRST; i < NUM_CAMS; i++) {
-        if (play->cameraPtrs[i] != NULL) {
+        if (play->cameraPtrs[playerIndex][i] != NULL) {
             osSyncPrintf(
                 VT_COL(RED, WHITE) "camera control: error: return to main, other camera left. %d cleared!!\n" VT_RST,
                 i);
-            Play_ClearCamera(play, i);
+            Play_ClearCamera(play, player, i);
         }
     }
 
     if (arg2 <= 0) {
-        Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-        play->cameraPtrs[MAIN_CAM]->childCamIdx = play->cameraPtrs[MAIN_CAM]->parentCamIdx = SUBCAM_FREE;
+        Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+        play->cameraPtrs[playerIndex][MAIN_CAM]->childCamIdx = play->cameraPtrs[playerIndex][MAIN_CAM]->parentCamIdx = SUBCAM_FREE;
     } else {
-        OnePointCutscene_Init(play, 1020, arg2, NULL, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 1020, arg2, NULL, MAIN_CAM);
     }
 }
 
-s16 Play_CameraGetUID(PlayState* play, s16 camId) {
-    Camera* camera = play->cameraPtrs[camId];
+s16 Play_CameraGetUID(PlayState* play, Player* player, s16 camId) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* camera = play->cameraPtrs[playerIndex][camId]; // unused
 
     if (camera != NULL) {
         return camera->uid;
@@ -2052,8 +2079,9 @@ s16 Play_CameraGetUID(PlayState* play, s16 camId) {
     }
 }
 
-s16 func_800C09D8(PlayState* play, s16 camId, s16 arg2) {
-    Camera* camera = play->cameraPtrs[camId];
+s16 func_800C09D8(PlayState* play, Player* player, s16 camId, s16 arg2) {
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* camera = play->cameraPtrs[playerIndex][camId]; // unused
 
     if (camera != NULL) {
         return 0;

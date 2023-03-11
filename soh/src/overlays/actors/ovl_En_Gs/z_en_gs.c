@@ -138,10 +138,11 @@ s32 func_80A4E3EC(EnGs* this, PlayState* play) {
 }
 
 void func_80A4E470(EnGs* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     bREG(15) = 0;
-    if (this->actor.xzDistToPlayer <= 100.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 100.0f) {
         bREG(15) = 1;
         if (this->unk_19D == 0) {
             player->stateFlags2 |= 0x800000;
@@ -218,6 +219,7 @@ f32 func_80A4E754(EnGs* this, PlayState* play, f32* arg2, f32* arg3, u16* arg4, 
 }
 
 void func_80A4E910(EnGs* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->unk_19F == 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_STALKID_ATTACK);
         this->unk_200 = 0;
@@ -226,7 +228,7 @@ void func_80A4E910(EnGs* this, PlayState* play) {
         this->unk_1EC = 0.0f;
     } else if ((this->unk_19F == 1) && (func_80A4E754(this, play, &this->unk_1E8, &this->unk_1EC, &this->unk_200,
                                                       0.8f, 0.007f, 0.001f, 7, 0) == 0.0f)) {
-        if (!Play_InCsMode(play)) {
+        if (!Play_InCsMode(play, player)) {
             Message_StartTextbox(play, 0x71B1, NULL);
         }
         this->unk_19C = 0;
@@ -383,7 +385,9 @@ void func_80A4ED34(EnGs* this, PlayState* play) {
         }
 
         Actor_MoveForward(&this->actor);
-        if (this->actor.yDistToPlayer < -12000.0f) {
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        if (this->actor.yDistToPlayer[playerIndex] < -12000.0f) {
             Actor_Kill(&this->actor);
         }
     }

@@ -522,9 +522,10 @@ void func_80967DBC(Demo6K* this, PlayState* play) {
         }
 
         if (this->timer2 > 104) {
-            func_80967BF8(GET_PLAYER(play), play);
+            Player* player = Player_NearestToActor(&this->actor, play);
+            func_80967BF8(player, play);
             Actor_Kill(&this->actor);
-            Audio_PlayActorSound2(&GET_PLAYER(play)->actor, NA_SE_EN_FANTOM_HIT_THUNDER);
+            Audio_PlayActorSound2(&player->actor, NA_SE_EN_FANTOM_HIT_THUNDER);
         } else if (this->timer2 > 94) {
             Actor_SetScale(&this->actor, this->actor.scale.x + 0.03f);
 
@@ -691,6 +692,8 @@ void func_8096865C(Actor* thisx, PlayState* play) {
 void func_809688C4(Actor* thisx, PlayState* play2) {
     Demo6K* this = (Demo6K*)thisx;
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u32 frames = play->state.frames;
     s32 i;
 
@@ -700,7 +703,7 @@ void func_809688C4(Actor* thisx, PlayState* play2) {
 
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
         gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, 255, 255, 255, 255);
-        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * (M_PI / 0x8000), MTXMODE_APPLY);
 
         for (i = 0; i < 16; i++) {
             FrameInterpolation_RecordOpenChild("Demo6K 809688C4", i);

@@ -380,8 +380,8 @@ void EnFz_ApplyDamage(EnFz* this, PlayState* play) {
     }
 }
 
-void EnFz_SetYawTowardsPlayer(EnFz* this) {
-    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 10, 2000, 0);
+void EnFz_SetYawTowardsPlayer(EnFz* this, u16 playerIndex) {
+    Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 10, 2000, 0);
     this->actor.world.rot.y = this->actor.shape.rot.y;
 }
 
@@ -416,7 +416,9 @@ void EnFz_SetupWait(EnFz* this) {
 }
 
 void EnFz_Wait(EnFz* this, PlayState* play) {
-    if ((this->timer == 0) && (this->actor.xzDistToPlayer < 400.0f)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if ((this->timer == 0) && (this->actor.xzDistToPlayer[playerIndex] < 400.0f)) {
         EnFz_SetupAppear(this);
     }
 }
@@ -452,7 +454,9 @@ void EnFz_SetupAimForMove(EnFz* this) {
 }
 
 void EnFz_AimForMove(EnFz* this, PlayState* play) {
-    EnFz_SetYawTowardsPlayer(this);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    EnFz_SetYawTowardsPlayer(this, playerIndex);
 
     if (this->timer == 0) {
         EnFz_SetupMoveTowardsPlayer(this);
@@ -482,7 +486,9 @@ void EnFz_SetupAimForFreeze(EnFz* this) {
 }
 
 void EnFz_AimForFreeze(EnFz* this, PlayState* play) {
-    EnFz_SetYawTowardsPlayer(this);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    EnFz_SetYawTowardsPlayer(this, playerIndex);
 
     if (this->timer == 0) {
         EnFz_SetupBlowSmoke(this, play);
@@ -616,7 +622,9 @@ void EnFz_BlowSmokeStationary(EnFz* this, PlayState* play) {
     s16 primAlpha;
 
     if (this->counter & 0xC0) {
-        EnFz_SetYawTowardsPlayer(this);
+        Player* player = Player_NearestToActor(&this->actor, play);
+        u16 playerIndex = Player_GetIndex(player, play);
+        EnFz_SetYawTowardsPlayer(this, playerIndex);
         EnFz_UpdateTargetPos(this, play);
     } else {
         isTimerMod8 = false;

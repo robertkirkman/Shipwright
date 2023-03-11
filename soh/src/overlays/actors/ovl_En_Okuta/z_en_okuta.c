@@ -205,8 +205,10 @@ void EnOkuta_SetupWaitToAppear(EnOkuta* this) {
 }
 
 void EnOkuta_SetupAppear(EnOkuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.draw = EnOkuta_Draw;
-    this->actor.shape.rot.y = this->actor.yawTowardsPlayer;
+    this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
     this->actor.flags |= ACTOR_FLAG_0;
     Animation_PlayOnce(&this->skelAnime, &gOctorokAppearAnim);
     EnOkuta_SpawnBubbles(this, play);
@@ -225,11 +227,13 @@ void EnOkuta_SetupWaitToShoot(EnOkuta* this) {
 }
 
 void EnOkuta_SetupShoot(EnOkuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_PlayOnce(&this->skelAnime, &gOctorokShootAnim);
     if (this->actionFunc != EnOkuta_Shoot) {
         this->timer = this->numShots;
     }
-    this->jumpHeight = this->actor.yDistToPlayer + 20.0f;
+    this->jumpHeight = this->actor.yDistToPlayer[playerIndex] + 20.0f;
     this->jumpHeight = CLAMP_MIN(this->jumpHeight, 10.0f);
     if (this->jumpHeight > 50.0f) {
         EnOkuta_SpawnSplash(this, play);
@@ -285,17 +289,21 @@ void EnOkuta_SpawnProjectile(EnOkuta* this, PlayState* play) {
 }
 
 void EnOkuta_WaitToAppear(EnOkuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.world.pos.y = this->actor.home.pos.y;
-    if ((this->actor.xzDistToPlayer < 480.0f) && (this->actor.xzDistToPlayer > 200.0f)) {
+    if ((this->actor.xzDistToPlayer[playerIndex] < 480.0f) && (this->actor.xzDistToPlayer[playerIndex] > 200.0f)) {
         EnOkuta_SetupAppear(this, play);
     }
 }
 
 void EnOkuta_Appear(EnOkuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     if (SkelAnime_Update(&this->skelAnime)) {
-        if (this->actor.xzDistToPlayer < 160.0f) {
+        if (this->actor.xzDistToPlayer[playerIndex] < 160.0f) {
             EnOkuta_SetupHide(this);
         } else {
             EnOkuta_SetupWaitToShoot(this);
@@ -336,6 +344,8 @@ void EnOkuta_Hide(EnOkuta* this, PlayState* play) {
 }
 
 void EnOkuta_WaitToShoot(EnOkuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 temp_v0_2;
     s32 phi_v1;
 
@@ -349,19 +359,21 @@ void EnOkuta_WaitToShoot(EnOkuta* this, PlayState* play) {
     if (Animation_OnFrame(&this->skelAnime, 0.5f)) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_OCTAROCK_FLOAT);
     }
-    if (this->actor.xzDistToPlayer < 160.0f || this->actor.xzDistToPlayer > 560.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 160.0f || this->actor.xzDistToPlayer[playerIndex] > 560.0f) {
         EnOkuta_SetupHide(this);
     } else {
-        temp_v0_2 = Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x71C, 0x38E);
+        temp_v0_2 = Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x71C, 0x38E);
         phi_v1 = ABS(temp_v0_2);
-        if ((phi_v1 < 0x38E) && (this->timer == 0) && (this->actor.yDistToPlayer < 200.0f)) {
+        if ((phi_v1 < 0x38E) && (this->timer == 0) && (this->actor.yDistToPlayer[playerIndex] < 200.0f)) {
             EnOkuta_SetupShoot(this, play);
         }
     }
 }
 
 void EnOkuta_Shoot(EnOkuta* this, PlayState* play) {
-    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer, 3, 0x71C);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Math_ApproachS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x71C);
     if (SkelAnime_Update(&this->skelAnime)) {
         if (this->timer != 0) {
             this->timer--;
@@ -387,7 +399,7 @@ void EnOkuta_Shoot(EnOkuta* this, PlayState* play) {
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_OCTAROCK_LAND);
         }
     }
-    if (this->actor.xzDistToPlayer < 160.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 160.0f) {
         EnOkuta_SetupHide(this);
     }
 }
@@ -471,7 +483,8 @@ void EnOkuta_Freeze(EnOkuta* this, PlayState* play) {
 
 void EnOkuta_ProjectileFly(EnOkuta* this, PlayState* play) {
     Vec3f pos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3s sp40;
 
     this->timer--;
@@ -618,7 +631,7 @@ void EnOkuta_ColliderCheck(EnOkuta* this, PlayState* play) {
 void EnOkuta_Update(Actor* thisx, PlayState* play2) {
     EnOkuta* this = (EnOkuta*)thisx;
     PlayState* play = play2;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
     WaterBox* outWaterBox;
     f32 ySurface;
     Vec3f sp38;

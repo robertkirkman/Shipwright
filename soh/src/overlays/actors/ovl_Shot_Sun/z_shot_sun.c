@@ -120,7 +120,7 @@ void ShotSun_TriggerFairy(ShotSun* this, PlayState* play) {
 }
 
 void func_80BADF0C(ShotSun* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
     s32 params = this->actor.params & 0xFF;
 
@@ -142,7 +142,7 @@ void func_80BADF0C(ShotSun* this, PlayState* play) {
             if ((params == 0x40 && play->msgCtx.lastPlayedSong == OCARINA_SONG_SUNS) ||
                 (params == 0x41 && play->msgCtx.lastPlayedSong == OCARINA_SONG_STORMS)) {
                 this->actionFunc = ShotSun_TriggerFairy;
-                OnePointCutscene_Attention(play, &this->actor);
+                OnePointCutscene_Attention(play, player, &this->actor);
                 this->timer = 0;
             } else {
                 this->unk_1A4 = 0;
@@ -154,7 +154,8 @@ void func_80BADF0C(ShotSun* this, PlayState* play) {
 
 void ShotSun_UpdateHyliaSun(ShotSun* this, PlayState* play) {
     Vec3s cylinderPos;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnItem00* collectible;
     s32 pad;
     Vec3f spawnPos;
@@ -180,7 +181,7 @@ void ShotSun_UpdateHyliaSun(ShotSun* this, PlayState* play) {
         }
         Actor_Kill(&this->actor);
     } else {
-        if (!(this->actor.xzDistToPlayer > 120.0f) && gSaveContext.dayTime >= 0x4555 && gSaveContext.dayTime < 0x5000) {
+        if (!(this->actor.xzDistToPlayer[playerIndex] > 120.0f) && gSaveContext.dayTime >= 0x4555 && gSaveContext.dayTime < 0x5000) {
             cylinderPos.x = player->bodyPartsPos[7].x + play->envCtx.sunPos.x * (1.0f / 6.0f);
             cylinderPos.y = player->bodyPartsPos[7].y - 30.0f + play->envCtx.sunPos.y * (1.0f / 6.0f);
             cylinderPos.z = player->bodyPartsPos[7].z + play->envCtx.sunPos.z * (1.0f / 6.0f);

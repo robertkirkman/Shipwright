@@ -2659,7 +2659,7 @@ void FileChoose_Init(GameState* thisx) {
                         __LINE__);
 
     Matrix_Init(&this->state);
-    View_Init(&this->view, this->state.gfxCtx);
+    View_Init(&this->view, this->state.gfxCtx, 0);
     this->state.main = FileChoose_Main;
     this->state.destroy = FileChoose_Destroy;
     FileChoose_InitContext(&this->state);

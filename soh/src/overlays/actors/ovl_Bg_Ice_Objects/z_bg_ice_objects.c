@@ -113,6 +113,7 @@ void BgIceObjects_SetNextTarget(BgIceObjects* this, PlayState* play) {
  */
 void BgIceObjects_CheckPits(BgIceObjects* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if ((thisx->velocity.y > 0.0f) || ((thisx->world.pos.x <= -1660.0f) && (thisx->world.pos.z <= -1060.0f)) ||
         ((thisx->world.pos.x <= -1580.0f) && (thisx->world.pos.z >= -420.0f)) ||
@@ -126,7 +127,7 @@ void BgIceObjects_CheckPits(BgIceObjects* this, PlayState* play) {
             thisx->world.pos.y = thisx->home.pos.y - 60.0f;
             thisx->world.pos.z = thisx->home.pos.z;
             if (thisx->params != 0) {
-                func_8002DF54(play, thisx, 7);
+                func_8002DF54(play, player, thisx, 7);
             }
             this->actionFunc = BgIceObjects_Reset;
         }
@@ -134,16 +135,16 @@ void BgIceObjects_CheckPits(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Idle(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
-        if ((this->dyna.unk_150 > 0.0f) && !Player_InCsMode(play)) {
+        if ((this->dyna.unk_150 > 0.0f) && !Player_InCsMode(play, player)) {
             BgIceObjects_SetNextTarget(this, play);
             if (Actor_WorldDistXZToPoint(thisx, &this->targetPos) > 1.0f) {
                 thisx->flags |= ACTOR_FLAG_4;
-                func_8002DF54(play, thisx, 8);
+                func_8002DF54(play, player, thisx, 8);
                 thisx->params = 1;
                 this->actionFunc = BgIceObjects_Slide;
             }
@@ -161,6 +162,7 @@ void BgIceObjects_Slide(BgIceObjects* this, PlayState* play) {
     Vec3f velocity;
     f32 spread;
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     Math_StepToF(&thisx->speedXZ, 10.0f, 0.5f);
     atTarget = Math_StepToF(&thisx->world.pos.x, this->targetPos.x, thisx->speedXZ);
@@ -173,7 +175,7 @@ void BgIceObjects_Slide(BgIceObjects* this, PlayState* play) {
             thisx->flags &= ~ACTOR_FLAG_4;
         }
         thisx->params = 0;
-        func_8002DF54(play, thisx, 7);
+        func_8002DF54(play, player, thisx, 7);
         Audio_PlayActorSound2(thisx, NA_SE_EV_BLOCK_BOUND);
         if ((fabsf(thisx->world.pos.x + 1387.0f) < 1.0f) && (fabsf(thisx->world.pos.z + 260.0f) < 1.0f)) {
             this->actionFunc = BgIceObjects_Stuck;
@@ -199,8 +201,8 @@ void BgIceObjects_Slide(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Reset(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;
@@ -215,7 +217,7 @@ void BgIceObjects_Reset(BgIceObjects* this, PlayState* play) {
 }
 
 void BgIceObjects_Stuck(BgIceObjects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     if (this->dyna.unk_150 != 0.0f) {
         player->stateFlags2 &= ~0x10;

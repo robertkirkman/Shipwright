@@ -168,8 +168,8 @@ void EnTuboTrap_SpawnEffectsInWater(EnTuboTrap* this, PlayState* play) {
 }
 
 void EnTuboTrap_HandleImpact(EnTuboTrap* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    Player* player2 = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Player* player2 = player;
 
     if ((this->actor.bgCheckFlags & 0x20) && (this->actor.yDistToWater > 15.0f)) {
         EnTuboTrap_SpawnEffectsInWater(this, play);
@@ -226,7 +226,8 @@ void EnTuboTrap_HandleImpact(EnTuboTrap* this, PlayState* play) {
 }
 
 void EnTuboTrap_WaitForProximity(EnTuboTrap* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 targetHeight;
 
     if (BREG(2) != 0) {
@@ -235,7 +236,7 @@ void EnTuboTrap_WaitForProximity(EnTuboTrap* this, PlayState* play) {
         osSyncPrintf("\n\n");
     }
 
-    if (this->actor.xzDistToPlayer < 200.0f && this->actor.world.pos.y <= player->actor.world.pos.y) {
+    if (this->actor.xzDistToPlayer[playerIndex] < 200.0f && this->actor.world.pos.y <= player->actor.world.pos.y) {
         Actor_ChangeCategory(play, &play->actorCtx, &this->actor, ACTORCAT_ENEMY);
         this->actor.flags |= ACTOR_FLAG_0;
         targetHeight = 40.0f + -10.0f * gSaveContext.linkAge;
@@ -252,12 +253,14 @@ void EnTuboTrap_WaitForProximity(EnTuboTrap* this, PlayState* play) {
 }
 
 void EnTuboTrap_Levitate(EnTuboTrap* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->actor.shape.rot.y += 5000;
     Math_ApproachF(&this->actor.world.pos.y, this->targetY, 0.8f, 3.0f);
 
     if (fabsf(this->actor.world.pos.y - this->targetY) < 10.0f) {
         this->actor.speedXZ = 10.0f;
-        this->actor.world.rot.y = this->actor.yawTowardsPlayer;
+        this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->actionFunc = EnTuboTrap_Fly;
     }
 }

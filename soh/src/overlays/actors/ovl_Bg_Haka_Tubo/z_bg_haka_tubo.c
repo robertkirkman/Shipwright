@@ -104,6 +104,8 @@ void BgHakaTubo_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgHakaTubo_Idle(BgHakaTubo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f sZeroVector = { 0.0f, 0.0f, 0.0f };
     Vec3f pos;
 
@@ -115,7 +117,7 @@ void BgHakaTubo_Idle(BgHakaTubo* this, PlayState* play) {
     // Colliding with flame circle
     if (this->flamesCollider.base.atFlags & AT_HIT) {
         this->flamesCollider.base.atFlags &= ~AT_HIT;
-        func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer, 5.0f);
+        func_8002F71C(play, &this->dyna.actor, 5.0f, this->dyna.actor.yawTowardsPlayer[playerIndex], 5.0f);
     }
     // Colliding with hitbox inside the pot
     if (this->potCollider.base.acFlags & AC_HIT) {

@@ -148,15 +148,17 @@ void ObjTimeblock_Destroy(Actor* thisx, PlayState* play) {
 }
 
 u8 ObjTimeblock_PlayerIsInRange(ObjTimeblock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->isVisible && func_80043590(&this->dyna)) {
         return false;
     }
 
-    if (this->dyna.actor.xzDistToPlayer <= sRanges[(this->dyna.actor.params >> 11) & 7]) {
+    if (this->dyna.actor.xzDistToPlayer[playerIndex] <= sRanges[(this->dyna.actor.params >> 11) & 7]) {
         Vec3f distance;
         f32 blockSize;
 
-        func_8002DBD0(&this->dyna.actor, &distance, &GET_PLAYER(play)->actor.world.pos);
+        func_8002DBD0(&this->dyna.actor, &distance, &player->actor.world.pos);
         blockSize = this->dyna.actor.scale.x * 50.0f + 6.0f;
         // Return true if player's xz position is not inside the block
         if (blockSize < fabsf(distance.x) || blockSize < fabsf(distance.z)) {
@@ -168,7 +170,8 @@ u8 ObjTimeblock_PlayerIsInRange(ObjTimeblock* this, PlayState* play) {
 }
 
 s32 ObjTimeblock_WaitForOcarina(ObjTimeblock* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (ObjTimeblock_PlayerIsInRange(this, play)) {
         if (player->stateFlags2 & 0x1000000) {
@@ -210,6 +213,7 @@ void ObjTimeblock_SetupNormal(ObjTimeblock* this) {
 }
 
 void ObjTimeblock_Normal(ObjTimeblock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     u32 newIsVisible;
 
     if (this->songObserverFunc(this, play) && this->demoEffectTimer <= 0) {
@@ -217,7 +221,7 @@ void ObjTimeblock_Normal(ObjTimeblock* this, PlayState* play) {
         this->demoEffectTimer = 160;
 
         // Possibly points the camera to this actor
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         // "◯◯◯◯ Time Block Attention Camera (frame counter  %d)\n"
         osSyncPrintf("◯◯◯◯ Time Block 注目カメラ (frame counter  %d)\n", play->state.frames);
 
@@ -271,11 +275,12 @@ void ObjTimeblock_SetupAltBehaviorVisible(ObjTimeblock* this) {
 }
 
 void ObjTimeblock_AltBehaviorVisible(ObjTimeblock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->songObserverFunc(this, play) && this->demoEffectTimer <= 0) {
         this->demoEffectFirstPartTimer = 12;
         ObjTimeblock_SpawnDemoEffect(this, play);
         this->demoEffectTimer = 160;
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         // "Time Block Attention Camera (frame counter)"
         osSyncPrintf("◯◯◯◯ Time Block 注目カメラ (frame counter  %d)\n", play->state.frames);
         ObjTimeblock_ToggleSwitchFlag(play, this->dyna.actor.params & 0x3F);

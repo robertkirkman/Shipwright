@@ -194,10 +194,11 @@ void EnGoma_SetupFlee(EnGoma* this) {
 }
 
 void EnGoma_Flee(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelanime);
     Math_ApproachF(&this->actor.speedXZ, 20.0f / 3.0f, 0.5f, 2.0f);
     Math_ApproachS(&this->actor.world.rot.y,
-                   Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor) + 0x8000, 3, 2000);
+                   Actor_WorldYawTowardActor(&this->actor, &player->actor) + 0x8000, 3, 2000);
     Math_ApproachS(&this->actor.shape.rot.y, this->actor.world.rot.y, 2, 3000);
 
     if (this->actionTimer == 0) {
@@ -268,7 +269,7 @@ void EnGoma_EggFallToGround(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_Egg(EnGoma* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 i;
 
     this->eggSquishAngle += 1.0f;
@@ -298,13 +299,14 @@ void EnGoma_Egg(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_SetupHatch(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Animation_Change(&this->skelanime, &gObjectGolJumpHeadbuttAnim, 1.0f, 0.0f,
                      Animation_GetLastFrame(&gObjectGolJumpHeadbuttAnim), ANIMMODE_ONCE, 0.0f);
     this->actionFunc = EnGoma_Hatch;
     Actor_SetScale(&this->actor, 0.005f);
     this->gomaType = ENGOMA_NORMAL;
     this->actionTimer = 5;
-    this->actor.shape.rot.y = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor);
+    this->actor.shape.rot.y = Actor_WorldYawTowardActor(&this->actor, &player->actor);
     this->actor.world.rot.y = this->actor.shape.rot.y;
     EnGoma_SpawnHatchDebris(this, play);
     this->eggScale = 1.0f;
@@ -319,6 +321,8 @@ void EnGoma_Hatch(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_SetupHurt(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Animation_Change(&this->skelanime, &gObjectGolDamagedAnim, 1.0f, 0.0f,
                      Animation_GetLastFrame(&gObjectGolDamagedAnim), ANIMMODE_ONCE, -2.0f);
     this->actionFunc = EnGoma_Hurt;
@@ -331,7 +335,7 @@ void EnGoma_SetupHurt(EnGoma* this, PlayState* play) {
     }
 
     this->actor.speedXZ = 20.0f;
-    this->actor.world.rot.y = this->actor.yawTowardsPlayer + 0x8000;
+    this->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
     if (this->actor.params < 6) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_GOMA_BJR_DAM1);
     } else {
@@ -453,12 +457,13 @@ void EnGoma_SetupPrepareJump(EnGoma* this) {
 }
 
 void EnGoma_PrepareJump(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 targetAngle;
 
     SkelAnime_Update(&this->skelanime);
     Math_ApproachZeroF(&this->actor.speedXZ, 0.5f, 2.0f);
 
-    targetAngle = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor);
+    targetAngle = Actor_WorldYawTowardActor(&this->actor, &player->actor);
     Math_ApproachS(&this->actor.world.rot.y, targetAngle, 2, 4000);
     Math_ApproachS(&this->actor.shape.rot.y, targetAngle, 2, 3000);
 
@@ -516,9 +521,10 @@ void EnGoma_Jump(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_Stand(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelanime);
     Math_ApproachZeroF(&this->actor.speedXZ, 0.5f, 2.0f);
-    Math_ApproachS(&this->actor.shape.rot.y, Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor), 2,
+    Math_ApproachS(&this->actor.shape.rot.y, Actor_WorldYawTowardActor(&this->actor, &player->actor), 2,
                    3000);
 
     if (this->actionTimer == 0) {
@@ -527,6 +533,8 @@ void EnGoma_Stand(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_ChasePlayer(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelanime);
 
     if (Animation_OnFrame(&this->skelanime, 1.0f) || Animation_OnFrame(&this->skelanime, 5.0f)) {
@@ -538,13 +546,13 @@ void EnGoma_ChasePlayer(EnGoma* this, PlayState* play) {
     }
 
     Math_ApproachF(&this->actor.speedXZ, 10.0f / 3.0f, 0.5f, 2.0f);
-    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer, 3, 2000);
+    Math_ApproachS(&this->actor.world.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 2000);
     Math_ApproachS(&this->actor.shape.rot.y, this->actor.world.rot.y, 2, 3000);
 
     if (this->actor.bgCheckFlags & 1) {
         this->actor.velocity.y = 0.0f;
     }
-    if (this->actor.xzDistToPlayer <= 150.0f) {
+    if (this->actor.xzDistToPlayer[playerIndex] <= 150.0f) {
         EnGoma_SetupPrepareJump(this);
     }
 }
@@ -589,11 +597,12 @@ void EnGoma_Stunned(EnGoma* this, PlayState* play) {
 }
 
 void EnGoma_LookAtPlayer(EnGoma* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 eyePitch;
     s16 eyeYaw;
 
-    eyeYaw = Actor_WorldYawTowardActor(&this->actor, &GET_PLAYER(play)->actor) - this->actor.shape.rot.y;
-    eyePitch = Actor_WorldPitchTowardActor(&this->actor, &GET_PLAYER(play)->actor) - this->actor.shape.rot.x;
+    eyeYaw = Actor_WorldYawTowardActor(&this->actor, &player->actor) - this->actor.shape.rot.y;
+    eyePitch = Actor_WorldPitchTowardActor(&this->actor, &player->actor) - this->actor.shape.rot.x;
 
     if (eyeYaw > 6000) {
         eyeYaw = 6000;
@@ -607,7 +616,7 @@ void EnGoma_LookAtPlayer(EnGoma* this, PlayState* play) {
 
 void EnGoma_UpdateHit(EnGoma* this, PlayState* play) {
     static Vec3f sShieldKnockbackVel = { 0.0f, 0.0f, 20.0f };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->hurtTimer != 0) {
         this->hurtTimer--;
@@ -702,7 +711,7 @@ void EnGoma_SetFloorRot(EnGoma* this) {
 void EnGoma_Update(Actor* thisx, PlayState* play) {
     EnGoma* this = (EnGoma*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     if (this->actionTimer != 0) {
         this->actionTimer--;
@@ -782,6 +791,8 @@ Gfx* EnGoma_NoBackfaceCullingDlist(GraphicsContext* gfxCtx) {
 
 void EnGoma_Draw(Actor* thisx, PlayState* play) {
     EnGoma* this = (EnGoma*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 y;
     s32 pad;
 
@@ -793,7 +804,7 @@ void EnGoma_Draw(Actor* thisx, PlayState* play) {
             this->actor.naviEnemyId = 0x03;
             Matrix_Translate(this->actor.world.pos.x,
                              this->actor.world.pos.y + ((this->actor.shape.yOffset * this->actor.scale.y) +
-                                                        play->mainCamera.skyboxOffset.y),
+                                                        play->mainCameras[playerIndex].skyboxOffset.y),
                              this->actor.world.pos.z, MTXMODE_NEW);
             Matrix_RotateX(this->slopePitch / (f32)0x8000 * M_PI, MTXMODE_APPLY);
             Matrix_RotateZ(this->slopeRoll / (f32)0x8000 * M_PI, MTXMODE_APPLY);

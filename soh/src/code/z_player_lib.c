@@ -336,9 +336,7 @@ s32 Player_InBlockingCsMode(PlayState* play, Player* this) {
            ((gSaveContext.magicState != 0) && (Player_ActionToMagicSpell(this, this->itemAction) >= 0));
 }
 
-s32 Player_InCsMode(PlayState* play) {
-    Player* this = GET_PLAYER(play);
-
+s32 Player_InCsMode(PlayState* play, Player* this) {
     return Player_InBlockingCsMode(play, this) || (this->unk_6AD == 4);
 }
 
@@ -462,19 +460,17 @@ void func_8008EE08(Player* this) {
     func_8008EDF0(this);
 }
 
-void func_8008EEAC(PlayState* play, Actor* actor) {
-    Player* this = GET_PLAYER(play);
-
+void func_8008EEAC(PlayState* play, Player* this, Actor* actor) {
     func_8008EE08(this);
     this->unk_664 = actor;
     this->unk_684 = actor;
     this->stateFlags1 |= 0x10000;
-    Camera_SetParam(Play_GetCamera(play, 0), 8, actor);
-    Camera_ChangeMode(Play_GetCamera(play, 0), 2);
+    Camera_SetParam(Play_GetCamera(play, this, MAIN_CAM), 8, actor);
+    Camera_ChangeMode(Play_GetCamera(play, this, MAIN_CAM), 2);
 }
 
 s32 func_8008EF30(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // unused
 
     return (this->stateFlags1 & 0x800000);
 }
@@ -484,8 +480,7 @@ s32 func_8008EF44(PlayState* play, s32 ammo) {
     return 1;
 }
 
-s32 Player_IsBurningStickInRange(PlayState* play, Vec3f* pos, f32 xzRange, f32 yRange) {
-    Player* this = GET_PLAYER(play);
+s32 Player_IsBurningStickInRange(PlayState* play, Player* this, Vec3f* pos, f32 xzRange, f32 yRange) {
     Vec3f diff;
     s32 pad;
 
@@ -510,13 +505,13 @@ s32 Player_GetStrength(void) {
 }
 
 u8 Player_GetMask(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return this->currentMask;
 }
 
 Player* Player_UnsetMask(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     this->currentMask = PLAYER_MASK_NONE;
 
@@ -524,13 +519,13 @@ Player* Player_UnsetMask(PlayState* play) {
 }
 
 s32 Player_HasMirrorShieldEquipped(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return (this->currentShield == PLAYER_SHIELD_MIRROR);
 }
 
 s32 Player_HasMirrorShieldSetToDraw(PlayState* play) {
-    Player* this = GET_PLAYER(play);
+    Player* this = GET_PLAYER(play); // todo
 
     return (this->rightHandType == 10) && (this->currentShield == PLAYER_SHIELD_MIRROR);
 }
@@ -656,7 +651,7 @@ s32 func_8008F2F8(PlayState* play) {
     }
 
     // Trigger general textboxes under certain conditions, like "It's so hot in here!"
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, this)) {
         triggerEntry = &sTextTriggers[var];
 
         if ((triggerEntry->flag != 0) && !(gSaveContext.textTriggerFlags & triggerEntry->flag) &&
@@ -1741,7 +1736,9 @@ void func_80091A24(PlayState* play, void* seg04, void* seg06, SkelAnime* skelAni
 
     POLY_OPA_DISP = Gfx_SetFog2(POLY_OPA_DISP++, 0, 0, 0, 0, 997, 1000);
 
-    func_8002EABC(pos, &play->view.eye, &lightDir, play->state.gfxCtx);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        func_8002EABC(pos, &play->views[i].eye, &lightDir, play->state.gfxCtx);
+    }
 
     gSPSegment(POLY_OPA_DISP++, 0x0C, gCullBackDList);
 

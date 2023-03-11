@@ -180,6 +180,7 @@ void BgJyaMegami_SetupDetectLight(BgJyaMegami* this) {
 }
 
 void BgJyaMegami_DetectLight(BgJyaMegami* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->collider.base.acFlags & AC_HIT) {
         this->lightTimer++;
         this->collider.base.acFlags &= ~AC_HIT;
@@ -194,7 +195,7 @@ void BgJyaMegami_DetectLight(BgJyaMegami* this, PlayState* play) {
         Flags_SetSwitch(play, this->dyna.actor.params & 0x3F);
         BgJyaMegami_SetupExplode(this);
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 100, NA_SE_EV_FACE_EXPLOSION);
-        OnePointCutscene_Init(play, 3440, -99, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3440, -99, &this->dyna.actor, MAIN_CAM);
     } else {
         if (this->lightTimer < 8) {
             this->crumbleIndex = 0;

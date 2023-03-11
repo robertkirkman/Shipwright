@@ -156,7 +156,7 @@ void func_808AC908(BgSpot02Objects* this, PlayState* play) {
 }
 
 void func_808ACA08(BgSpot02Objects* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
     // The visual effects play the same way whether in rando or not, we just don't want
     // to play the damage animation on link.
@@ -184,9 +184,10 @@ void func_808ACA08(BgSpot02Objects* this, PlayState* play) {
 }
 
 void func_808ACAFC(BgSpot02Objects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->unk_16B)) {
         Actor_SetFocus(&this->dyna.actor, 60.0f);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = func_808ACB58;
     }
 }
