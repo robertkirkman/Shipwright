@@ -216,7 +216,7 @@ void func_80A8F75C(EnKakasi* this, PlayState* play) {
             if (absyawTowardsPlayer < 0x4300) {
                 if (!this->unk_194) {
                     if (player->stateFlags2 & 0x1000000) {
-                        this->camId = OnePointCutscene_Init(play, 2260, -99, &this->actor, MAIN_CAM);
+                        this->camId = OnePointCutscene_Init(play, player, 2260, -99, &this->actor, MAIN_CAM);
 
                         func_8010BD58(play, OCARINA_ACTION_SCARECROW_LONG_RECORDING);
                         this->unk_19A = 0;
@@ -249,7 +249,7 @@ void func_80A8F8D0(EnKakasi* this, PlayState* play) {
             Message_StartTextbox(play, this->actor.textId, NULL);
             this->actionFunc = func_80A8F9C8;
         } else {
-            OnePointCutscene_EndCutscene(play, this->camId);
+            OnePointCutscene_EndCutscene(play, player, this->camId);
             this->camId = SUBCAM_NONE;
             this->actionFunc = func_80A8F660;
         }
@@ -260,24 +260,28 @@ void func_80A8F8D0(EnKakasi* this, PlayState* play) {
 }
 
 void func_80A8F9C8(EnKakasi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     func_80A8F28C(this);
     SkelAnime_Update(&this->skelanime);
-    func_8002DF54(play, NULL, 8);
+    func_8002DF54(play, player, NULL, 8);
 
     if (this->unk_196 == Message_GetState(&play->msgCtx) && Message_ShouldAdvance(play)) {
 
         if (this->camId != SUBCAM_NONE) {
-            func_8005B1A4(play->cameraPtrs[this->camId]);
+            func_8005B1A4(play->cameraPtrs[playerIndex][this->camId], playerIndex);
         }
-        this->camId = OnePointCutscene_Init(play, 2270, -99, &this->actor, MAIN_CAM);
+        this->camId = OnePointCutscene_Init(play, player, 2270, -99, &this->actor, MAIN_CAM);
         play->msgCtx.msgMode = MSGMODE_PAUSED;
-        func_8002DF54(play, NULL, 8);
+        func_8002DF54(play, player, NULL, 8);
         func_8010BD58(play, OCARINA_ACTION_SCARECROW_LONG_PLAYBACK);
         this->actionFunc = func_80A8FAA4;
     }
 }
 
 void func_80A8FAA4(EnKakasi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (play->msgCtx.ocarinaMode != OCARINA_MODE_0F) {
         func_80A8F320(this, play, 1);
         return;
@@ -296,21 +300,23 @@ void func_80A8FAA4(EnKakasi* this, PlayState* play) {
             Message_StartTextbox(play, this->actor.textId, NULL);
         }
         this->actionFunc = func_80A8FBB8;
-        OnePointCutscene_EndCutscene(play, this->camId);
+        OnePointCutscene_EndCutscene(play, player, this->camId);
         this->camId = SUBCAM_NONE;
-        this->camId = OnePointCutscene_Init(play, 2260, -99, &this->actor, MAIN_CAM);
-        func_8005B1A4(play->cameraPtrs[this->camId]);
+        this->camId = OnePointCutscene_Init(play, player, 2260, -99, &this->actor, MAIN_CAM);
+        func_8005B1A4(play->cameraPtrs[playerIndex][this->camId], playerIndex);
     }
 }
 
 void func_80A8FBB8(EnKakasi* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     func_80A8F28C(this);
     SkelAnime_Update(&this->skelanime);
 
     if (this->unk_196 == Message_GetState(&play->msgCtx) && Message_ShouldAdvance(play)) {
-        func_8005B1A4(play->cameraPtrs[this->camId]);
+        func_8005B1A4(play->cameraPtrs[playerIndex][this->camId], playerIndex);
         Message_CloseTextbox(play);
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actionFunc = func_80A8F660;
     }
 }

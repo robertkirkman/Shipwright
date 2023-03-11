@@ -219,6 +219,7 @@ f32 func_80A4E754(EnGs* this, PlayState* play, f32* arg2, f32* arg3, u16* arg4, 
 }
 
 void func_80A4E910(EnGs* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->unk_19F == 0) {
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_STALKID_ATTACK);
         this->unk_200 = 0;
@@ -227,7 +228,7 @@ void func_80A4E910(EnGs* this, PlayState* play) {
         this->unk_1EC = 0.0f;
     } else if ((this->unk_19F == 1) && (func_80A4E754(this, play, &this->unk_1E8, &this->unk_1EC, &this->unk_200,
                                                       0.8f, 0.007f, 0.001f, 7, 0) == 0.0f)) {
-        if (!Play_InCsMode(play)) {
+        if (!Play_InCsMode(play, player)) {
             Message_StartTextbox(play, 0x71B1, NULL);
         }
         this->unk_19C = 0;

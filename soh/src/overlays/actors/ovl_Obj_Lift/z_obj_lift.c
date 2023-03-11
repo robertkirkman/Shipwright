@@ -135,6 +135,8 @@ void func_80B9651C(ObjLift* this) {
 }
 
 void func_80B96560(ObjLift* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 quakeIndex;
 
@@ -143,7 +145,7 @@ void func_80B96560(ObjLift* this, PlayState* play) {
             if (((this->dyna.actor.params >> 8) & 7) == 7) {
                 func_80B967C0(this);
             } else {
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 1);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 1);
                 Quake_SetSpeed(quakeIndex, 10000);
                 Quake_SetQuakeValues(quakeIndex, 2, 0, 0, 0);
                 Quake_SetCountdown(quakeIndex, 20);

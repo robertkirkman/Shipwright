@@ -623,6 +623,8 @@ void func_809BE180(EnBigokuta* this, PlayState* play) {
     }
 }
 void func_809BE26C(EnBigokuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f effectPos;
 
     if (this->unk_196 != 0) {
@@ -646,8 +648,8 @@ void func_809BE26C(EnBigokuta* this, PlayState* play) {
         }
         if (this->unk_198 == 0 && Math_StepToF(&this->actor.scale.y, 0.0f, 0.001f)) {
             Flags_SetClear(play, this->actor.room);
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
-            func_8005ACFC(play->cameraPtrs[MAIN_CAM], 4);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
+            func_8005ACFC(play->cameraPtrs[playerIndex][MAIN_CAM], 4);
             SoundSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 50, NA_SE_EN_OCTAROCK_BUBLE);
             Item_DropCollectibleRandom(play, &this->actor, &this->actor.world.pos, 0xB0);
             Actor_Kill(&this->actor);
@@ -781,14 +783,16 @@ void EnBigokuta_Update(Actor* thisx, PlayState* play2) {
     EnBigokuta* this = (EnBigokuta*)thisx;
     s32 i;
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     func_809BE798(this, play);
     EnBigokuta_UpdateDamage(this, play);
     this->actionFunc(this, play);
     func_809BD2E4(this);
     func_809BE568(this);
-    Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_BIG_OCTO);
-    func_8005AD1C(play->cameraPtrs[MAIN_CAM], 4);
+    Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BIG_OCTO);
+    func_8005AD1C(play->cameraPtrs[playerIndex][MAIN_CAM], 4);
 
     if (this->cylinder[0].base.atFlags & AT_ON) {
         if (this->actionFunc != func_809BE058) {

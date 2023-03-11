@@ -610,6 +610,8 @@ void EnPoh_ComposerAppear(EnPoh* this, PlayState* play) {
 }
 
 void func_80ADF15C(EnPoh* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f vec;
     f32 multiplier;
     f32 newScale;
@@ -621,16 +623,16 @@ void func_80ADF15C(EnPoh* this, PlayState* play) {
         if (this->unk_198 < 5) {
             vec.y = Math_SinS((this->unk_198 * 0x1000) - 0x4000) * 23.0f + (this->actor.world.pos.y + 40.0f);
             multiplier = Math_CosS((this->unk_198 * 0x1000) - 0x4000) * 23.0f;
-            vec.x = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * multiplier +
+            vec.x = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * multiplier +
                     this->actor.world.pos.x;
-            vec.z = Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * multiplier +
+            vec.z = Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * multiplier +
                     this->actor.world.pos.z;
         } else {
             vec.y = (this->actor.world.pos.y + 40.0f) + (15.0f * (this->unk_198 - 5));
             vec.x =
-                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * 23.0f + this->actor.world.pos.x;
+                Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * 23.0f + this->actor.world.pos.x;
             vec.z =
-                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4800) * 23.0f + this->actor.world.pos.z;
+                Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4800) * 23.0f + this->actor.world.pos.z;
         }
         EffectSsDeadDb_Spawn(play, &vec, &D_80AE1B60, &D_80AE1B6C, this->unk_198 * 10 + 80, 0, 255, 255, 255, 255,
                              0, 0, 255, 1, 9, 1);
@@ -1182,6 +1184,8 @@ void EnPoh_UpdateDead(Actor* thisx, PlayState* play) {
 
 void EnPoh_DrawSoul(Actor* thisx, PlayState* play) {
     EnPoh* this = (EnPoh*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     OPEN_DISPS(play->state.gfxCtx);
 
@@ -1210,7 +1214,7 @@ void EnPoh_DrawSoul(Actor* thisx, PlayState* play) {
         gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, this->info->primColor.r, this->info->primColor.g,
                         this->info->primColor.b, this->lightColor.a);
         gDPSetEnvColor(POLY_XLU_DISP++, this->lightColor.r, this->lightColor.g, this->lightColor.b, 255);
-        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000) * 9.58738e-05f, MTXMODE_APPLY);
+        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000) * 9.58738e-05f, MTXMODE_APPLY);
         gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_XLU_DISP++, this->info->soulDisplayList);

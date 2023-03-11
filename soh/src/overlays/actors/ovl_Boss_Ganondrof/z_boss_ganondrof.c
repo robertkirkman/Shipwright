@@ -951,7 +951,7 @@ void BossGanondrof_Death(BossGanondrof* this, PlayState* play) {
     f32 camZ;
     f32 pad;
     Player* player = Player_NearestToActor(&this->actor, play);
-    Camera* camera = Play_GetCamera(play, MAIN_CAM);
+    Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
 
     osSyncPrintf("PYP %f\n", player->actor.floorHeight);
     SkelAnime_Update(&this->skelAnime);
@@ -964,11 +964,11 @@ void BossGanondrof_Death(BossGanondrof* this, PlayState* play) {
     switch (this->deathState) {
         case DEATH_START:
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            this->deathCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
+            func_8002DF54(play, player, &this->actor, 1);
+            this->deathCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
             osSyncPrintf("7\n");
-            Play_ChangeCameraStatus(play, this->deathCamera, CAM_STAT_ACTIVE);
+            Play_ChangeCameraStatus(play, player, this->deathCamera, CAM_STAT_ACTIVE);
             osSyncPrintf("8\n");
             this->deathState = DEATH_THROES;
             player->actor.speedXZ = 0.0f;
@@ -1139,10 +1139,10 @@ void BossGanondrof_Death(BossGanondrof* this, PlayState* play) {
                 camera->eye = this->cameraEye;
                 camera->eyeNext = this->cameraEye;
                 camera->at = this->cameraAt;
-                func_800C08AC(play, this->deathCamera, 0);
+                func_800C08AC(play, player, this->deathCamera, 0);
                 this->deathCamera = 0;
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 Actor_Spawn(&play->actorCtx, play, ACTOR_ITEM_B_HEART, GND_BOSSROOM_CENTER_X,
                             GND_BOSSROOM_CENTER_Y, GND_BOSSROOM_CENTER_Z + 200.0f, 0, 0, 0, 0, true);
                 this->actor.child = &horse->actor;
@@ -1242,7 +1242,7 @@ void BossGanondrof_Death(BossGanondrof* this, PlayState* play) {
             Math_ApproachF(&this->cameraSpeedMod, 1.0f, 1.0f, this->cameraAccel);
         }
 
-        Play_CameraSetAtEye(play, this->deathCamera, &this->cameraAt, &this->cameraEye);
+        Play_CameraSetAtEye(play, player, this->deathCamera, &this->cameraAt, &this->cameraEye);
     }
 }
 

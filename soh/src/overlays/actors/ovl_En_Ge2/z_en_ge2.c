@@ -519,10 +519,11 @@ void EnGe2_ForceTalk(EnGe2* this, PlayState* play) {
 }
 
 void EnGe2_SetupCapturePlayer(EnGe2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->stateFlags |= GE2_STATE_CAPTURING;
     this->actor.speedXZ = 0.0f;
     EnGe2_ChangeAction(this, GE2_ACTION_CAPTURETURN);
-    func_8002DF54(play, &this->actor, 95);
+    func_8002DF54(play, player, &this->actor, 95);
     func_80078884(NA_SE_SY_FOUND);
     Message_StartTextbox(play, 0x6000, &this->actor);
 }

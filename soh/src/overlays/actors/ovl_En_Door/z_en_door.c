@@ -205,7 +205,7 @@ void EnDoor_Idle(EnDoor* this, PlayState* play) {
             Flags_SetSwitch(play, this->actor.params & 0x3F);
             Audio_PlayActorSound2(&this->actor, NA_SE_EV_CHAIN_KEY_UNLOCK);
         }
-    } else if (!Player_InCsMode(play)) {
+    } else if (!Player_InCsMode(play, player)) {
         if (fabsf(playerPosRelToDoor.y) < 20.0f && fabsf(playerPosRelToDoor.x) < 20.0f &&
             fabsf(playerPosRelToDoor.z) < 50.0f) {
             phi_v0 = player->actor.shape.rot.y - this->actor.shape.rot.y;
@@ -315,6 +315,8 @@ s32 EnDoor_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* 
     s16 phi_v0_2;
     s32 phi_v0;
     EnDoor* this = (EnDoor*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (limbIndex == 4) {
         temp_a2 = D_809FCEE4[this->dListIndex];
@@ -323,7 +325,7 @@ s32 EnDoor_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* 
         if ((play->roomCtx.prevRoom.num >= 0) ||
             (transitionEntry->sides[0].room == transitionEntry->sides[1].room)) {
             phi_v0_2 = ((this->actor.shape.rot.y + this->skelAnime.jointTable[3].z) + rot->z) -
-                       Math_Vec3f_Yaw(&play->views[0].eye, &this->actor.world.pos);
+                       Math_Vec3f_Yaw(&play->views[playerIndex].eye, &this->actor.world.pos);
             *dList = (ABS(phi_v0_2) < 0x4000) ? temp_a2[0] : temp_a2[1];
         } else {
             phi_v0 = this->unk_192;

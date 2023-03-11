@@ -289,6 +289,8 @@ void EnVali_SetupReturnToLurk(EnVali* this) {
 }
 
 void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Color_RGBA8 primColor = { 255, 255, 255, 255 };
     static Color_RGBA8 envColor = { 200, 255, 255, 255 };
     Vec3f pos;
@@ -298,8 +300,8 @@ void EnVali_DischargeLightning(EnVali* this, PlayState* play) {
     s16 yaw;
 
     for (i = 0; i < 4; i++) {
-        cos = -Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)));
-        sin = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)));
+        cos = -Math_CosS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)));
+        sin = Math_SinS(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)));
         if (!((this->lightningTimer + (i << 1)) % 4)) {
             yaw = (s16)Rand_CenteredFloat(12288.0f) + (i * 0x4000) + 0x2000;
             pos.x = this->actor.world.pos.x + (Math_SinS(yaw) * 12.0f * cos);

@@ -150,7 +150,7 @@ void DoorAna_WaitOpen(DoorAna* this, PlayState* play) {
 
             DoorAna_SetupAction(this, DoorAna_GrabPlayer);
         } else {
-            if (!Player_InCsMode(play) && !(player->stateFlags1 & 0x8800000) &&
+            if (!Player_InCsMode(play, player) && !(player->stateFlags1 & 0x8800000) &&
                 this->actor.xzDistToPlayer[playerIndex] <= 15.0f && -50.0f <= this->actor.yDistToPlayer[playerIndex] &&
                 this->actor.yDistToPlayer[playerIndex] <= 15.0f) {
                 player->stateFlags1 |= 0x80000000;
@@ -181,7 +181,7 @@ void DoorAna_Update(Actor* thisx, PlayState* play) {
 
     this->actionFunc(this, play);
     // changes the grottos facing angle based on camera angle
-    this->actor.shape.rot.y = Camera_GetCamDirYaw(play->cameraPtrs[playerIndex]) + 0x8000;
+    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000;
 }
 
 void DoorAna_Draw(Actor* thisx, PlayState* play) {

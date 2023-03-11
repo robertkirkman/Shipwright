@@ -336,9 +336,7 @@ s32 Player_InBlockingCsMode(PlayState* play, Player* this) {
            ((gSaveContext.magicState != 0) && (Player_ActionToMagicSpell(this, this->itemAction) >= 0));
 }
 
-s32 Player_InCsMode(PlayState* play) {
-    Player* this = GET_PLAYER(play); // todo
-
+s32 Player_InCsMode(PlayState* play, Player* this) {
     return Player_InBlockingCsMode(play, this) || (this->unk_6AD == 4);
 }
 
@@ -462,17 +460,13 @@ void func_8008EE08(Player* this) {
     func_8008EDF0(this);
 }
 
-void func_8008EEAC(PlayState* play, Actor* actor) {
-    Player* player = NULL;
-    for (u32 i = 0; i < PLAYER_COUNT; i++) {
-        player = Player_FromIndex(i, play);
-        func_8008EE08(player);
-        player->unk_664 = actor;
-        player->unk_684 = actor;
-        player->stateFlags1 |= 0x10000;
-        Camera_SetParam(Play_GetCamera(play, i), 8, actor);
-        Camera_ChangeMode(Play_GetCamera(play, i), 2);
-    }
+void func_8008EEAC(PlayState* play, Player* this, Actor* actor) {
+    func_8008EE08(this);
+    this->unk_664 = actor;
+    this->unk_684 = actor;
+    this->stateFlags1 |= 0x10000;
+    Camera_SetParam(Play_GetCamera(play, this, MAIN_CAM), 8, actor);
+    Camera_ChangeMode(Play_GetCamera(play, this, MAIN_CAM), 2);
 }
 
 s32 func_8008EF30(PlayState* play) {
@@ -657,7 +651,7 @@ s32 func_8008F2F8(PlayState* play) {
     }
 
     // Trigger general textboxes under certain conditions, like "It's so hot in here!"
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, this)) {
         triggerEntry = &sTextTriggers[var];
 
         if ((triggerEntry->flag != 0) && !(gSaveContext.textTriggerFlags & triggerEntry->flag) &&
@@ -1742,7 +1736,9 @@ void func_80091A24(PlayState* play, void* seg04, void* seg06, SkelAnime* skelAni
 
     POLY_OPA_DISP = Gfx_SetFog2(POLY_OPA_DISP++, 0, 0, 0, 0, 997, 1000);
 
-    func_8002EABC(pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        func_8002EABC(pos, &play->views[i].eye, &lightDir, play->state.gfxCtx);
+    }
 
     gSPSegment(POLY_OPA_DISP++, 0x0C, gCullBackDList);
 

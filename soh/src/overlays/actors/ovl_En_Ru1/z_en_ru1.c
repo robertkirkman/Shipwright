@@ -864,7 +864,7 @@ void func_80AEC780(EnRu1* this, PlayState* play) {
     s32 pad;
     Player* player = Player_NearestToActor(&this->actor, play);
 
-    if ((func_80AEC5FC(this, play)) && (!Play_InCsMode(play)) && (!(player->stateFlags1 & 0x206000)) &&
+    if ((func_80AEC5FC(this, play)) && (!Play_InCsMode(play, player)) && (!(player->stateFlags1 & 0x206000)) &&
         (player->actor.bgCheckFlags & 1)) {
 
         play->csCtx.segment = &D_80AF0880;
@@ -1543,6 +1543,7 @@ void func_80AEE2F8(EnRu1* this, PlayState* play) {
 }
 
 s32 func_80AEE394(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad[2];
     CollisionContext* colCtx;
     DynaPolyActor* dynaPolyActor;
@@ -1553,7 +1554,7 @@ s32 func_80AEE394(EnRu1* this, PlayState* play) {
         floorBgId = this->actor.floorBgId; // necessary match, can't move this out of this block unfortunately
         dynaPolyActor = DynaPoly_GetActor(colCtx, floorBgId);
         if (dynaPolyActor != NULL && dynaPolyActor->actor.id == ACTOR_BG_BDAN_OBJECTS &&
-            dynaPolyActor->actor.params == 0 && !Player_InCsMode(play) && play->msgCtx.msgLength == 0) {
+            dynaPolyActor->actor.params == 0 && !Player_InCsMode(play, player) && play->msgCtx.msgLength == 0) {
             func_80AEE02C(this);
             play->csCtx.segment = &D_80AF10A4;
             gSaveContext.cutsceneTrigger = 1;
@@ -1610,11 +1611,12 @@ void func_80AEE628(EnRu1* this, PlayState* play) {
 }
 
 s32 func_80AEE6D0(EnRu1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
     s8 curRoomNum = play->roomCtx.curRoom.num;
 
     if (!(gSaveContext.infTable[20] & 0x10) && (func_80AEB124(play) != 0)) {
-        if (!Player_InCsMode(play)) {
+        if (!Player_InCsMode(play, player)) {
             Animation_Change(&this->skelAnime, &gRutoChildSeesSapphireAnim, 1.0f, 0,
                              Animation_GetLastFrame(&gRutoChildSquirmAnim), ANIMMODE_LOOP, -8.0f);
             func_80AED600(this);

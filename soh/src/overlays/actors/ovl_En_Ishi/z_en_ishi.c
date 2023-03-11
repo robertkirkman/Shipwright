@@ -442,7 +442,7 @@ void EnIshi_Fly(EnIshi* this, PlayState* play) {
         if (type == ROCK_LARGE) {
             Player* player = Player_NearestToActor(&this->actor, play);
             u16 playerIndex = Player_GetIndex(player, play);
-            quakeIdx = Quake_Add(play->cameraPtrs[playerIndex], 3);
+            quakeIdx = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
             Quake_SetSpeed(quakeIdx, -0x3CB0);
             Quake_SetQuakeValues(quakeIdx, 3, 0, 0, 0);
             Quake_SetCountdown(quakeIdx, 7);

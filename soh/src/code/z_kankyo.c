@@ -1294,7 +1294,7 @@ void Environment_Update(PlayState* play, EnvironmentContext* envCtx, LightContex
     }
 }
 
-void Environment_DrawSunAndMoon(PlayState* play) {
+void Environment_DrawSunAndMoon(PlayState* play, u16 playerIndex) {
     f32 alpha;
     f32 color;
     f32 y;
@@ -1318,9 +1318,9 @@ void Environment_DrawSunAndMoon(PlayState* play) {
     }
 
     if (gSaveContext.entranceIndex != 0xCD || ((void)0, gSaveContext.sceneSetupIndex) != 5) {
-        Matrix_Translate(play->views[0].eye.x + play->envCtx.sunPos.x,
-                         play->views[0].eye.y + play->envCtx.sunPos.y,
-                         play->views[0].eye.z + play->envCtx.sunPos.z, MTXMODE_NEW);
+        Matrix_Translate(play->views[playerIndex].eye.x + play->envCtx.sunPos.x,
+                         play->views[playerIndex].eye.y + play->envCtx.sunPos.y,
+                         play->views[playerIndex].eye.z + play->envCtx.sunPos.z, MTXMODE_NEW);
 
         y = play->envCtx.sunPos.y / 25.0f;
         temp = y / 80.0f;
@@ -1371,9 +1371,9 @@ void Environment_DrawSunAndMoon(PlayState* play) {
         gSPVertex(POLY_OPA_DISP++, vertices, 4, 0);
         gSP2Triangles(POLY_OPA_DISP++, 0, 1, 2, 0, 2, 1, 3, 0);
 
-        Matrix_Translate(play->views[0].eye.x - play->envCtx.sunPos.x,
-                         play->views[0].eye.y - play->envCtx.sunPos.y,
-                         play->views[0].eye.z - play->envCtx.sunPos.z, MTXMODE_NEW);
+        Matrix_Translate(play->views[playerIndex].eye.x - play->envCtx.sunPos.x,
+                         play->views[playerIndex].eye.y - play->envCtx.sunPos.y,
+                         play->views[playerIndex].eye.z - play->envCtx.sunPos.z, MTXMODE_NEW);
 
         color = -y / 120.0f;
         color = CLAMP_MIN(color, 0.0f);
@@ -1406,17 +1406,17 @@ void Environment_DrawSunAndMoon(PlayState* play) {
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-void Environment_DrawSunLensFlare(PlayState* play, EnvironmentContext* envCtx, View* view,
+void Environment_DrawSunLensFlare(PlayState* play, u16 playerIndex, EnvironmentContext* envCtx, View* view,
                                   GraphicsContext* gfxCtx, Vec3f pos, s32 unused) {
     if ((play->envCtx.unk_EE[1] == 0) && (play->envCtx.unk_17 == 0)) {
-        Environment_DrawLensFlare(play, &play->envCtx, &play->views[0], play->state.gfxCtx, pos, 2000,
+        Environment_DrawLensFlare(play, playerIndex, &play->envCtx, &play->views[playerIndex], play->state.gfxCtx, pos, 2000,
                                   370, Math_CosS(((void)0, gSaveContext.dayTime) - 0x8000) * 120.0f, 400, 1);
     }
 }
 
 f32 sLensFlareScales[] = { 23.0f, 12.0f, 7.0f, 5.0f, 3.0f, 10.0f, 6.0f, 2.0f, 3.0f, 1.0f };
 
-void Environment_DrawLensFlare(PlayState* play, EnvironmentContext* envCtx, View* view,
+void Environment_DrawLensFlare(PlayState* play, u16 playerIndex, EnvironmentContext* envCtx, View* view,
                                GraphicsContext* gfxCtx, Vec3f pos, s32 unused, s16 scale, f32 colorIntensity,
                                s16 screenFillAlpha, u8 arg9) {
     s16 i;
@@ -1527,7 +1527,7 @@ void Environment_DrawLensFlare(PlayState* play, EnvironmentContext* envCtx, View
             Matrix_Translate(pos.x, pos.y, pos.z, MTXMODE_NEW);
 
             if (arg9) {
-                temp = Environment_LerpWeight(60, 15, play->views[0].fovy);
+                temp = Environment_LerpWeight(60, 15, play->views[playerIndex].fovy);
             }
 
             Matrix_Translate(-posDirX * i * dist, -posDirY * i * dist, -posDirZ * i * dist, MTXMODE_APPLY);
@@ -1629,7 +1629,7 @@ f32 func_800746DC(void) {
     return Rand_ZeroOne() - 0.5f;
 }
 
-void Environment_DrawRain(PlayState* play, View* view, GraphicsContext* gfxCtx) {
+void Environment_DrawRain(PlayState* play, u16 playerIndex, View* view, GraphicsContext* gfxCtx) {
     s16 i;
     s32 pad;
     Vec3f vec;
@@ -1646,9 +1646,9 @@ void Environment_DrawRain(PlayState* play, View* view, GraphicsContext* gfxCtx) 
     f32 z280;
     Vec3f unused = { 0.0f, 0.0f, 0.0f };
     Vec3f windDirection = { 0.0f, 0.0f, 0.0f };
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_FromIndex(playerIndex, play);
 
-    if (!(play->cameraPtrs[0]->unk_14C & 0x100) && (play->envCtx.unk_EE[2] == 0)) {
+    if (!(play->cameraPtrs[playerIndex][0]->unk_14C & 0x100) && (play->envCtx.unk_EE[2] == 0)) {
         OPEN_DISPS(gfxCtx);
 
         vec.x = view->lookAt.x - view->eye.x;
@@ -1914,7 +1914,7 @@ void Environment_AddLightningBolts(PlayState* play, u8 num) {
 /**
  * Draw any active lightning bolt entries contained in `sLightningBolts`
  */
-void Environment_DrawLightning(PlayState* play, s32 unused) {
+void Environment_DrawLightning(PlayState* play, u16 playerIndex, s32 unused) {
     static void* lightningTextures[] = {
         gEffLightning1Tex, gEffLightning2Tex, gEffLightning3Tex,
         gEffLightning4Tex, gEffLightning5Tex, gEffLightning6Tex,
@@ -1936,15 +1936,15 @@ void Environment_DrawLightning(PlayState* play, s32 unused) {
 
         switch (sLightningBolts[i].state) {
             case LIGHTNING_BOLT_START:
-                dx = play->views[0].lookAt.x - play->views[0].eye.x;
-                dz = play->views[0].lookAt.z - play->views[0].eye.z;
+                dx = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+                dz = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
 
                 x = dx / sqrtf(SQ(dx) + SQ(dz));
                 z = dz / sqrtf(SQ(dx) + SQ(dz));
 
-                sLightningBolts[i].pos.x = play->views[0].eye.x + x * 9500.0f;
+                sLightningBolts[i].pos.x = play->views[playerIndex].eye.x + x * 9500.0f;
                 sLightningBolts[i].pos.y = Rand_ZeroOne() * 1000.0f + 4000.0f;
-                sLightningBolts[i].pos.z = play->views[0].eye.z + z * 9500.0f;
+                sLightningBolts[i].pos.z = play->views[playerIndex].eye.z + z * 9500.0f;
 
                 sLightningBolts[i].offset.x = (Rand_ZeroOne() - 0.5f) * 5000.0f;
                 sLightningBolts[i].offset.y = 0.0f;
@@ -2103,7 +2103,7 @@ void func_80075B44(PlayState* play) {
                 func_80078884(NA_SE_EV_CHICKEN_CRY_M);
                 if ((Inventory_ReplaceItem(play, ITEM_WEIRD_EGG, ITEM_CHICKEN) ||
                      Inventory_HatchPocketCucco(play)) &&
-                    play->csCtx.state == 0 && !Player_InCsMode(play)) {
+                    play->csCtx.state == 0 && !Player_InCsMode(play, Player_FromIndex(0, play))) {
                     Message_StartTextbox(play, 0x3066, NULL);
                 }
                 play->envCtx.unk_E0++;
@@ -2129,7 +2129,7 @@ void func_80075B44(PlayState* play) {
     }
 }
 
-void Environment_DrawCustomLensFlare(PlayState* play) {
+void Environment_DrawCustomLensFlare(PlayState* play, u16 playerIndex) {
     Vec3f pos;
 
     if (gCustomLensFlareOn) {
@@ -2137,7 +2137,7 @@ void Environment_DrawCustomLensFlare(PlayState* play) {
         pos.y = gCustomLensFlarePos.y;
         pos.z = gCustomLensFlarePos.z;
 
-        Environment_DrawLensFlare(play, &play->envCtx, &play->views[0], play->state.gfxCtx, pos,
+        Environment_DrawLensFlare(play, playerIndex, &play->envCtx, &play->views[playerIndex], play->state.gfxCtx, pos,
                                   gLensFlareUnused, gLensFlareScale, gLensFlareColorIntensity,
                                   gLensFlareScreenFillAlpha, 0);
     }

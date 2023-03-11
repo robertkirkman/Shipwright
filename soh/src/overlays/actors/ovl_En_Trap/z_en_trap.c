@@ -176,7 +176,7 @@ void EnTrap_Update(Actor* thisx, PlayState* play) {
             } else {
                 angleToKnockPlayer = thisx->yawTowardsPlayer[playerIndex];
             }
-            play->damagePlayer(play, -4);
+            play->damagePlayer(play, player, -4);
             func_8002F7A0(play, thisx, 6.0f, angleToKnockPlayer, 6.0f);
             this->playerDmgTimer = 15;
         }

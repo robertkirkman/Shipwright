@@ -354,7 +354,7 @@ typedef struct {
     /* 0x0004 */ char   unk_04[0x04];
     /* 0x0008 */ u8     total; // total number of actors loaded
     /* 0x000C */ ActorListEntry actorLists[ACTORCAT_MAX];
-    /* 0x006C */ TargetContext targetCtx;
+    /* 0x006C */ TargetContext targetCtxs[PLAYER_COUNT];
     struct {
         /* 0x0104 */ u32    swch;
         /* 0x0108 */ u32    tempSwch;
@@ -386,6 +386,7 @@ typedef struct {
     /* 0x20 */ CutsceneCameraPoint* cameraPosition;
     /* 0x24 */ CsCmdActorAction* linkAction;
     /* 0x28 */ CsCmdActorAction* npcActions[10]; // "npcdemopnt"
+    /*      */ u16 playerIndex;
 } CutsceneContext; // size = 0x50
 
 typedef struct {
@@ -1320,10 +1321,10 @@ typedef struct PlayState {
     /* 0x000B0 */ void* sceneSegment;
     /* 0x000B8 */ View views[PLAYER_COUNT];
     /* 0x001E0 */ Camera mainCameras[PLAYER_COUNT];
-    /* 0x0034C */ Camera subCameras[NUM_SUBCAMS];
-    /* 0x00790 */ Camera* cameraPtrs[NUM_CAMS];
-    /* 0x007A0 */ s16 activeCamera;
-    /* 0x007A2 */ s16 nextCamera;
+    /* 0x0034C */ Camera subCameras[PLAYER_COUNT][NUM_CAMS - SUBCAM_FIRST];
+    /* 0x00790 */ Camera* cameraPtrs[PLAYER_COUNT][NUM_CAMS];
+    /* 0x007A0 */ s16 activeCameras[PLAYER_COUNT];
+    /* 0x007A2 */ s16 nextCameras[PLAYER_COUNT];
     /* 0x007A2 */ bool manualCamera;
     /* 0x007A2 */ f32 camX;
     /* 0x007A2 */ f32 camY;
@@ -1349,9 +1350,9 @@ typedef struct PlayState {
     /* 0x11D44 */ s32 (*isPlayerDroppingFish)(struct PlayState* play);
     /* 0x11D48 */ s32 (*startPlayerFishing)(struct PlayState* play);
     /* 0x11D4C */ s32 (*grabPlayer)(struct PlayState* play, Player* player);
-    /* 0x11D50 */ s32 (*startPlayerCutscene)(struct PlayState* play, Actor* actor, s32 mode);
+    /* 0x11D50 */ s32 (*startPlayerCutscene)(struct PlayState* play, Player* player, Actor* actor, s32 mode);
     /* 0x11D54 */ void (*func_11D54)(Player* player, struct PlayState* play);
-    /* 0x11D58 */ s32 (*damagePlayer)(struct PlayState* play, s32 damage);
+    /* 0x11D58 */ s32 (*damagePlayer)(struct PlayState* play, Player* player, s32 damage);
     /* 0x11D5C */ void (*talkWithPlayer)(struct PlayState* play, Actor* actor);
     /* 0x11D60 */ MtxF viewProjectionMtxF;
     /* 0x11DA0 */ MtxF billboardMtxF;

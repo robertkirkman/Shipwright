@@ -279,9 +279,10 @@ void EnGe1_KickPlayer(EnGe1* this, PlayState* play) {
 }
 
 void EnGe1_SpotPlayer(EnGe1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->cutsceneTimer = 30;
     this->actionFunc = EnGe1_KickPlayer;
-    func_8002DF54(play, &this->actor, 0x5F);
+    func_8002DF54(play, player, &this->actor, 0x5F);
     func_80078884(NA_SE_SY_FOUND);
     Message_StartTextbox(play, 0x6000, &this->actor);
 }
@@ -667,7 +668,7 @@ void EnGe1_BeginGame_Archery(EnGe1* this, PlayState* play) {
                     gSaveContext.eventChkInf[6] |= 0x100;
 
                     if (!(player->stateFlags1 & 0x800000)) {
-                        func_8002DF54(play, &this->actor, 1);
+                        func_8002DF54(play, player, &this->actor, 1);
                     } else {
                         horse = Actor_FindNearby(play, &player->actor, ACTOR_EN_HORSE, ACTORCAT_BG, 1200.0f);
                         player->actor.freezeTimer = 1200;

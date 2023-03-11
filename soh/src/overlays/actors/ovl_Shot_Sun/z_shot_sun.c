@@ -142,7 +142,7 @@ void func_80BADF0C(ShotSun* this, PlayState* play) {
             if ((params == 0x40 && play->msgCtx.lastPlayedSong == OCARINA_SONG_SUNS) ||
                 (params == 0x41 && play->msgCtx.lastPlayedSong == OCARINA_SONG_STORMS)) {
                 this->actionFunc = ShotSun_TriggerFairy;
-                OnePointCutscene_Attention(play, &this->actor);
+                OnePointCutscene_Attention(play, player, &this->actor);
                 this->timer = 0;
             } else {
                 this->unk_1A4 = 0;

@@ -92,11 +92,12 @@ void BgMizuShutter_Destroy(BgMizuShutter* thisx, PlayState* play) {
 }
 
 void BgMizuShutter_WaitForSwitch(BgMizuShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, (u16)this->dyna.actor.params & 0x3F)) {
         if (ABS(this->dyna.actor.world.rot.x) > 0x2C60) {
-            OnePointCutscene_Init(play, 4510, -99, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4510, -99, &this->dyna.actor, MAIN_CAM);
         } else {
-            OnePointCutscene_Attention(play, &this->dyna.actor);
+            OnePointCutscene_Attention(play, player, &this->dyna.actor);
         }
         this->actionFunc = BgMizuShutter_WaitForCutscene;
         this->timer = 30;

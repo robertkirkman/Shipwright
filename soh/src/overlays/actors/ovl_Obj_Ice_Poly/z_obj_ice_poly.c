@@ -122,7 +122,7 @@ void ObjIcePoly_Idle(ObjIcePoly* this, PlayState* play) {
     if (this->colliderIce.base.acFlags & AC_HIT) {
         this->meltTimer = -this->colliderIce.info.acHitInfo->toucher.damage;
         this->actor.focus.rot.y = this->actor.yawTowardsPlayer[playerIndex];
-        OnePointCutscene_Init(play, 5120, 40, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 5120, 40, &this->actor, MAIN_CAM);
         this->actionFunc = ObjIcePoly_Melt;
     } else if (this->actor.parent != NULL) {
         this->actor.parent->freezeTimer = 40;

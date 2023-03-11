@@ -513,12 +513,14 @@ void ObjectKankyo_Draw(Actor* thisx, PlayState* play) {
 void ObjectKankyo_DrawFairies(ObjectKankyo* this2, PlayState* play2) {
     ObjectKankyo* this = this2;
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 alphaScale;
     Vec3f vec1 = { 0.0f, 0.0f, 0.0f };
     Vec3f vec2 = { 0.0f, 0.0f, 0.0f };
     s16 i;
 
-    if (!(play->cameraPtrs[0]->unk_14C & 0x100)) {
+    if (!(play->cameraPtrs[playerIndex][MAIN_CAM]->unk_14C & 0x100)) {
         OPEN_DISPS(play->state.gfxCtx);
         POLY_XLU_DISP = Gfx_SetupDL(POLY_XLU_DISP, 0x14);
         gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(gSunTex));
@@ -617,7 +619,7 @@ void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
     s32 pad;
     s32 pad2;
 
-    if (!(play->cameraPtrs[0]->unk_14C & 0x100)) {
+    if (!(play->cameraPtrs[playerIndex][MAIN_CAM]->unk_14C & 0x100)) {
         OPEN_DISPS(play->state.gfxCtx);
         if (play->envCtx.unk_EE[2] < play->envCtx.unk_EE[3]) {
             if (play->state.frames % 16 == 0) {

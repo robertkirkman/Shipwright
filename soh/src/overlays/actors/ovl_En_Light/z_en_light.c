@@ -77,8 +77,10 @@ void EnLight_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void EnLight_UpdatePosRot(EnLight* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     // update yaw for billboard effect
-    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000;
+    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000;
 
     if (this->actor.parent != NULL) {
         Math_Vec3f_Copy(&this->actor.world.pos, &(this->actor.parent)->world.pos);
@@ -152,6 +154,8 @@ void EnLight_UpdateSwitch(Actor* thisx, PlayState* play) {
 
 void EnLight_Draw(Actor* thisx, PlayState* play) {
     EnLight* this = (EnLight*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     FlameParams* flameParams;
     Gfx* dList;
@@ -181,7 +185,7 @@ void EnLight_Draw(Actor* thisx, PlayState* play) {
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
     }
 
-    Matrix_RotateY((s16)((Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->actor.shape.rot.y) + 0x8000) *
+    Matrix_RotateY((s16)((Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->actor.shape.rot.y) + 0x8000) *
                        (M_PI / 32768.0f),
                    MTXMODE_APPLY);
 

@@ -124,7 +124,7 @@ void BossVa_Draw(Actor* thisx, PlayState* play);
 void BossVa_Reset(void);
 
 void BossVa_UpdateEffects(BossVa* this, PlayState* play);
-void BossVa_DrawEffects(BossVaEffect* effect, PlayState* play);
+void BossVa_DrawEffects(BossVaEffect* effect, Player* player, PlayState* play);
 void BossVa_DrawDoor(PlayState* play, s16 scale);
 
 void BossVa_SetupIntro(BossVa* this);
@@ -585,6 +585,7 @@ void BossVa_KillBari(BossVa* this, PlayState* play) {
 void BossVa_Init(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     BossVa* this = (BossVa*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s32 i;
     s16 warpId;
 
@@ -651,22 +652,22 @@ void BossVa_Init(Actor* thisx, PlayState* play2) {
                 if (gSaveContext.eventChkInf[7] & 0x40) {
                     sCsState = INTRO_CALL_BARI;
                     sDoorState = 100;
-                    func_8002DF54(play, &this->actor, 1);
+                    func_8002DF54(play, player, &this->actor, 1);
                     play->envCtx.screenFillColor[0] = 0xDC;
                     play->envCtx.screenFillColor[1] = 0xDC;
                     play->envCtx.screenFillColor[2] = 0xBE;
                     play->envCtx.screenFillColor[3] = 0xD2;
                     func_80064520(play, &play->csCtx);
-                    sCsCamera = Play_CreateSubCamera(play);
-                    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-                    Play_ChangeCameraStatus(play, sCsCamera, CAM_STAT_ACTIVE);
+                    sCsCamera = Play_CreateSubCamera(play, player);
+                    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+                    Play_ChangeCameraStatus(play, player, sCsCamera, CAM_STAT_ACTIVE);
                     sCameraNextEye.x = sCameraEye.x = 140.0f;
                     sCameraNextEye.y = sCameraEye.y = 205.0f;
                     sCameraNextEye.z = sCameraEye.z = -20.0f;
                     sCameraNextAt.x = sCameraAt.x = 10.0f;
                     sCameraNextAt.y = sCameraAt.y = 50.0f;
                     sCameraNextAt.z = sCameraAt.z = -220.0f;
-                    Play_CameraSetAtEye(play, sCsCamera, &sCameraAt, &sCameraEye);
+                    Play_CameraSetAtEye(play, player, sCsCamera, &sCameraAt, &sCameraEye);
                     this->timer = 20;
 
                     for (i = BOSSVA_BARI_LOWER_5; i >= BOSSVA_BARI_UPPER_1; i--) {
@@ -793,17 +794,17 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
             play->envCtx.screenFillColor[1] = 0xDC;
             play->envCtx.screenFillColor[2] = 0xBE;
             play->envCtx.screenFillColor[3] = 0xD2;
-            func_8002DF54(play, &this->actor, 8);
+            func_8002DF54(play, player, &this->actor, 8);
             player->actor.world.rot.y = player->actor.shape.rot.y = 0x7FFF;
             sCsState++;
             break;
         case INTRO_LOOK_DOOR:
             func_80064520(play, &play->csCtx);
             if (sCsCamera == SUBCAM_FREE) {
-                sCsCamera = Play_CreateSubCamera(play);
+                sCsCamera = Play_CreateSubCamera(play, player);
             }
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCsCamera, CAM_STAT_ACTIVE);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCsCamera, CAM_STAT_ACTIVE);
 
             sCameraNextEye.x = sCameraEye.x = 13.0f;
             sCameraNextEye.y = sCameraEye.y = 124.0f;
@@ -821,7 +822,7 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
         case INTRO_CLOSE_DOOR:
             this->timer--;
             if (this->timer == 0) {
-                func_8002DF54(play, &this->actor, 2);
+                func_8002DF54(play, player, &this->actor, 2);
                 sCsState++;
                 this->timer = 30;
             }
@@ -836,16 +837,16 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
             }
             break;
         case INTRO_CRACKLE:
-            func_8002DF54(play, &this->actor, 1);
+            func_8002DF54(play, player, &this->actor, 1);
             sCsState++;
             break;
         case INTRO_SPAWN_BARI:
             func_80064520(play, &play->csCtx);
             if (sCsCamera == SUBCAM_FREE) {
-                sCsCamera = Play_CreateSubCamera(play);
+                sCsCamera = Play_CreateSubCamera(play, player);
             }
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCsCamera, CAM_STAT_ACTIVE);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCsCamera, CAM_STAT_ACTIVE);
 
             sCameraNextEye.x = sCameraEye.x = 13.0f;
             sCameraNextEye.y = sCameraEye.y = 124.0f;
@@ -967,7 +968,7 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
             sCameraAtMaxVel = sCameraEyeMaxVel;
             if (this->timer >= 45000) {
                 play->envCtx.unk_BF = 1;
-                func_8002DF54(play, &this->actor, 8);
+                func_8002DF54(play, player, &this->actor, 8);
             } else if (this->timer >= 35000) {
                 Audio_QueueSeqCmd(SEQ_PLAYER_BGM_MAIN << 24 | NA_BGM_BOSS);
             }
@@ -1020,11 +1021,11 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
         case INTRO_FINISH:
             this->timer--;
             if (this->timer == 0) {
-                Play_ClearCamera(play, sCsCamera);
+                Play_ClearCamera(play, player, sCsCamera);
                 sCsCamera = 0;
                 func_80064534(play, &play->csCtx);
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-                func_8002DF54(play, &this->actor, 7);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+                func_8002DF54(play, player, &this->actor, 7);
                 sCsState++;
                 gSaveContext.eventChkInf[7] |= 0x40;
                 player->actor.shape.rot.y = player->actor.world.rot.y = this->actor.yawTowardsPlayer[playerIndex] + 0x8000;
@@ -1051,7 +1052,7 @@ void BossVa_BodyIntro(BossVa* this, PlayState* play) {
         Math_SmoothStepToF(&sCameraAt.x, sCameraNextAt.x, 0.3f, sCameraAtMaxVel.x, 0.075f);
         Math_SmoothStepToF(&sCameraAt.y, sCameraNextAt.y, 0.3f, sCameraAtMaxVel.y, 0.075f);
         Math_SmoothStepToF(&sCameraAt.z, sCameraNextAt.z, 0.3f, sCameraAtMaxVel.z, 0.075f);
-        Play_CameraSetAtEye(play, sCsCamera, &sCameraAt, &sCameraEye);
+        Play_CameraSetAtEye(play, player, sCsCamera, &sCameraAt, &sCameraEye);
     }
 }
 
@@ -1542,18 +1543,19 @@ void BossVa_SetupBodyDeath(BossVa* this, PlayState* play) {
 
 void BossVa_BodyDeath(BossVa* this, PlayState* play) {
     s32 i;
-    Camera* camera = Play_GetCamera(play, MAIN_CAM);
-    s32 sp7C;
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
+    s32 sp7C;
     s16 tmp16;
 
     switch (sCsState) {
         case DEATH_START:
-            func_8002DF54(play, &this->actor, 1);
+            func_8002DF54(play, player, &this->actor, 1);
             func_80064520(play, &play->csCtx);
-            sCsCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCsCamera, CAM_STAT_ACTIVE);
+            sCsCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCsCamera, CAM_STAT_ACTIVE);
 
             sCameraNextAt.x = this->actor.world.pos.x;
             sCameraNextAt.y = this->actor.world.pos.y;
@@ -1612,7 +1614,7 @@ void BossVa_BodyDeath(BossVa* this, PlayState* play) {
                                                   0x28);
                 this->onCeiling = 2; // Not used by body
                 BossVa_SetDeathEnv(play);
-                func_8002DF54(play, &this->actor, 8);
+                func_8002DF54(play, player, &this->actor, 8);
             }
             break;
         case DEATH_CORE_BURST:
@@ -1644,16 +1646,16 @@ void BossVa_BodyDeath(BossVa* this, PlayState* play) {
 
             this->timer--;
             if (this->timer == 0) {
-                Play_ClearCamera(play, sCsCamera);
+                Play_ClearCamera(play, player, sCsCamera);
                 sCsCamera = 0;
                 func_80064534(play, &play->csCtx);
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
 
                 camera->eyeNext = camera->eye = sCameraEye;
 
                 camera->at = sCameraAt;
 
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 sCsState++;
 
                 Actor_Spawn(&play->actorCtx, play, ACTOR_ITEM_B_HEART, this->actor.world.pos.x,
@@ -1682,7 +1684,7 @@ void BossVa_BodyDeath(BossVa* this, PlayState* play) {
         Math_SmoothStepToF(&sCameraAt.x, sCameraNextAt.x, 0.3f, sCameraAtMaxVel.x, 0.15f);
         Math_SmoothStepToF(&sCameraAt.y, sCameraNextAt.y, 0.3f, sCameraAtMaxVel.y, 0.15f);
         Math_SmoothStepToF(&sCameraAt.z, sCameraNextAt.z, 0.3f, sCameraAtMaxVel.z, 0.15f);
-        Play_CameraSetAtEye(play, sCsCamera, &sCameraAt, &sCameraEye);
+        Play_CameraSetAtEye(play, player, sCsCamera, &sCameraAt, &sCameraEye);
     }
 
     SkelAnime_Update(&this->skelAnime);
@@ -2424,6 +2426,7 @@ void BossVa_SetupBariIntro(BossVa* this, PlayState* play) {
 }
 
 void BossVa_BariIntro(BossVa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f sp54 = this->actor.home.pos;
     f32 sp50 = 40.0f;
     s16 sp4E;
@@ -2438,7 +2441,7 @@ void BossVa_BariIntro(BossVa* this, PlayState* play) {
     switch (sCsState) {
         case INTRO_LOOK_BARI:
             if (this->actor.params == BOSSVA_BARI_UPPER_1) {
-                func_8002DF54(play, &this->actor, 1);
+                func_8002DF54(play, player, &this->actor, 1);
                 if (Math_SmoothStepToF(&this->actor.world.pos.y, 60.0f, 0.3f, 1.0f, 0.15f) == 0.0f) {
                     this->timer--;
                     if (this->timer == 0) {
@@ -3191,6 +3194,7 @@ void BossVa_BariPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s*
 }
 
 void BossVa_Draw(Actor* thisx, PlayState* play) {
+    Player* player = Player_NearestToActor(thisx, play);
     s16* paramsPtr; // This stack slot is almost certainly actually play2, but can't make it match
     BossVa* this = (BossVa*)thisx;
     Vec3f spBC;
@@ -3302,7 +3306,7 @@ void BossVa_Draw(Actor* thisx, PlayState* play) {
     }
 
     if (*paramsPtr == BOSSVA_BODY) {
-        BossVa_DrawEffects(sVaEffects, play);
+        BossVa_DrawEffects(sVaEffects, player, play);
     } else if (*paramsPtr == BOSSVA_DOOR) {
         BossVa_DrawDoor(play, sDoorState);
     }
@@ -3520,7 +3524,7 @@ void BossVa_UpdateEffects(BossVa* this, PlayState* play) {
     }
 }
 
-void BossVa_DrawEffects(BossVaEffect* effect, PlayState* play) {
+void BossVa_DrawEffects(BossVaEffect* effect, Player* player, PlayState* play) {
     static void* sSparkBallTex[] = {
         gBarinadeSparkBall1Tex, gBarinadeSparkBall2Tex, gBarinadeSparkBall3Tex, gBarinadeSparkBall4Tex,
         gBarinadeSparkBall5Tex, gBarinadeSparkBall6Tex, gBarinadeSparkBall7Tex, gBarinadeSparkBall8Tex,
@@ -3529,7 +3533,7 @@ void BossVa_DrawEffects(BossVaEffect* effect, PlayState* play) {
     GraphicsContext* gfxCtx = play->state.gfxCtx;
     u8 flag = 0;
     BossVaEffect* effectHead = effect;
-    Camera* camera = Play_GetCamera(play, sCsCamera);
+    Camera* camera = Play_GetCamera(play, player, sCsCamera);
 
     OPEN_DISPS(gfxCtx);
 

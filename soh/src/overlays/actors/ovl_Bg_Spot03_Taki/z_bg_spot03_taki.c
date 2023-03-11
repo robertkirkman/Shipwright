@@ -69,11 +69,12 @@ void BgSpot03Taki_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_808ADEF0(BgSpot03Taki* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->state == WATERFALL_CLOSED) {
         if (Flags_GetSwitch(play, this->switchFlag)) {
             this->state = WATERFALL_OPENING_ANIMATED;
             this->timer = 40;
-            OnePointCutscene_Init(play, 4100, -99, NULL, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4100, -99, NULL, MAIN_CAM);
         }
     } else if (this->state == WATERFALL_OPENING_IDLE) {
         this->timer--;

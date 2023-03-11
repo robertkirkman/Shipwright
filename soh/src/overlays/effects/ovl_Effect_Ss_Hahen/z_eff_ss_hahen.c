@@ -117,7 +117,7 @@ void EffectSsHahen_DrawGray(PlayState* play, u32 index, EffectSs* this) {
 }
 
 void EffectSsHahen_Update(PlayState* play, u32 index, EffectSs* this) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(&this->actor, play);
 
     this->rPitch += 55;
     this->rYaw += 10;

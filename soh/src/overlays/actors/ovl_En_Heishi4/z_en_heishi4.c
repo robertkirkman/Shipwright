@@ -263,12 +263,13 @@ void func_80A56900(EnHeishi4* this, PlayState* play) {
 }
 
 void func_80A56994(EnHeishi4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     func_80038290(play, &this->actor, &this->unk_260, &this->unk_266, this->actor.focus.pos);
     if ((this->unk_282 == Message_GetState(&play->msgCtx)) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
         gSaveContext.infTable[6] |= 0x1000;
-        func_8002DF54(play, NULL, 8);
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = func_80A56A50;
     }
 }
@@ -282,11 +283,12 @@ void func_80A56A50(EnHeishi4* this, PlayState* play) {
 }
 
 void func_80A56ACC(EnHeishi4* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 currentFrame = this->skelAnime.curFrame;
 
     SkelAnime_Update(&this->skelAnime);
     if (this->unk_288 <= currentFrame) {
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actionFunc = func_80A5673C;
     }
 }

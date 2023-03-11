@@ -409,10 +409,11 @@ void func_80AAE224(EnMm* this, PlayState* play) {
 }
 
 void func_80AAE294(EnMm* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 floorYNorm;
     Vec3f dustPos;
 
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, player)) {
         SkelAnime_Update(&this->skelAnime);
 
         if (this->curAnimIndex == 0) {

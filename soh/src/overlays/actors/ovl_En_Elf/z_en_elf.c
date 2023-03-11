@@ -317,7 +317,7 @@ f32 EnElf_GetColorValue(s32 colorFlag) {
 void EnElf_Init(Actor* thisx, PlayState* play) {
     EnElf* this = (EnElf*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play); // init
+    Player* player = Player_NearestToActor(thisx, play);
     s32 colorConfig;
     s32 i;
 
@@ -624,7 +624,7 @@ void func_80A0329C(EnElf* this, PlayState* play) {
         return;
     }
 
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, player)) {
         heightDiff = this->actor.world.pos.y - player->actor.world.pos.y;
 
         if ((heightDiff > 0.0f) && (heightDiff < 60.0f)) {
@@ -941,15 +941,15 @@ void func_80A03CF8(EnElf* this, PlayState* play) {
                 }
                 break;
             case 12:
-                nextPos = play->cameraPtrs[playerIndex]->eye;
+                nextPos = GET_ACTIVE_CAM(playerIndex, play)->eye;
                 nextPos.y += (-2000.0f * this->actor.scale.y);
                 func_80A03148(this, &nextPos, 0.0f, 20.0f, 0.2f);
                 break;
             default:
                 func_80A029A8(this, 1);
-                nextPos = play->actorCtx.targetCtx.naviRefPos;
+                nextPos = play->actorCtx.targetCtxs[playerIndex].naviRefPos;
                 nextPos.y += (1500.0f * this->actor.scale.y);
-                arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
+                arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
 
                 if (arrowPointedActor != NULL) {
                     func_80A03148(this, &nextPos, 0.0f, 20.0f, 0.2f);
@@ -1012,12 +1012,13 @@ void EnElf_ChangeColor(Color_RGBAf* dest, Color_RGBAf* newColor, Color_RGBAf* cu
 }
 
 void func_80A04414(EnElf* this, PlayState* play) {
-    Actor* arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    Actor* arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
     f32 transitionRate;
     u16 targetSound;
 
-    if (play->actorCtx.targetCtx.unk_40 != 0.0f) {
+    if (play->actorCtx.targetCtxs[playerIndex].unk_40 != 0.0f) {
         this->unk_2C6 = 0;
         this->unk_29C = 1.0f;
 
@@ -1028,18 +1029,18 @@ void func_80A04414(EnElf* this, PlayState* play) {
     } else {
         if (this->unk_2C6 == 0) {
             if ((arrowPointedActor == NULL) ||
-                (Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->actorCtx.targetCtx.naviRefPos) < 50.0f)) {
+                (Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->actorCtx.targetCtxs[playerIndex].naviRefPos) < 50.0f)) {
                 this->unk_2C6 = 1;
             }
         } else if (this->unk_29C != 0.0f) {
             if (Math_StepToF(&this->unk_29C, 0.0f, 0.25f) != 0) {
-                this->innerColor = play->actorCtx.targetCtx.naviInner;
-                this->outerColor = play->actorCtx.targetCtx.naviOuter;
+                this->innerColor = play->actorCtx.targetCtxs[playerIndex].naviInner;
+                this->outerColor = play->actorCtx.targetCtxs[playerIndex].naviOuter;
             } else {
                 transitionRate = 0.25f / this->unk_29C;
-                EnElf_ChangeColor(&this->innerColor, &play->actorCtx.targetCtx.naviInner, &this->innerColor,
+                EnElf_ChangeColor(&this->innerColor, &play->actorCtx.targetCtxs[playerIndex].naviInner, &this->innerColor,
                                   transitionRate);
-                EnElf_ChangeColor(&this->outerColor, &play->actorCtx.targetCtx.naviOuter, &this->outerColor,
+                EnElf_ChangeColor(&this->outerColor, &play->actorCtx.targetCtxs[playerIndex].naviOuter, &this->outerColor,
                                   transitionRate);
             }
         }
@@ -1071,6 +1072,7 @@ void func_80A0461C(EnElf* this, PlayState* play) {
     s32 temp;
     Actor* arrowPointedActor;
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         if (play->csCtx.npcActions[8] != NULL) {
@@ -1094,7 +1096,7 @@ void func_80A0461C(EnElf* this, PlayState* play) {
         }
 
     } else {
-        arrowPointedActor = play->actorCtx.targetCtx.arrowPointedActor;
+        arrowPointedActor = play->actorCtx.targetCtxs[playerIndex].arrowPointedActor;
 
         if ((player->stateFlags1 & 0x400) || ((YREG(15) & 0x10) && func_800BC56C(play, 2))) {
             temp = 12;
@@ -1226,10 +1228,11 @@ void func_80A04D90(EnElf* this, PlayState* play) {
 void func_80A04DE4(EnElf* this, PlayState* play) {
     Vec3f headCopy;
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f naviRefPos;
 
     if (this->fairyFlags & 0x10) {
-        naviRefPos = play->actorCtx.targetCtx.naviRefPos;
+        naviRefPos = play->actorCtx.targetCtxs[playerIndex].naviRefPos;
 
         if ((player->unk_664 == NULL) || (&player->actor == player->unk_664) || (&this->actor == player->unk_664)) {
             naviRefPos.x = player->bodyPartsPos[7].x + (Math_SinS(player->actor.shape.rot.y) * 20.0f);
@@ -1427,7 +1430,7 @@ void func_80A053F0(Actor* thisx, PlayState* play) {
             }
         }
 
-        if (!Play_InCsMode(play)) {
+        if (!Play_InCsMode(play, player)) {
             if (gSaveContext.naviTimer < 25800) {
                 gSaveContext.naviTimer++;
             } else if (!(this->fairyFlags & 0x80)) {

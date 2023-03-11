@@ -372,13 +372,15 @@ void EnMa2_Draw(Actor* thisx, PlayState* play) {
     static void* sEyeTextures[] = { gMalonAdultEyeOpenTex, gMalonAdultEyeHalfTex, gMalonAdultEyeClosedTex };
 
     EnMa2* this = (EnMa2*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Camera* camera;
     f32 someFloat;
     s32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     someFloat = Math_Vec3f_DistXZ(&this->actor.world.pos, &camera->eye);
     func_800F6268(someFloat, NA_BGM_LONLON);
     Gfx_SetupDL_25Opa(play->state.gfxCtx);

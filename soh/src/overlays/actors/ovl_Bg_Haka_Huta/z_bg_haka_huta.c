@@ -105,10 +105,11 @@ void BgHakaHuta_PlaySound(BgHakaHuta* this, PlayState* play, u16 sfx) {
 }
 
 void BgHakaHuta_SpawnEnemies(BgHakaHuta* this, PlayState* play) {
-    if (Flags_GetSwitch(play, this->dyna.actor.params) && !Player_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    if (Flags_GetSwitch(play, this->dyna.actor.params) && !Player_InCsMode(play, player)) {
         this->counter = 25;
         this->actionFunc = BgHakaHuta_Open;
-        OnePointCutscene_Init(play, 6001, 999, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 6001, 999, &this->dyna.actor, MAIN_CAM);
         if (this->unk_16A == 2) {
             Actor_Spawn(&play->actorCtx, play, ACTOR_EN_FIREFLY,
                         (this->dyna.actor.world.pos.x + (-25.0f) * Math_CosS(this->dyna.actor.shape.rot.y) +
@@ -170,6 +171,8 @@ void BgHakaHuta_SlideOpen(BgHakaHuta* this, PlayState* play) {
 }
 
 void func_8087D720(BgHakaHuta* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f D_8087D958 = { 30.0f, 0.0f, 0.0f };
     static Vec3f D_8087D964 = { 0.03258f, 0.3258f, -0.9449f };
     MtxF mtx;
@@ -179,7 +182,7 @@ void func_8087D720(BgHakaHuta* this, PlayState* play) {
     this->counter++;
     if (this->counter == 6) {
         this->actionFunc = BgHakaHuta_DoNothing;
-        quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
         Quake_SetSpeed(quakeIndex, 0x7530);
         Quake_SetQuakeValues(quakeIndex, 4, 0, 0, 0);
         Quake_SetCountdown(quakeIndex, 2);

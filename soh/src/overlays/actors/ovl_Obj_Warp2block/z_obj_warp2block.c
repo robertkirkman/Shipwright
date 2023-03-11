@@ -277,10 +277,11 @@ void func_80BA2600(ObjWarp2block* this) {
 }
 
 void func_80BA2610(ObjWarp2block* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if ((func_80BA2304(this, play) != 0) && (this->unk_16C <= 0)) {
         ObjWarp2block_Spawn(this, play);
         this->unk_16C = 0xA0;
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->unk_170 = 0xC;
     }
 

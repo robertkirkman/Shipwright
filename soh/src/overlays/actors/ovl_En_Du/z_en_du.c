@@ -330,7 +330,7 @@ void func_809FE3C0(EnDu* this, PlayState* play) {
         return;
     }
     if (this->interactInfo.talkState == NPC_TALK_STATE_ACTION) {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         this->interactInfo.talkState = NPC_TALK_STATE_IDLE;
     }
     if (this->actor.xzDistToPlayer[playerIndex] < 116.0f + this->collider.dim.radius) {
@@ -369,7 +369,7 @@ void func_809FE638(EnDu* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
 
     if (!(player->stateFlags1 & 0x20000000)) {
-        OnePointCutscene_Init(play, 3330, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3330, -99, &this->actor, MAIN_CAM);
         player->actor.shape.rot.y = player->actor.world.rot.y = this->actor.world.rot.y + 0x7FFF;
         Audio_PlayFanfare(NA_BGM_APPEAR);
         EnDu_SetupAction(this, func_809FE6CC);
@@ -395,8 +395,10 @@ void func_809FE6CC(EnDu* this, PlayState* play) {
 }
 
 void func_809FE740(EnDu* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     if (this->interactInfo.talkState == NPC_TALK_STATE_IDLE) {
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
         this->unk_1E2 = 0x5A;
         EnDu_SetupAction(this, func_809FE798);
     }
@@ -436,6 +438,7 @@ void func_809FE798(EnDu* this, PlayState* play) {
 }
 
 void func_809FE890(EnDu* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 frame;
     Vec3f startPos;
     Vec3f endPos;
@@ -446,7 +449,7 @@ void func_809FE890(EnDu* this, PlayState* play) {
         if (gSaveContext.n64ddFlag) {
             play->csCtx.state = CS_STATE_IDLE;
         }
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
         EnDu_SetupAction(this, func_809FEB08);
         return;
     }
@@ -507,13 +510,14 @@ void func_809FE890(EnDu* this, PlayState* play) {
 }
 
 void func_809FEB08(EnDu* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->blinkTimer = 11;
     this->unk_1EC = 0;
     this->unk_1ED = 0;
     this->unk_1EE = 0;
 
     if (this->unk_1E8 == 1) {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENDU_ANIM_1);
         EnDu_SetupAction(this, func_809FE3C0);
         return;
@@ -535,8 +539,9 @@ void func_809FEB08(EnDu* this, PlayState* play) {
 }
 
 void func_809FEC14(EnDu* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->interactInfo.talkState == NPC_TALK_STATE_ACTION) {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         EnDu_SetupAction(this, func_809FEC70);
         func_809FEC70(this, play);
     }

@@ -94,6 +94,7 @@ void BgDdanKd_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgDdanKd_CheckForExplosions(BgDdanKd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* explosive;
 
     explosive = Actor_GetCollidedExplosive(play, &this->collider.base);
@@ -105,7 +106,7 @@ void BgDdanKd_CheckForExplosions(BgDdanKd* this, PlayState* play) {
     if ((explosive != NULL) && (this->prevExplosive != NULL) && (explosive != this->prevExplosive) &&
         (Math_Vec3f_DistXZ(&this->prevExplosivePos, &explosive->world.pos) > 80.0f)) {
         BgDdanKd_SetupAction(this, BgDdanKd_LowerStairs);
-        OnePointCutscene_Init(play, 3050, 999, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3050, 999, &this->dyna.actor, MAIN_CAM);
     } else {
         if (this->timer != 0) {
             this->timer--;

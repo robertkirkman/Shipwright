@@ -2,9 +2,9 @@
 #include "vt.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
 
-void func_80095AB4(PlayState* play, Room* room, u32 flags);
-void func_80095D04(PlayState* play, Room* room, u32 flags);
-void func_80096F6C(PlayState* play, Room* room, u32 flags);
+void func_80095AB4(PlayState* play, u16 playerIndex, Room* room, u32 flags);
+void func_80095D04(PlayState* play, u16 playerIndex, Room* room, u32 flags);
+void func_80096F6C(PlayState* play, u16 playerIndex, Room* room, u32 flags);
 
 Vec3f D_801270A0 = { 0.0f, 0.0f, 0.0f };
 
@@ -23,7 +23,7 @@ Gfx D_801270B0[] = {
     gsSPEndDisplayList(),
 };
 
-void (*sRoomDrawHandlers[])(PlayState* play, Room* room, u32 flags) = {
+void (*sRoomDrawHandlers[])(PlayState* play, u16 playerIndex, Room* room, u32 flags) = {
     func_80095AB4,
     func_80096F6C,
     func_80095D04,
@@ -33,7 +33,7 @@ void func_80095AA0(PlayState* play, Room* room, Input* arg2, UNK_TYPE arg3) {
 }
 
 // Room Draw Polygon Type 0
-void func_80095AB4(PlayState* play, Room* room, u32 flags) {
+void func_80095AB4(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     s32 i;
     PolygonType0* polygon0;
     PolygonDlist* polygonDlist;
@@ -41,14 +41,14 @@ void func_80095AB4(PlayState* play, Room* room, u32 flags) {
     OPEN_DISPS(play->state.gfxCtx);
 
     if (flags & 1) {
-        func_800342EC(&D_801270A0, play);
+        func_800342EC(&D_801270A0, playerIndex, play);
         gSPSegment(POLY_OPA_DISP++, 0x03, room->segment);
         func_80093C80(play);
         gSPMatrix(POLY_OPA_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
     }
 
     if (flags & 2) {
-        func_8003435C(&D_801270A0, play);
+        func_8003435C(&D_801270A0, playerIndex, play);
         gSPSegment(POLY_XLU_DISP++, 0x03, room->segment);
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
         gSPMatrix(POLY_XLU_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
@@ -81,7 +81,7 @@ typedef struct struct_80095D04 {
 } struct_80095D04; // size = 0x10
 
 // Room Draw Polygon Type 2
-void func_80095D04(PlayState* play, Room* room, u32 flags) {
+void func_80095D04(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     PolygonType2* polygon2;
     PolygonDlist2* polygonDlist;
     struct_80095D04 spB8[SHAPE_SORT_MAX];
@@ -102,13 +102,13 @@ void func_80095D04(PlayState* play, Room* room, u32 flags) {
 
     OPEN_DISPS(play->state.gfxCtx);
     if (flags & 1) {
-        func_800342EC(&D_801270A0, play);
+        func_800342EC(&D_801270A0, playerIndex, play);
         //gSPSegment(POLY_OPA_DISP++, 0x03, room->segment);
         func_80093C80(play);
         gSPMatrix(POLY_OPA_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
     }
     if (flags & 2) {
-        func_8003435C(&D_801270A0, play);
+        func_8003435C(&D_801270A0, playerIndex, play);
         //gSPSegment(POLY_XLU_DISP++, 0x03, room->segment);
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
         gSPMatrix(POLY_XLU_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
@@ -333,7 +333,7 @@ void func_8009638C(Gfx** displayList, void* source, void* tlut, u16 width, u16 h
 }
 
 // Room Draw Polygon Type 1 - Single Format
-void func_80096680(PlayState* play, Room* room, u32 flags) {
+void func_80096680(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     Camera* camera;
     Gfx* spA8;
     PolygonType1* polygon1;
@@ -345,7 +345,7 @@ void func_80096680(PlayState* play, Room* room, u32 flags) {
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     sp9C = (camera->setting == CAM_SET_PREREND_FIXED);
     polygon1 = &room->meshHeader->polygon1;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon1->dlist);
@@ -392,7 +392,7 @@ void func_80096680(PlayState* play, Room* room, u32 flags) {
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-BgImage* func_80096A74(PolygonType1* polygon1, PlayState* play) {
+BgImage* func_80096A74(PolygonType1* polygon1, PlayState* play, u16 playerIndex) {
     Camera* camera;
     s32 camId;
     s16 camId2;
@@ -400,7 +400,7 @@ BgImage* func_80096A74(PolygonType1* polygon1, PlayState* play) {
     BgImage* bgImage;
     s32 i;
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     camId = camera->camDataIdx;
     if (camId == -1 && CVarGetInteger("gNoRestrictItems", 0)) {
         // This prevents a crash when using items that change the
@@ -414,7 +414,7 @@ BgImage* func_80096A74(PolygonType1* polygon1, PlayState* play) {
         camId = camId2;
     }
 
-    player = GET_PLAYER(play);
+    player = Player_FromIndex(playerIndex, play);
     player->actor.params = (player->actor.params & 0xFF00) | camId;
 
     bgImage = SEGMENTED_TO_VIRTUAL(polygon1->multi.list);
@@ -433,7 +433,7 @@ BgImage* func_80096A74(PolygonType1* polygon1, PlayState* play) {
 }
 
 // Room Draw Polygon Type 1 - Multi Format
-void func_80096B6C(PlayState* play, Room* room, u32 flags) {
+void func_80096B6C(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     Camera* camera;
     Gfx* spA8;
     PolygonType1* polygon1;
@@ -446,11 +446,11 @@ void func_80096B6C(PlayState* play, Room* room, u32 flags) {
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    camera = GET_ACTIVE_CAM(play);
+    camera = GET_ACTIVE_CAM(playerIndex, play);
     sp98 = (camera->setting == CAM_SET_PREREND_FIXED);
     polygon1 = &room->meshHeader->polygon1;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon1->dlist);
-    bgImage = func_80096A74(polygon1, play);
+    bgImage = func_80096A74(polygon1, play, playerIndex);
     sp94 = (flags & 1) && sp98 && bgImage->source && !(SREG(25) & 1);
     sp90 = (flags & 1) && polygonDlist->opa && !(SREG(25) & 2);
     sp8C = (flags & 2) && polygonDlist->xlu && !(SREG(25) & 4);
@@ -494,13 +494,13 @@ void func_80096B6C(PlayState* play, Room* room, u32 flags) {
 }
 
 // Room Draw Polygon Type 1
-void func_80096F6C(PlayState* play, Room* room, u32 flags) {
+void func_80096F6C(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     PolygonType1* polygon1 = &room->meshHeader->polygon1;
 
     if (polygon1->format == 1) {
-        func_80096680(play, room, flags);
+        func_80096680(play, playerIndex, room, flags);
     } else if (polygon1->format == 2) {
-        func_80096B6C(play, room, flags);
+        func_80096B6C(play, playerIndex, room, flags);
     } else {
         LOG_HUNGUP_THREAD();
     }
@@ -629,12 +629,12 @@ s32 func_800973FC(PlayState* play, RoomContext* roomCtx) {
     return 1;
 }
 
-void Room_Draw(PlayState* play, Room* room, u32 flags) {
+void Room_Draw(PlayState* play, u16 playerIndex, Room* room, u32 flags) {
     if (room->segment != NULL)
     {
         gSegments[3] = VIRTUAL_TO_PHYSICAL(room->segment);
         ASSERT(room->meshHeader->base.type < ARRAY_COUNTU(sRoomDrawHandlers));
-        sRoomDrawHandlers[room->meshHeader->base.type](play, room, flags);
+        sRoomDrawHandlers[room->meshHeader->base.type](play, playerIndex, room, flags);
     }
 }
 

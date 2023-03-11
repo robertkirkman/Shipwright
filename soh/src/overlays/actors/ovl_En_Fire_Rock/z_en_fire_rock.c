@@ -70,8 +70,8 @@ static ColliderCylinderInit D_80A12CCC = {
 
 void EnFireRock_Init(Actor* thisx, PlayState* play) {
     PlayState* play2 = play;
-    Player* player = GET_PLAYER(play); // init
     EnFireRock* this = (EnFireRock*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s16 temp;
 
     this->type = this->actor.params;

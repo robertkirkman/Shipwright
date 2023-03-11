@@ -617,6 +617,7 @@ u16 EnGo2_GetTextIdGoronDmtBiggoron(PlayState* play, EnGo2* this) {
 
 s16 EnGo2_UpdateTalkStateGoronDmtBiggoron(PlayState* play, EnGo2* this) {
     s32 unusedPad;
+    Player* player = Player_NearestToActor(&this->actor, play);
     u8 dialogState = this->dialogState;
 
     switch (EnGo2_GetDialogState(this, play)) {
@@ -640,7 +641,6 @@ s16 EnGo2_UpdateTalkStateGoronDmtBiggoron(PlayState* play, EnGo2* this) {
         case TEXT_STATE_DONE_FADING:
             switch (this->actor.textId) {
                 case 0x305E:
-                    Player* player = Player_NearestToActor(&this->actor, play);
                     if (func_8002F368(play, player) != EXCH_ITEM_CLAIM_CHECK) {
                         break;
                     }
@@ -946,7 +946,7 @@ s32 func_80A44AB0(EnGo2* this, PlayState* play) {
 
                 arg2 = this->actionFunc == EnGo2_ContinueRolling ? 1.5f : this->actor.speedXZ * 1.5f;
 
-                play->damagePlayer(play, -4);
+                play->damagePlayer(play, player, -4);
                 func_8002F71C(play, &this->actor, arg2, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
                 Audio_PlayActorSound2(&player->actor, NA_SE_PL_BODY_HIT);
                 this->collider.base.ocFlags1 &= ~0x8;
@@ -1204,7 +1204,7 @@ f32 EnGo2_GetTargetXZSpeed(EnGo2* this, u16 playerIndex) {
 s32 EnGo2_IsCameraModified(EnGo2* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
     u16 playerIndex = Player_GetIndex(player, play);
-    Camera* camera = play->cameraPtrs[playerIndex];
+    Camera* camera = play->cameraPtrs[playerIndex][MAIN_CAM];
 
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
         if (EnGo2_IsWakingUp(this, playerIndex)) {
@@ -1360,6 +1360,7 @@ void EnGo2_RollingAnimation(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_WakeUp(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (CVarGetInteger("gUnfixGoronSpin", 0)) {
         // Trick SkelAnime into thinking the current animation is changing so that it morphs between the same position,
         // making the goron do a spin
@@ -1373,7 +1374,7 @@ void EnGo2_WakeUp(EnGo2* this, PlayState* play) {
         }
     }
     if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
-        OnePointCutscene_Init(play, 4200, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4200, -99, &this->actor, MAIN_CAM);
         // There is an issue interpolating between ENGO2_ANIM_0 and ENGO2_ANIM_1/10, the goron
         // is technically in the same position at the end of ANIM_0 and beginning of ANIM_1/10
         // but something isn't getting translated correctly causing the 360 degree spin before
@@ -1543,11 +1544,12 @@ void EnGo2_GoronLinkAnimation(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_GoronFireCamera(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s16 yaw;
 
-    this->camId = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->camId, CAM_STAT_ACTIVE);
+    this->camId = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->camId, CAM_STAT_ACTIVE);
     Path_CopyLastPoint(this->path, &this->at);
     yaw = Math_Vec3f_Yaw(&this->actor.world.pos, &this->at) + 0xE38;
     this->eye.x = Math_SinS(yaw) * 100.0f + this->actor.world.pos.x;
@@ -1556,12 +1558,13 @@ void EnGo2_GoronFireCamera(EnGo2* this, PlayState* play) {
     this->at.x = this->actor.world.pos.x;
     this->at.y = this->actor.world.pos.y + 40.0f;
     this->at.z = this->actor.world.pos.z;
-    Play_CameraSetAtEye(play, this->camId, &this->at, &this->eye);
+    Play_CameraSetAtEye(play, player, this->camId, &this->at, &this->eye);
 }
 
 void EnGo2_GoronFireClearCamera(EnGo2* this, PlayState* play) {
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-    Play_ClearCamera(play, this->camId);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->camId);
 }
 
 void EnGo2_BiggoronAnimation(EnGo2* this) {
@@ -1697,7 +1700,7 @@ void EnGo2_CurledUp(EnGo2* this, PlayState* play) {
 
     if (Animation_OnFrame(&this->skelAnime, this->skelAnime.endFrame)) {
         if ((this->actor.params & 0x1F) == GORON_DMT_BIGGORON) {
-            quake = Quake_Add(GET_ACTIVE_CAM(play), 3);
+            quake = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
             Quake_SetSpeed(quake, -0x3CB0);
             Quake_SetQuakeValues(quake, 8, 0, 0, 0);
             Quake_SetCountdown(quake, 16);
@@ -1907,6 +1910,8 @@ void EnGo2_SetGetItem(EnGo2* this, PlayState* play) {
 }
 
 void EnGo2_BiggoronEyedrops(EnGo2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     switch (this->goronState) {
         case 0:
             Animation_ChangeByInfo(&this->skelAnime, sAnimationInfo, ENGO2_ANIM_5);
@@ -1919,13 +1924,13 @@ void EnGo2_BiggoronEyedrops(EnGo2* this, PlayState* play) {
             this->goronState++;
             func_800F483C(0x28, 5);
             if (!gSaveContext.n64ddFlag) {
-                OnePointCutscene_Init(play, 4190, -99, &this->actor, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 4190, -99, &this->actor, MAIN_CAM);
             }
             break;
         case 1:
             if (DECR(this->animTimer)) {
                 if (this->animTimer == 60 || this->animTimer == 120) {
-                    func_8005B1A4(GET_ACTIVE_CAM(play));
+                    func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
                     func_800F4524(&D_801333D4, NA_SE_EV_GORON_WATER_DROP, 60);
                 }
             } else {
@@ -2019,7 +2024,7 @@ void EnGo2_GoronFireGenericAction(EnGo2* this, PlayState* play) {
                     (f32)((Math_SinS(this->actor.world.rot.y) * -30.0f) + this->actor.world.pos.x);
                 player->actor.world.pos.z =
                     (f32)((Math_CosS(this->actor.world.rot.y) * -30.0f) + this->actor.world.pos.z);
-                func_8002DF54(play, &this->actor, 8);
+                func_8002DF54(play, player, &this->actor, 8);
                 Audio_PlayFanfare(NA_BGM_APPEAR);
             }
             break;
@@ -2056,7 +2061,7 @@ void EnGo2_GoronFireGenericAction(EnGo2* this, PlayState* play) {
         case 4: // Finalize walking away
             Message_CloseTextbox(play);
             EnGo2_GoronFireClearCamera(this, play);
-            func_8002DF54(play, &this->actor, 7);
+            func_8002DF54(play, player, &this->actor, 7);
             Actor_Kill(&this->actor);
             break;
         case 1:

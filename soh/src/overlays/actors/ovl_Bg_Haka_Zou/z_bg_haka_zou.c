@@ -268,13 +268,14 @@ void func_80882E54(BgHakaZou* this, PlayState* play) {
 }
 
 void func_80883000(BgHakaZou* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->collider.base.acFlags & AC_HIT) {
         Flags_SetSwitch(play, this->switchFlag);
 
         if (this->dyna.actor.params == STA_GIANT_BIRD_STATUE) {
             this->timer = 20;
             this->actionFunc = func_80883144;
-            OnePointCutscene_Init(play, 3400, 999, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3400, 999, &this->dyna.actor, MAIN_CAM);
         } else if (this->dyna.actor.params == 2) {
             func_80882E54(this, play);
             this->dyna.actor.draw = NULL;

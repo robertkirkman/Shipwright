@@ -184,9 +184,10 @@ void func_808ACA08(BgSpot02Objects* this, PlayState* play) {
 }
 
 void func_808ACAFC(BgSpot02Objects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->unk_16B)) {
         Actor_SetFocus(&this->dyna.actor, 60.0f);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = func_808ACB58;
     }
 }

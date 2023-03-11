@@ -170,11 +170,12 @@ void BgRelayObjects_DoNothing(BgRelayObjects* this, PlayState* play) {
 }
 
 void func_808A932C(BgRelayObjects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->timer != 0) {
         this->timer--;
     }
     if (this->timer == 0) {
-        if (!Player_InCsMode(play)) {
+        if (!Player_InCsMode(play, player)) {
             func_80078884(NA_SE_OC_ABYSS);
             Play_TriggerRespawn(play);
             this->actionFunc = BgRelayObjects_DoNothing;

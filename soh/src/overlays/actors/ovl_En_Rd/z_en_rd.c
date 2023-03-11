@@ -337,7 +337,7 @@ void func_80AE2C1C(EnRd* this, PlayState* play) {
             if (this->unk_306 == 0) {
                 if (!(this->unk_312 & 0x80)) {
                     player->actor.freezeTimer = 40;
-                    func_8008EEAC(play, &this->actor);
+                    func_8008EEAC(play, player, &this->actor);
                     player->unk_684 = &this->actor;
                     func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
                 }
@@ -492,7 +492,7 @@ void func_80AE3454(EnRd* this, PlayState* play) {
         case 1:
             Animation_PlayLoop(&this->skelAnime, &gGibdoRedeadGrabAttackAnim);
             this->unk_304++;
-            play->damagePlayer(play, -8);
+            play->damagePlayer(play, player, -8);
             func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 1, 0xC);
             this->unk_319 = 20;
         case 0:
@@ -526,7 +526,7 @@ void func_80AE3454(EnRd* this, PlayState* play) {
             this->unk_319--;
 
             if (this->unk_319 == 0) {
-                play->damagePlayer(play, -8);
+                play->damagePlayer(play, player, -8);
                 func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xF0, 1, 0xC);
                 this->unk_319 = 20;
                 func_8002F7DC(&player->actor, NA_SE_VO_LI_DAMAGE_S + player->ageProperties->unk_92);
@@ -569,7 +569,7 @@ void func_80AE3834(EnRd* this, PlayState* play) {
         if (!(this->unk_312 & 0x80)) {
             player->actor.freezeTimer = 60;
             func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
-            func_8008EEAC(play, &this->actor);
+            func_8008EEAC(play, player, &this->actor);
         }
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_REDEAD_AIM);
         func_80AE2B90(this, play);

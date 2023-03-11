@@ -183,6 +183,8 @@ void BgJya1flift_Update(Actor* thisx, PlayState* play2) {
     BgJya1flift* this = (BgJya1flift*)thisx;
     PlayState* play = play2;
     s32 tempIsRiding;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     // Room 0 is the first room and 6 is the room that the lift starts on
     if (play->roomCtx.curRoom.num == 6 || play->roomCtx.curRoom.num == 0) {
@@ -190,9 +192,9 @@ void BgJya1flift_Update(Actor* thisx, PlayState* play2) {
         tempIsRiding = func_8004356C(&this->dyna) ? true : false;
         if ((this->actionFunc == BgJya1flift_Move) || (this->actionFunc == BgJya1flift_DelayMove)) {
             if (tempIsRiding) {
-                Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_FIRE_PLATFORM);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_FIRE_PLATFORM);
             } else if (!tempIsRiding && this->isLinkRiding) {
-                Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
             }
         }
         this->isLinkRiding = tempIsRiding;

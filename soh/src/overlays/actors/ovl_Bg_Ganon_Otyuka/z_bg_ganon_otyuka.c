@@ -250,10 +250,11 @@ void BgGanonOtyuka_Update(Actor* thisx, PlayState* play) {
 
 void BgGanonOtyuka_Draw(Actor* thisx, PlayState* play) {
     BgGanonOtyuka* this = (BgGanonOtyuka*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
     s16 i;
     Gfx* phi_s2;
     Gfx* phi_s1;
-    Camera* camera = Play_GetCamera(play, 0);
+    Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
     Actor* actor;
     BgGanonOtyuka* platform;
     BossGanon* ganondorf;

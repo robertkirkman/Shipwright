@@ -3448,6 +3448,7 @@ s32 Camera_KeepOn3(Camera* camera) {
     Keep3Anim* anim = &keep3->anim;
     s32 pad;
     f32 playerHeight;
+    u16 playerIndex = Player_GetIndex(camera->player, camera->play);
 
     playerHeight = Player_GetHeight(camera->player);
     if (camera->target == NULL || camera->target->update == NULL) {
@@ -3459,9 +3460,9 @@ s32 Camera_KeepOn3(Camera* camera) {
         return 1;
     }
     if (camera->animState == 0 || camera->animState == 0xA || camera->animState == 0x14) {
-        if (camera->play->views[Player_GetIndex(camera->player, camera->play)].unk_124 == 0) {
+        if (camera->play->views[playerIndex].unk_124 == 0) {
             camera->unk_14C |= 0x20;
-            camera->play->views[Player_GetIndex(camera->player, camera->play)].unk_124 = camera->thisIdx | 0x50;
+            camera->play->views[playerIndex].unk_124 = camera->thisIdx | 0x50;
             return 1;
         }
         camera->unk_14C &= ~0x20;
@@ -3594,14 +3595,14 @@ s32 Camera_KeepOn3(Camera* camera) {
         func_80043B60(camera);
         camera->atLERPStepScale = 0.0f;
 
-        if (camera->xzSpeed > 0.001f || CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_A) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_B) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_CLEFT) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_CDOWN) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_CUP) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_CRIGHT) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_R) ||
-            CHECK_BTN_ALL(D_8015BD7C->state.input[0].press.button, BTN_Z)) {
+        if (camera->xzSpeed > 0.001f || CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_A) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_B) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_CLEFT) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_CDOWN) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_CUP) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_CRIGHT) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_R) ||
+            CHECK_BTN_ALL(D_8015BD7C->state.input[playerIndex < 4 ? playerIndex : 0].press.button, BTN_Z)) {
             camera->unk_14C |= 4;
             camera->unk_14C &= ~8;
         }
@@ -3634,14 +3635,15 @@ s32 Camera_KeepOn4(Camera* camera) {
     s32 pad;
     f32 playerHeight;
     Player* player = camera->player;
+    u16 playerIndex = Player_GetIndex(player, camera->play);
     s16 angleCnt;
     s32 i;
 
     if (camera->animState == 0 || camera->animState == 0xA || camera->animState == 0x14) {
-        if (camera->play->views[Player_GetIndex(player, camera->play)].unk_124 == 0) {
+        if (camera->play->views[playerIndex].unk_124 == 0) {
             camera->unk_14C |= 0x20;
             camera->unk_14C &= ~(0x4 | 0x2);
-            camera->play->views[Player_GetIndex(player, camera->play)].unk_124 = camera->thisIdx | 0x50;
+            camera->play->views[playerIndex].unk_124 = camera->thisIdx | 0x50;
             return 1;
         }
         unk20->unk_14 = *temp_s0;
@@ -3654,7 +3656,7 @@ s32 Camera_KeepOn4(Camera* camera) {
         camera->animState = 0x14;
         camera->unk_14C |= 0x20;
         camera->unk_14C &= ~(0x4 | 0x2);
-        camera->play->views[Player_GetIndex(player, camera->play)].unk_124 = camera->thisIdx | 0x50;
+        camera->play->views[playerIndex].unk_124 = camera->thisIdx | 0x50;
         return 1;
     }
 
@@ -5185,6 +5187,7 @@ s32 Camera_Unique9(Camera* camera) {
     Vec3f* at = &camera->at;
     Vec3f* eye = &camera->eye;
     Player* player = camera->player;
+    u16 playerIndex = Player_GetIndex(player, camera->play);
     Actor* focusActor;
     f32 spB4;
     PosRot atFocusPosRot;
@@ -5234,11 +5237,11 @@ s32 Camera_Unique9(Camera* camera) {
                 } else if ((anim->curKeyFrame->unk_01 & 0xF0) == 0xC0) {
                     Camera_UpdateInterface(0xF000 | ((anim->curKeyFrame->unk_01 & 0xF) << 8));
                 } else if (player->stateFlags1 & 0x8000000 && player->currentBoots != PLAYER_BOOTS_IRON) {
-                    func_8002DF38(camera->play, camera->target, 8);
+                    func_8002DF38(camera->play, player, camera->target, 8);
                     osSyncPrintf("camera: demo: player demo set WAIT\n");
                 } else {
                     osSyncPrintf("camera: demo: player demo set %d\n", anim->curKeyFrame->unk_01);
-                    func_8002DF38(camera->play, camera->target, anim->curKeyFrame->unk_01);
+                    func_8002DF38(camera->play, player, camera->target, anim->curKeyFrame->unk_01);
                 }
             }
         } else {
@@ -5257,9 +5260,9 @@ s32 Camera_Unique9(Camera* camera) {
         anim->atTarget = anim->curKeyFrame->atTargetInit;
     } else if (atInitFlags == 2) {
         if (anim->isNewKeyFrame) {
-            anim->atTarget.x = camera->play->views[Player_GetIndex(player, camera->play)].lookAt.x + anim->curKeyFrame->atTargetInit.x;
-            anim->atTarget.y = camera->play->views[Player_GetIndex(player, camera->play)].lookAt.y + anim->curKeyFrame->atTargetInit.y;
-            anim->atTarget.z = camera->play->views[Player_GetIndex(player, camera->play)].lookAt.z + anim->curKeyFrame->atTargetInit.z;
+            anim->atTarget.x = camera->play->views[playerIndex].lookAt.x + anim->curKeyFrame->atTargetInit.x;
+            anim->atTarget.y = camera->play->views[playerIndex].lookAt.y + anim->curKeyFrame->atTargetInit.y;
+            anim->atTarget.z = camera->play->views[playerIndex].lookAt.z + anim->curKeyFrame->atTargetInit.z;
         }
     } else if (atInitFlags == 3) {
         if (anim->isNewKeyFrame) {
@@ -5339,9 +5342,9 @@ s32 Camera_Unique9(Camera* camera) {
         anim->eyeTarget = anim->curKeyFrame->eyeTargetInit;
     } else if (eyeInitFlags == 0x200) {
         if (anim->isNewKeyFrame) {
-            anim->eyeTarget.x = camera->play->views[Player_GetIndex(player, camera->play)].eye.x + anim->curKeyFrame->eyeTargetInit.x;
-            anim->eyeTarget.y = camera->play->views[Player_GetIndex(player, camera->play)].eye.y + anim->curKeyFrame->eyeTargetInit.y;
-            anim->eyeTarget.z = camera->play->views[Player_GetIndex(player, camera->play)].eye.z + anim->curKeyFrame->eyeTargetInit.z;
+            anim->eyeTarget.x = camera->play->views[playerIndex].eye.x + anim->curKeyFrame->eyeTargetInit.x;
+            anim->eyeTarget.y = camera->play->views[playerIndex].eye.y + anim->curKeyFrame->eyeTargetInit.y;
+            anim->eyeTarget.z = camera->play->views[playerIndex].eye.z + anim->curKeyFrame->eyeTargetInit.z;
         }
     } else if (eyeInitFlags == 0x300) {
         if (anim->isNewKeyFrame) {
@@ -5428,7 +5431,7 @@ s32 Camera_Unique9(Camera* camera) {
     }
 
     if (anim->curKeyFrame->initFlags == 2) {
-        anim->fovTarget = camera->play->views[Player_GetIndex(player, camera->play)].fovy;
+        anim->fovTarget = camera->play->views[playerIndex].fovy;
         anim->rollTarget = 0;
     } else if (anim->curKeyFrame->initFlags == 0) {
         anim->fovTarget = camera->fov;
@@ -5582,12 +5585,12 @@ s32 Camera_Unique9(Camera* camera) {
             // Change the parent camera (or default)'s mode to normal
             s32 camIdx = camera->parentCamIdx <= SUBCAM_NONE ? MAIN_CAM : camera->parentCamIdx;
 
-            Camera_ChangeModeFlags(camera->play->cameraPtrs[camIdx], CAM_MODE_NORMAL, 1);
+            Camera_ChangeModeFlags(camera->play->cameraPtrs[playerIndex][camIdx], CAM_MODE_NORMAL, 1);
         }
         case 18: {
             // copy the current camera to the parent (or default)'s camera.
             s32 camIdx = camera->parentCamIdx <= SUBCAM_NONE ? MAIN_CAM : camera->parentCamIdx;
-            Camera* cam = camera->play->cameraPtrs[camIdx];
+            Camera* cam = camera->play->cameraPtrs[playerIndex][camIdx];
 
             *eye = *eyeNext;
             Camera_Copy(cam, camera);
@@ -6180,14 +6183,14 @@ s32 Camera_Demo5(Camera* camera) {
             pad = camera->play->state.frames - sDemo5PrevAction12Frame;
             if (player->stateFlags1 & 0x800) {
                 // holding object over head.
-                func_8002DF54(camera->play, camera->target, 8);
+                func_8002DF54(camera->play, player, camera->target, 8);
             } else if (ABS(pad) > 3000) {
-                func_8002DF54(camera->play, camera->target, 12);
+                func_8002DF54(camera->play, player, camera->target, 12);
             } else {
-                func_8002DF54(camera->play, camera->target, 69);
+                func_8002DF54(camera->play, player, camera->target, 69);
             }
         } else {
-            func_8002DF54(camera->play, camera->target, 1);
+            func_8002DF54(camera->play, player, camera->target, 1);
         }
     }
 
@@ -6212,7 +6215,7 @@ s32 Camera_Demo6(Camera* camera) {
     s16 stateTimers[4];
     Vec3f* at = &camera->at;
 
-    mainCam = Play_GetCamera(camera->play, MAIN_CAM);
+    mainCam = Play_GetCamera(camera->play, camera->player, MAIN_CAM);
     camFocus = camera->target;
     stateTimers[1] = 0x37;
     stateTimers[2] = 0x46;
@@ -6246,7 +6249,7 @@ s32 Camera_Demo6(Camera* camera) {
             camera->animState++;
         case 1:
             if (stateTimers[camera->animState] < anim->animTimer) {
-                func_8002DF54(camera->play, &camera->player->actor, 8);
+                func_8002DF54(camera->play, camera->player, &camera->player->actor, 8);
                 Actor_GetWorld(&focusPosRot, camFocus);
                 anim->atTarget.x = focusPosRot.pos.x;
                 anim->atTarget.y = focusPosRot.pos.y - 20.0f;
@@ -6317,7 +6320,7 @@ s32 Camera_Demo9(Camera* camera) {
     f32* camFOV = &camera->fov;
     Demo9Anim* anim = &demo9->anim;
 
-    mainCam = Play_GetCamera(camera->play, MAIN_CAM);
+    mainCam = Play_GetCamera(camera->play, camera->player, MAIN_CAM); // todo fix
     mainCamPlayerPosRot = &mainCam->playerPosRot;
     if (RELOAD_PARAMS) {
         values = sCameraSettings[camera->setting].cameraModes[camera->mode].values;
@@ -6408,7 +6411,7 @@ s32 Camera_Demo9(Camera* camera) {
                         // finish action = 0x2000, run OnePointCs 0x3FC (Dramatic Return to Link)
                         onePointTimer =
                             demo9OnePoint->onePointCs.initTimer < 50 ? 5 : demo9OnePoint->onePointCs.initTimer / 5;
-                        OnePointCutscene_Init(camera->play, 1020, onePointTimer, NULL, camera->parentCamIdx);
+                        OnePointCutscene_Init(camera->play, camera->player, 1020, onePointTimer, NULL, camera->parentCamIdx);
                     }
                 } else {
                     // finish action = 0x1000, copy the current camera's values to the
@@ -6920,12 +6923,12 @@ s32 Camera_Special9(Camera* camera) {
     return true;
 }
 
-Camera* Camera_Create(View* view, CollisionContext* colCtx, PlayState* play) {
+Camera* Camera_Create(View* view, CollisionContext* colCtx, PlayState* play, u16 playerIndex) {
     Camera* newCamera = ZELDA_ARENA_MALLOC_DEBUG(sizeof(*newCamera));
 
     if (newCamera != NULL) {
         osSyncPrintf(VT_FGCOL(BLUE) "camera: create --- allocate %d byte" VT_RST "\n", sizeof(*newCamera) * 4);
-        Camera_Init(newCamera, view, colCtx, play);
+        Camera_Init(newCamera, view, colCtx, play, playerIndex); // unused
     } else {
         osSyncPrintf(VT_COL(RED, WHITE) "camera: create: not enough memory\n" VT_RST);
     }
@@ -6941,7 +6944,7 @@ void Camera_Destroy(Camera* camera) {
     }
 }
 
-void Camera_Init(Camera* camera, View* view, CollisionContext* colCtx, PlayState* play) {
+void Camera_Init(Camera* camera, View* view, CollisionContext* colCtx, PlayState* play, u16 playerIndex) {
     Camera* camP;
     s32 i;
     s16 curUID;
@@ -6971,7 +6974,7 @@ void Camera_Init(Camera* camera, View* view, CollisionContext* colCtx, PlayState
         }
 
         for (j = 0; j < NUM_CAMS; j++) {
-            camP = camera->play->cameraPtrs[j];
+            camP = camera->play->cameraPtrs[playerIndex][j];
             if (camP != NULL && curUID == camP->uid) {
                 break;
             }
@@ -7159,19 +7162,20 @@ s16 Camera_ChangeStatus(Camera* camera, s16 status) {
     return camera->status;
 }
 
-void Camera_PrintSettings(Camera* camera) {
+void Camera_PrintSettings(Camera* camera, u16 playerIndex) {
+    Player* player = camera->player;
     char sp58[8];
     char sp50[8];
     char sp48[8];
     s32 i;
 
-    if ((OREG(0) & 1) && (camera->play->activeCamera == camera->thisIdx) && !gDbgCamEnabled) {
+    if ((OREG(0) & 1) && (camera->play->activeCameras[playerIndex] == camera->thisIdx) && !gDbgCamEnabled) {
         for (i = 0; i < NUM_CAMS; i++) {
-            if (camera->play->cameraPtrs[i] == NULL) {
+            if (camera->play->cameraPtrs[playerIndex][i] == NULL) {
                 sp58[i] = '-';
                 sp48[i] = ' ';
             } else {
-                switch (camera->play->cameraPtrs[i]->status) {
+                switch (camera->play->cameraPtrs[playerIndex][i]->status) {
                     case 0:
                         sp58[i] = 'c';
                         break;
@@ -7197,7 +7201,7 @@ void Camera_PrintSettings(Camera* camera) {
         sp58[i] = '\0';
         sp48[i] = '\0';
 
-        sp48[camera->play->activeCamera] = 'a';
+        sp48[camera->play->activeCameras[playerIndex]] = 'a';
         func_8006376C(3, 0x16, 5, sp58);
         func_8006376C(3, 0x16, 1, sp48);
         func_8006376C(3, 0x17, 5, "S:");
@@ -7364,10 +7368,10 @@ s32 Camera_UpdateHotRoom(Camera* camera) {
     return 1;
 }
 
-s32 Camera_DbgChangeMode(Camera* camera) {
+s32 Camera_DbgChangeMode(Camera* camera, u16 playerIndex) {
     s32 changeDir = 0;
 
-    if (!gDbgCamEnabled && camera->play->activeCamera == MAIN_CAM) {
+    if (!gDbgCamEnabled && camera->play->activeCameras[playerIndex] == MAIN_CAM) {
         if (CHECK_BTN_ALL(D_8015BD7C->state.input[2].press.button, BTN_CUP)) {
             osSyncPrintf("attention sound URGENCY\n");
             func_80078884(NA_SE_SY_ATTENTION_URGENCY);
@@ -7405,6 +7409,7 @@ void Camera_UpdateDistortion(Camera* camera) {
     f32 yScale;
     f32 zScale;
     f32 speed;
+    u16 playerIndex = Player_GetIndex(camera->player, camera->play);
 
     if (camera->distortionFlags != 0) {
         if (camera->distortionFlags & DISTORTION_UNDERWATER_MEDIUM) {
@@ -7463,17 +7468,17 @@ void Camera_UpdateDistortion(Camera* camera) {
         depthPhase += DEGF_TO_BINANG(depthPhaseStep);
         screenPlanePhase += DEGF_TO_BINANG(screenPlanePhaseStep);
 
-        View_SetDistortionOrientation(&camera->play->views[Player_GetIndex(camera->player, camera->play)], Math_CosS(depthPhase) * 0.0f, Math_SinS(depthPhase) * 0.0f,
+        View_SetDistortionOrientation(&camera->play->views[playerIndex], Math_CosS(depthPhase) * 0.0f, Math_SinS(depthPhase) * 0.0f,
                                  Math_SinS(screenPlanePhase) * 0.0f);
-        View_SetDistortionScale(&camera->play->views[Player_GetIndex(camera->player, camera->play)], Math_SinS(screenPlanePhase) * (xScale * scaleFactor) + 1.0f,
+        View_SetDistortionScale(&camera->play->views[playerIndex], Math_SinS(screenPlanePhase) * (xScale * scaleFactor) + 1.0f,
                                 Math_CosS(screenPlanePhase) * (yScale * scaleFactor) + 1.0f,
                                 Math_CosS(depthPhase) * (zScale * scaleFactor) + 1.0f);
-        View_SetDistortionSpeed(&camera->play->views[Player_GetIndex(camera->player, camera->play)], speed * speedFactor);
+        View_SetDistortionSpeed(&camera->play->views[playerIndex], speed * speedFactor);
 
         camera->unk_14C |= 0x40;
 
     } else if (camera->unk_14C & 0x40) {
-        View_ClearDistortion(&camera->play->views[Player_GetIndex(camera->player, camera->play)]);
+        View_ClearDistortion(&camera->play->views[playerIndex]);
         camera->unk_14C &= ~0x40;
     }
 }
@@ -7492,9 +7497,9 @@ Vec3s Camera_Update(Camera* camera) {
     s16 camDataIdx;
     PosRot curPlayerPosRot;
     QuakeCamCalc quake;
-    Player* player;
+    Player* player = camera->player;
+    u16 playerIndex = Player_GetIndex(player, camera->play);
 
-    player = camera->player;
 
     if (R_DBG_CAM_UPDATE) {
         osSyncPrintf("camera: in %x\n", camera);
@@ -7570,8 +7575,8 @@ Vec3s Camera_Update(Camera* camera) {
             }
         }
     }
-    Camera_PrintSettings(camera);
-    Camera_DbgChangeMode(camera);
+    Camera_PrintSettings(camera, playerIndex);
+    Camera_DbgChangeMode(camera, playerIndex);
 
     if (camera->status == CAM_STAT_WAIT) {
         if (R_DBG_CAM_UPDATE) {
@@ -7638,9 +7643,9 @@ Vec3s Camera_Update(Camera* camera) {
 
     // Debug cam update
     if (gDbgCamEnabled) {
-        camera->play->views[Player_GetIndex(player, camera->play)].fovy = D_8015BD80.fov;
+        camera->play->views[playerIndex].fovy = D_8015BD80.fov;
         DbCamera_Update(&D_8015BD80, camera);
-        func_800AA358(&camera->play->views[Player_GetIndex(player, camera->play)], &D_8015BD80.eye, &D_8015BD80.at, &D_8015BD80.unk_1C);
+        func_800AA358(&camera->play->views[playerIndex], &D_8015BD80.eye, &D_8015BD80.at, &D_8015BD80.unk_1C);
         if (R_DBG_CAM_UPDATE) {
             osSyncPrintf("camera: debug out\n");
         }
@@ -7686,12 +7691,12 @@ Vec3s Camera_Update(Camera* camera) {
     Camera_UpdateDistortion(camera);
 
     if ((camera->play->sceneNum == SCENE_SPOT00) && (camera->fov < 59.0f)) {
-        View_SetScale(&camera->play->views[Player_GetIndex(player, camera->play)], 0.79f);
+        View_SetScale(&camera->play->views[playerIndex], 0.79f);
     } else {
-        View_SetScale(&camera->play->views[Player_GetIndex(player, camera->play)], 1.0f);
+        View_SetScale(&camera->play->views[playerIndex], 1.0f);
     }
-    camera->play->views[Player_GetIndex(player, camera->play)].fovy = viewFov;
-    func_800AA358(&camera->play->views[Player_GetIndex(player, camera->play)], &viewEye, &viewAt, &viewUp);
+    camera->play->views[playerIndex].fovy = viewFov;
+    func_800AA358(&camera->play->views[playerIndex], &viewEye, &viewAt, &viewUp);
     camera->camDir.x = eyeAtAngle.pitch;
     camera->camDir.y = eyeAtAngle.yaw;
     camera->camDir.z = 0;
@@ -7730,42 +7735,42 @@ Vec3s Camera_Update(Camera* camera) {
 /**
  * When the camera's timer is 0, change the camera to its parent
  */
-void Camera_Finish(Camera* camera) {
-    Camera* mainCam = camera->play->cameraPtrs[MAIN_CAM];
+void Camera_Finish(Camera* camera, u16 playerIndex) {
     Player* player = camera->player;
+    Camera* mainCam = camera->play->cameraPtrs[playerIndex][MAIN_CAM];
 
     if (camera->timer == 0) {
-        Play_ChangeCameraStatus(camera->play, camera->parentCamIdx, CAM_STAT_ACTIVE);
+        Play_ChangeCameraStatus(camera->play, player, camera->parentCamIdx, CAM_STAT_ACTIVE);
 
         if ((camera->parentCamIdx == MAIN_CAM) && (camera->csId != 0)) {
             player->actor.freezeTimer = 0;
             player->stateFlags1 &= ~0x20000000;
 
             if (player->csMode != 0) {
-                func_8002DF54(camera->play, &player->actor, 7);
+                func_8002DF54(camera->play, player, &player->actor, 7);
                 osSyncPrintf("camera: player demo end!!\n");
             }
 
             mainCam->unk_14C |= 8;
         }
 
-        if (CHILD_CAM(camera)->parentCamIdx == camera->thisIdx) {
-            CHILD_CAM(camera)->parentCamIdx = camera->parentCamIdx;
+        if (CHILD_CAM(camera, playerIndex)->parentCamIdx == camera->thisIdx) {
+            CHILD_CAM(camera, playerIndex)->parentCamIdx = camera->parentCamIdx;
         }
 
-        if (PARENT_CAM(camera)->childCamIdx == camera->thisIdx) {
-            PARENT_CAM(camera)->childCamIdx = camera->childCamIdx;
+        if (PARENT_CAM(camera, playerIndex)->childCamIdx == camera->thisIdx) {
+            PARENT_CAM(camera, playerIndex)->childCamIdx = camera->childCamIdx;
         }
 
-        if (PARENT_CAM(camera)->thisIdx == MAIN_CAM) {
-            PARENT_CAM(camera)->animState = 0;
+        if (PARENT_CAM(camera, playerIndex)->thisIdx == MAIN_CAM) {
+            PARENT_CAM(camera, playerIndex)->animState = 0;
         }
 
         camera->childCamIdx = camera->parentCamIdx = SUBCAM_FREE;
         camera->timer = -1;
         camera->play->envCtx.fillScreen = false;
 
-        Play_ClearCamera(camera->play, camera->thisIdx);
+        Play_ClearCamera(camera->play, player, camera->thisIdx);
     }
 }
 
@@ -8300,12 +8305,12 @@ s32 func_8005B198() {
     return D_8011D3AC;
 }
 
-s16 func_8005B1A4(Camera* camera) {
+s16 func_8005B1A4(Camera* camera, u16 playerIndex) {
     camera->unk_14C |= 0x8;
 
-    if ((camera->thisIdx < PLAYER_COUNT) && (camera->play->activeCamera >= PLAYER_COUNT)) {
-        GET_ACTIVE_CAM(camera->play)->unk_14C |= 0x8;
-        return camera->play->activeCamera;
+    if ((camera->thisIdx == MAIN_CAM) && (camera->play->activeCameras[playerIndex] != MAIN_CAM)) {
+        GET_ACTIVE_CAM(playerIndex, camera->play)->unk_14C |= 0x8;
+        return camera->play->activeCameras[playerIndex];
     }
 
     return camera->thisIdx;

@@ -332,6 +332,8 @@ Gfx* func_8088D9F4(PlayState* play, BgHidanSekizou* this, s16 arg2, MtxF* arg3, 
 }
 
 Gfx* func_8088DC50(PlayState* play, BgHidanSekizou* this, s16 arg2, s16 arg3, Gfx* arg4) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s16 temp_v1;
     s32 phi_s1;
@@ -352,7 +354,7 @@ Gfx* func_8088DC50(PlayState* play, BgHidanSekizou* this, s16 arg2, s16 arg3, Gf
     temp_f20 = Math_SinS(arg2);
     temp_f22 = Math_CosS(arg2);
     Matrix_MtxFCopy(&sp68, &gMtxFClear);
-    temp_v1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - arg2;
+    temp_v1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - arg2;
 
     if (ABS(temp_v1) < 0x4000) {
         for (i = phi_s2 - 1; i >= phi_s1; i--) {
@@ -395,6 +397,8 @@ void func_8088DE08(s16 arg0, s16 arg1, s32 arg2[]) {
 void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     BgHidanSekizou* this = (BgHidanSekizou*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     s32 sp6C[4];
 
@@ -410,7 +414,7 @@ void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
     POLY_XLU_DISP = Gfx_SetupDL(POLY_XLU_DISP, 0x14);
     if (this->dyna.actor.params == 0) {
         if (this->unk_168[0] > 0) {
-            if ((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->dyna.actor.shape.rot.y) >= 0) {
+            if ((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->dyna.actor.shape.rot.y) >= 0) {
                 POLY_XLU_DISP = func_8088DC50(play, this, this->dyna.actor.shape.rot.y + 0x2000, this->unk_168[0],
                                               POLY_XLU_DISP);
                 POLY_XLU_DISP = func_8088DC50(play, this, this->dyna.actor.shape.rot.y - 0x2000, this->unk_168[0],
@@ -423,7 +427,7 @@ void BgHidanSekizou_Draw(Actor* thisx, PlayState* play2) {
             }
         }
     } else {
-        func_8088DE08(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)), this->dyna.actor.shape.rot.y, sp6C);
+        func_8088DE08(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)), this->dyna.actor.shape.rot.y, sp6C);
         for (i = 0; i < 4; i++) {
             s32 index = sp6C[i];
 

@@ -846,7 +846,7 @@ s32 func_80986A5C(DemoIm* this, PlayState* play) {
     f32 playerPosX = player->actor.world.pos.x;
     f32 thisPosX = this->actor.world.pos.x;
 
-    if ((thisPosX - (kREG(17) + 130.0f) < playerPosX) && (!Play_InCsMode(play))) {
+    if ((thisPosX - (kREG(17) + 130.0f) < playerPosX) && (!Play_InCsMode(play, player))) {
         return true;
     } else {
         return false;
@@ -876,7 +876,7 @@ void func_80986B2C(DemoIm* this, PlayState* play) {
         }
         play->fadeTransition = 38;
         play->sceneLoadFlag = 0x14;
-        func_8002DF54(play, &player->actor, 8);
+        func_8002DF54(play, player, &player->actor, 8);
     }
 }
 

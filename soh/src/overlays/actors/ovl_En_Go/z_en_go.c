@@ -427,7 +427,7 @@ s32 EnGo_IsCameraModified(EnGo* this, PlayState* play) {
     u16 playerIndex = Player_GetIndex(player, play);
     f32 xyzDist;
     s16 yawDiff = this->actor.yawTowardsPlayer[playerIndex] - this->actor.shape.rot.y;
-    Camera* camera = play->cameraPtrs[playerIndex];
+    Camera* camera = play->cameraPtrs[playerIndex][MAIN_CAM];
 
     if (fabsf(yawDiff) > 10920.0f) {
         return 0;
@@ -721,7 +721,7 @@ void EnGo_StopRolling(EnGo* this, PlayState* play) {
     if (DECR(this->unk_20E) == 0) {
         if (this->collider.base.ocFlags2 & 1) {
             this->collider.base.ocFlags2 &= ~1;
-            play->damagePlayer(play, -4);
+            play->damagePlayer(play, player, -4);
             func_8002F71C(play, &this->actor, 4.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
             this->unk_20E = 0x10;
         }
@@ -776,6 +776,7 @@ void EnGo_FireGenericActionFunc(EnGo* this, PlayState* play) {
 }
 
 void EnGo_CurledUp(EnGo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if ((DECR(this->unk_210) == 0) && EnGo_IsCameraModified(this, play)) {
         Audio_PlaySoundGeneral(NA_SE_EN_GOLON_WAKE_UP, &this->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                                &D_801333E8);
@@ -785,7 +786,7 @@ void EnGo_CurledUp(EnGo* this, PlayState* play) {
 
         EnGo_SetupAction(this, EnGo_WakeUp);
         if ((this->actor.params & 0xF0) == 0x90) {
-            OnePointCutscene_Init(play, 4200, -99, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4200, -99, &this->actor, MAIN_CAM);
         }
     }
 }
@@ -866,6 +867,7 @@ void func_80A405CC(EnGo* this, PlayState* play) {
 }
 
 void EnGo_BiggoronActionFunc(EnGo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (((this->actor.params & 0xF0) == 0x90) && (this->interactInfo.talkState == NPC_TALK_STATE_ACTION)) {
         if (!gSaveContext.n64ddFlag && gSaveContext.bgsFlag) {
             this->interactInfo.talkState = NPC_TALK_STATE_IDLE;
@@ -877,7 +879,7 @@ void EnGo_BiggoronActionFunc(EnGo* this, PlayState* play) {
                 EnGo_SetupAction(this, EnGo_Eyedrops);
                 play->msgCtx.msgMode = MSGMODE_PAUSED;
                 gSaveContext.timer2State = 0;
-                OnePointCutscene_Init(play, 4190, -99, &this->actor, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 4190, -99, &this->actor, MAIN_CAM);
             } else {
                 this->interactInfo.talkState = NPC_TALK_STATE_IDLE;
                 EnGo_SetupAction(this, EnGo_GetItem);

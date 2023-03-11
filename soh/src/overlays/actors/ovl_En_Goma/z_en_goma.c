@@ -791,6 +791,8 @@ Gfx* EnGoma_NoBackfaceCullingDlist(GraphicsContext* gfxCtx) {
 
 void EnGoma_Draw(Actor* thisx, PlayState* play) {
     EnGoma* this = (EnGoma*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 y;
     s32 pad;
 
@@ -802,7 +804,7 @@ void EnGoma_Draw(Actor* thisx, PlayState* play) {
             this->actor.naviEnemyId = 0x03;
             Matrix_Translate(this->actor.world.pos.x,
                              this->actor.world.pos.y + ((this->actor.shape.yOffset * this->actor.scale.y) +
-                                                        play->mainCameras[0].skyboxOffset.y),
+                                                        play->mainCameras[playerIndex].skyboxOffset.y),
                              this->actor.world.pos.z, MTXMODE_NEW);
             Matrix_RotateX(this->slopePitch / (f32)0x8000 * M_PI, MTXMODE_APPLY);
             Matrix_RotateZ(this->slopeRoll / (f32)0x8000 * M_PI, MTXMODE_APPLY);

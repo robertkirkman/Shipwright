@@ -167,7 +167,7 @@ void BgMoriRakkatenjo_Fall(BgMoriRakkatenjo* this, PlayState* play) {
                 403.0f - (thisx->world.pos.y - 403.0f) * bounceVel[this->bounceCount] / fabsf(thisx->velocity.y);
             thisx->velocity.y = bounceVel[this->bounceCount];
             this->bounceCount++;
-            quake = Quake_Add(GET_ACTIVE_CAM(play), 3);
+            quake = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
             Quake_SetSpeed(quake, 50000);
             Quake_SetQuakeValues(quake, 5, 0, 0, 0);
             Quake_SetCountdown(quake, 5);
@@ -203,6 +203,8 @@ void BgMoriRakkatenjo_Rise(BgMoriRakkatenjo* this, PlayState* play) {
 void BgMoriRakkatenjo_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     BgMoriRakkatenjo* this = (BgMoriRakkatenjo*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->timer > 0) {
         this->timer--;
@@ -211,13 +213,13 @@ void BgMoriRakkatenjo_Update(Actor* thisx, PlayState* play) {
     if (BgMoriRakkatenjo_IsLinkUnder(this, play)) {
         if (sCamSetting == CAM_SET_NONE) {
             osSyncPrintf("camera changed (mori rakka tenjyo) ... \n");
-            sCamSetting = play->cameraPtrs[MAIN_CAM]->setting;
-            Camera_SetCameraData(play->cameraPtrs[MAIN_CAM], 1, &this->dyna.actor, NULL, 0, 0, 0);
-            Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_FOREST_BIRDS_EYE);
+            sCamSetting = play->cameraPtrs[playerIndex][MAIN_CAM]->setting;
+            Camera_SetCameraData(play->cameraPtrs[playerIndex][MAIN_CAM], 1, &this->dyna.actor, NULL, 0, 0, 0);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_FOREST_BIRDS_EYE);
         }
     } else if (sCamSetting != CAM_SET_NONE) {
         osSyncPrintf("camera changed (previous) ... \n");
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON1);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON1);
         sCamSetting = 0;
     }
 }

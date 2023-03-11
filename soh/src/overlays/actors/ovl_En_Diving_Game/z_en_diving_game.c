@@ -127,7 +127,8 @@ void EnDivingGame_SpawnRuppy(EnDivingGame* this, PlayState* play) {
 }
 
 s32 EnDivingGame_HasMinigameFinished(EnDivingGame* this, PlayState* play) {
-    if (gSaveContext.timer1State == 10 && !Play_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    if (gSaveContext.timer1State == 10 && !Play_InCsMode(play, player)) {
         // Failed.
         gSaveContext.timer1State = 0;
         func_800F5B58();
@@ -136,7 +137,7 @@ s32 EnDivingGame_HasMinigameFinished(EnDivingGame* this, PlayState* play) {
         Message_StartTextbox(play, this->actor.textId, NULL);
         this->unk_292 = TEXT_STATE_EVENT;
         this->allRupeesThrown = this->state = this->phase = this->unk_2A2 = this->grabbedRupeesCounter = 0;
-        func_8002DF54(play, NULL, 8);
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = func_809EE048;
         return true;
     } else {
@@ -161,7 +162,7 @@ s32 EnDivingGame_HasMinigameFinished(EnDivingGame* this, PlayState* play) {
             this->unk_292 = TEXT_STATE_EVENT;
             func_800F5B58();
             Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET);
-            func_8002DF54(play, NULL, 8);
+            func_8002DF54(play, player, NULL, 8);
             if (!(gSaveContext.eventChkInf[3] & 0x100)) {
                 this->actionFunc = func_809EE96C;
             } else {
@@ -183,13 +184,14 @@ void func_809EDCB0(EnDivingGame* this, PlayState* play) {
 }
 
 void EnDivingGame_Talk(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->state != ENDIVINGGAME_STATE_PLAYING || !EnDivingGame_HasMinigameFinished(this, play)) {
         if (Actor_ProcessTalkRequest(&this->actor, play)) {
             if (this->unk_292 != TEXT_STATE_DONE) {
                 switch (this->state) {
                     case ENDIVINGGAME_STATE_NOTPLAYING:
-                        func_8002DF54(play, NULL, 8);
+                        func_8002DF54(play, player, NULL, 8);
                         this->actionFunc = EnDivingGame_HandlePlayChoice;
                         break;
                     case ENDIVINGGAME_STATE_AWARDPRIZE:
@@ -232,6 +234,7 @@ void EnDivingGame_Talk(EnDivingGame* this, PlayState* play) {
 }
 
 void EnDivingGame_HandlePlayChoice(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->unk_292 == Message_GetState(&play->msgCtx) &&
         Message_ShouldAdvance(play)) { // Did player selected an answer?
@@ -256,7 +259,7 @@ void EnDivingGame_HandlePlayChoice(EnDivingGame* this, PlayState* play) {
             this->actionFunc = func_809EE048;
         } else {
             play->msgCtx.msgMode = MSGMODE_PAUSED;
-            func_8002DF54(play, NULL, 8);
+            func_8002DF54(play, player, NULL, 8);
             this->actionFunc = func_809EE0FC;
         }
     }
@@ -264,15 +267,16 @@ void EnDivingGame_HandlePlayChoice(EnDivingGame* this, PlayState* play) {
 
 // Waits for the message to close
 void func_809EE048(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->unk_292 == Message_GetState(&play->msgCtx) && Message_ShouldAdvance(play)) {
         if (this->phase == ENDIVINGGAME_PHASE_ENDED) {
             Message_CloseTextbox(play);
-            func_8002DF54(play, NULL, 7);
+            func_8002DF54(play, player, NULL, 7);
             this->actionFunc = func_809EDCB0;
         } else {
             play->msgCtx.msgMode = MSGMODE_PAUSED;
-            func_8002DF54(play, NULL, 8);
+            func_8002DF54(play, player, NULL, 8);
             this->actionFunc = func_809EE0FC;
         }
     }
@@ -298,10 +302,12 @@ void func_809EE194(EnDivingGame* this, PlayState* play) {
 }
 
 void EnDivingGame_SetupRupeeThrow(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
-    this->subCamId = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, 0, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->subCamId, CAM_STAT_ACTIVE);
+    this->subCamId = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->subCamId, CAM_STAT_ACTIVE);
     this->spawnRuppyTimer = 10;
     this->unk_2F4.x = -210.0f;
     this->unk_2F4.y = -80.0f;
@@ -315,20 +321,20 @@ void EnDivingGame_SetupRupeeThrow(EnDivingGame* this, PlayState* play) {
         this->rupeesLeftToThrow = 10;
     }
     this->unk_2DC.x = this->unk_2DC.y = this->unk_2DC.z = this->unk_300.x = this->unk_300.y = this->unk_300.z = 0.1f;
-    this->camLookAt.x = play->views[0].lookAt.x;
-    this->camLookAt.y = play->views[0].lookAt.y;
-    this->camLookAt.z = play->views[0].lookAt.z;
-    this->camEye.x = play->views[0].eye.x;
-    this->camEye.y = play->views[0].eye.y + 80.0f;
-    this->camEye.z = play->views[0].eye.z + 250.0f;
+    this->camLookAt.x = play->views[playerIndex].lookAt.x;
+    this->camLookAt.y = play->views[playerIndex].lookAt.y;
+    this->camLookAt.z = play->views[playerIndex].lookAt.z;
+    this->camEye.x = play->views[playerIndex].eye.x;
+    this->camEye.y = play->views[playerIndex].eye.y + 80.0f;
+    this->camEye.z = play->views[playerIndex].eye.z + 250.0f;
     this->unk_2E8.x = fabsf(this->camEye.x - this->unk_2D0.x) * 0.04f;
     this->unk_2E8.y = fabsf(this->camEye.y - this->unk_2D0.y) * 0.04f;
     this->unk_2E8.z = fabsf(this->camEye.z - this->unk_2D0.z) * 0.04f;
     this->unk_30C.x = fabsf(this->camLookAt.x - this->unk_2F4.x) * 0.04f;
     this->unk_30C.y = fabsf(this->camLookAt.y - this->unk_2F4.y) * 0.04f;
     this->unk_30C.z = fabsf(this->camLookAt.z - this->unk_2F4.z) * 0.04f;
-    Play_CameraSetAtEye(play, this->subCamId, &this->camLookAt, &this->camEye);
-    Play_CameraSetFov(play, this->subCamId, play->mainCameras[0].fov);
+    Play_CameraSetAtEye(play, player, this->subCamId, &this->camLookAt, &this->camEye);
+    Play_CameraSetFov(play, player, this->subCamId, play->mainCameras[playerIndex].fov);
     this->csCameraTimer = 60;
     this->actionFunc = EnDivingGame_RupeeThrow;
     this->unk_318 = 0.0f;
@@ -336,6 +342,7 @@ void EnDivingGame_SetupRupeeThrow(EnDivingGame* this, PlayState* play) {
 
 // Throws rupee when this->spawnRuppyTimer == 0
 void EnDivingGame_RupeeThrow(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (func_800C0DB4(play, &this->actor.projectedPos)) {
         Audio_SetExtraFilter(0);
@@ -348,7 +355,7 @@ void EnDivingGame_RupeeThrow(EnDivingGame* this, PlayState* play) {
         Math_ApproachF(&this->camLookAt.z, this->unk_2F4.z, this->unk_300.z, this->unk_30C.z * this->unk_318);
         Math_ApproachF(&this->unk_318, 1.0f, 1.0f, 0.02f);
     }
-    Play_CameraSetAtEye(play, this->subCamId, &this->camLookAt, &this->camEye);
+    Play_CameraSetAtEye(play, player, this->subCamId, &this->camLookAt, &this->camEye);
     if (!this->allRupeesThrown && this->spawnRuppyTimer == 0) {
         this->spawnRuppyTimer = 5;
         EnDivingGame_SpawnRuppy(this, play);
@@ -395,10 +402,12 @@ void EnDivingGame_SetupUnderwaterViewCs(EnDivingGame* this, PlayState* play) {
 
 // EnDivingGame_SayStartAndWait ?
 void func_809EE780(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->csCameraTimer == 0) {
-        Play_ClearCamera(play, this->subCamId);
-        Play_ChangeCameraStatus(play, 0, CAM_STAT_ACTIVE);
+        Play_ClearCamera(play, player, this->subCamId);
+        Play_ChangeCameraStatus(play, player, 0, CAM_STAT_ACTIVE);
         this->actor.textId = 0x405A;
         Message_ContinueTextbox(play, this->actor.textId);
         this->unk_292 = TEXT_STATE_EVENT;
@@ -408,6 +417,7 @@ void func_809EE780(EnDivingGame* this, PlayState* play) {
 
 // EnDivingGame_TalkDuringMinigame
 void func_809EE800(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->unk_292 == Message_GetState(&play->msgCtx) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
@@ -417,7 +427,7 @@ void func_809EE800(EnDivingGame* this, PlayState* play) {
             func_80088B34(BREG(2) + 50);
         }
         func_800F5ACC(NA_BGM_TIMED_MINI_GAME);
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actor.textId = 0x405B;
         this->unk_292 = TEXT_STATE_EVENT;
         this->state = ENDIVINGGAME_STATE_PLAYING;
@@ -437,10 +447,11 @@ void func_809EE8F0(EnDivingGame* this, PlayState* play) {
 
 // EnDivingGame_SayCongratsAndWait ? // EnDivingGame_PlayerWonPhase1
 void func_809EE96C(EnDivingGame* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if ((this->unk_292 == Message_GetState(&play->msgCtx) && Message_ShouldAdvance(play))) {
         Message_CloseTextbox(play);
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actor.textId = 0x4056;
         this->unk_292 = TEXT_STATE_EVENT;
         this->state = ENDIVINGGAME_STATE_AWARDPRIZE;

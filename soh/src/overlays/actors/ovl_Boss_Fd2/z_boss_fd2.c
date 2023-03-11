@@ -627,6 +627,7 @@ void BossFd2_SetupDeath(BossFd2* this, PlayState* play) {
 }
 
 void BossFd2_UpdateCamera(BossFd2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->deathCamera != SUBCAM_FREE) {
         Math_ApproachF(&this->camData.eye.x, this->camData.nextEye.x, this->camData.eyeMaxVel.x,
                        this->camData.eyeVel.x * this->camData.speedMod);
@@ -642,7 +643,7 @@ void BossFd2_UpdateCamera(BossFd2* this, PlayState* play) {
                        this->camData.atVel.z * this->camData.speedMod);
         Math_ApproachF(&this->camData.speedMod, 1.0f, 1.0f, this->camData.accel);
         this->camData.at.y += this->camData.yMod;
-        Play_CameraSetAtEye(play, this->deathCamera, &this->camData.at, &this->camData.eye);
+        Play_CameraSetAtEye(play, player, this->deathCamera, &this->camData.at, &this->camData.eye);
         Math_ApproachF(&this->camData.yMod, 0.0f, 1.0f, 0.1f);
     }
 }
@@ -652,8 +653,8 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
     Vec3f sp70;
     Vec3f sp64;
     BossFd* bossFd = (BossFd*)this->actor.parent;
-    Camera* mainCam = Play_GetCamera(play, MAIN_CAM);
     Player* player = Player_NearestToActor(&this->actor, play);
+    Camera* mainCam = Play_GetCamera(play, player, MAIN_CAM);
     u16 playerIndex = Player_GetIndex(player, play);
     f32 pad3;
     f32 pad2;
@@ -666,10 +667,10 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
         case DEATH_START:
             this->deathState = DEATH_RETREAT;
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            this->deathCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, this->deathCamera, CAM_STAT_ACTIVE);
+            func_8002DF54(play, player, &this->actor, 1);
+            this->deathCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, this->deathCamera, CAM_STAT_ACTIVE);
             this->camData.eye = mainCam->eye;
             this->camData.at = mainCam->at;
             this->camData.eyeVel.x = 100.0f;
@@ -759,7 +760,7 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
                     this->work[FD2_ACTION_STATE]++;
                     this->camData.speedMod = 0.0f;
                     this->camData.accel = 0.02f;
-                    func_8002DF54(play, &bossFd->actor, 1);
+                    func_8002DF54(play, player, &bossFd->actor, 1);
                 }
             }
             if ((bossFd->work[BFD_ACTION_STATE] == BOSSFD_BONES_FALL) && (bossFd->timers[0] == 5)) {
@@ -790,10 +791,10 @@ void BossFd2_Death(BossFd2* this, PlayState* play) {
                 mainCam->eye = this->camData.eye;
                 mainCam->eyeNext = this->camData.eye;
                 mainCam->at = this->camData.at;
-                func_800C08AC(play, this->deathCamera, 0);
+                func_800C08AC(play, player, this->deathCamera, 0);
                 this->deathCamera = 0;
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DOOR_WARP1, 0.0f, 100.0f, 0.0f,
                                    0, 0, 0, WARP_DUNGEON_ADULT);
                 Flags_SetClear(play, play->roomCtx.curRoom.num);

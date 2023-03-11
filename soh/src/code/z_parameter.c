@@ -3438,7 +3438,7 @@ void Interface_UpdateMagicBar(PlayState* play) {
         case 7:
             if ((play->pauseCtx.state == 0) && (play->pauseCtx.debugState == 0) &&
                 (msgCtx->msgMode == MSGMODE_NONE) && (play->gameOverCtx.state == GAMEOVER_INACTIVE) &&
-                (play->sceneLoadFlag == 0) && (play->transitionMode == 0) && !Play_InCsMode(play)) {
+                (play->sceneLoadFlag == 0) && (play->transitionMode == 0) && !Play_InCsMode(play, Player_FromIndex(0, play))) {
                 bool hasLens = false;
                 for (int buttonIndex = 1; buttonIndex < (CVarGetInteger("gDpadEquips", 0) != 0) ? ARRAY_COUNT(gSaveContext.equips.buttonItems) : 4; buttonIndex++) {
                     if (gSaveContext.equips.buttonItems[buttonIndex] == ITEM_LENS) {
@@ -3736,7 +3736,7 @@ void Interface_DrawItemButtons(PlayState* play) {
     static void* cUpLabelTextures[] = { gNaviCUpENGTex, gNaviCUpENGTex, gNaviCUpENGTex };
     static s16 startButtonLeftPos[] = { 132, 130, 130 };
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // todo UI
     PauseContext* pauseCtx = &play->pauseCtx;
     s16 temp; // Used as both an alpha value and a button index
     s16 dxdy;
@@ -4905,7 +4905,7 @@ void Interface_Draw(PlayState* play) {
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
     PauseContext* pauseCtx = &play->pauseCtx;
     MessageContext* msgCtx = &play->msgCtx;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // todo UI
     s16 svar1;
     s16 svar2;
     s16 svar3;
@@ -5149,7 +5149,7 @@ void Interface_Draw(PlayState* play) {
         Minimap_Draw(play);
 
         if ((R_PAUSE_MENU_MODE != 2) && (R_PAUSE_MENU_MODE != 3)) {
-            func_8002C124(&play->actorCtx.targetCtx, play); // Draw Z-Target
+            func_8002C124(&play->actorCtx.targetCtxs[0], 0, play); // Draw Z-Target (todo)
         }
 
         Gfx_SetupDL_39Overlay(play->state.gfxCtx);
@@ -5635,7 +5635,7 @@ void Interface_Draw(PlayState* play) {
         if ((play->pauseCtx.state == 0) && (play->pauseCtx.debugState == 0) &&
             (play->gameOverCtx.state == GAMEOVER_INACTIVE) && (msgCtx->msgMode == MSGMODE_NONE) &&
             !(player->stateFlags2 & 0x01000000) && (play->sceneLoadFlag == 0) &&
-            (play->transitionMode == 0) && !Play_InCsMode(play) && (gSaveContext.minigameState != 1) &&
+            (play->transitionMode == 0) && !Play_InCsMode(play, player) && (gSaveContext.minigameState != 1) &&
             (play->shootingGalleryStatus <= 1) &&
             !((play->sceneNum == SCENE_BOWLING) && Flags_GetSwitch(play, 0x38))) {
             svar6 = 0;
@@ -5727,7 +5727,7 @@ void Interface_Draw(PlayState* play) {
                                 gSaveContext.timer1State = 10;
                                 if (D_80125A5C != 0) {
                                     gSaveContext.health = 0;
-                                    play->damagePlayer(play, -(gSaveContext.health + 2));
+                                    play->damagePlayer(play, player, -(gSaveContext.health + 2));
                                 }
                                 D_80125A5C = 0;
                             } else if (gSaveContext.timer1Value > 60) {
@@ -5900,7 +5900,7 @@ void Interface_Draw(PlayState* play) {
                                                 gSaveContext.timer2State = 5;
                                                 gSaveContext.cutsceneIndex = 0;
                                                 Message_StartTextbox(play, 0x71B0, NULL);
-                                                func_8002DF54(play, NULL, 8);
+                                                func_8002DF54(play, player, NULL, 8);
                                             } else {
                                                 D_8015FFE6 = 40;
                                                 gSaveContext.timer2State = 6;
@@ -6054,7 +6054,7 @@ void Interface_Update(PlayState* play) {
     static s16 sPrevTimeIncrement = 0;
     MessageContext* msgCtx = &play->msgCtx;
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
-    Player* player = GET_PLAYER(play);
+    Player* player = GET_PLAYER(play); // todo UI
     s16 alpha;
     s16 alpha1;
     u16 action;
@@ -6221,7 +6221,7 @@ void Interface_Update(PlayState* play) {
 
     if ((gSaveContext.timer1State >= 3) && (play->pauseCtx.state == 0) && (play->pauseCtx.debugState == 0) &&
         (msgCtx->msgMode == MSGMODE_NONE) && !(player->stateFlags2 & 0x01000000) && (play->sceneLoadFlag == 0) &&
-        (play->transitionMode == 0) && !Play_InCsMode(play)) {}
+        (play->transitionMode == 0) && !Play_InCsMode(play, player)) {}
 
     if (gSaveContext.rupeeAccumulator != 0) {
         if (gSaveContext.rupeeAccumulator > 0) {
@@ -6308,7 +6308,7 @@ void Interface_Update(PlayState* play) {
     if ((play->pauseCtx.state == 0) && (play->pauseCtx.debugState == 0) &&
         (msgCtx->msgMode == MSGMODE_NONE) && (play->sceneLoadFlag == 0) &&
         (play->gameOverCtx.state == GAMEOVER_INACTIVE) && (play->transitionMode == 0) &&
-        ((play->csCtx.state == CS_STATE_IDLE) || !Player_InCsMode(play))) {
+        ((play->csCtx.state == CS_STATE_IDLE) || !Player_InCsMode(play, player))) {
         if ((gSaveContext.isMagicAcquired != 0) && (gSaveContext.magicLevel == 0)) {
             gSaveContext.magicLevel = gSaveContext.isDoubleMagicAcquired + 1;
             gSaveContext.magicState = 8;

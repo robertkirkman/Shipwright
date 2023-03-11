@@ -169,6 +169,7 @@ void func_80B3A15C(EnWonderTalk2* this, PlayState* play) {
 }
 
 void func_80B3A3D4(EnWonderTalk2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (BREG(2) != 0) {
         // "Oh"
         osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ わー %d\n" VT_RST, Message_GetState(&play->msgCtx));
@@ -195,7 +196,7 @@ void func_80B3A3D4(EnWonderTalk2* this, PlayState* play) {
                 this->unk_15A = true;
             }
             this->actor.flags &= ~(ACTOR_FLAG_0 | ACTOR_FLAG_4);
-            func_8002DF54(play, NULL, 7);
+            func_8002DF54(play, player, NULL, 7);
             this->unk_156 = true;
             this->actionFunc = func_80B3A4F8;
             break;
@@ -218,7 +219,7 @@ void func_80B3A4F8(EnWonderTalk2* this, PlayState* play) {
         }
         if (((this->actor.xzDistToPlayer[playerIndex] < (40.0f + this->triggerRange)) &&
              (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 100.0f)) &&
-            !Play_InCsMode(play)) {
+            !Play_InCsMode(play, player)) {
             if (this->unk_158 >= 2) {
                 osSyncPrintf("\n\n");
                 // "Transparent Message Kimi Seto"
@@ -284,7 +285,7 @@ void func_80B3A4F8(EnWonderTalk2* this, PlayState* play) {
                 }
                 if (!(randoSkipText)) {
                     Message_StartTextbox(play, this->actor.textId, NULL);
-                    func_8002DF54(play, NULL, 8);
+                    func_8002DF54(play, player, NULL, 8);
                     this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_4;
                     this->actionFunc = func_80B3A3D4;
                 }

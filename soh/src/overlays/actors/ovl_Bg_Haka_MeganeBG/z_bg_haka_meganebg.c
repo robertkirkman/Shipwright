@@ -183,8 +183,9 @@ void func_8087E258(BgHakaMeganeBG* this, PlayState* play) {
 }
 
 void func_8087E288(BgHakaMeganeBG* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->unk_168)) {
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = func_8087E2D8;
     }
 }

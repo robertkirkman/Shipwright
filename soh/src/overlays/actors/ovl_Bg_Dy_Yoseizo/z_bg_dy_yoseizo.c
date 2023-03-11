@@ -194,6 +194,7 @@ void BgDyYoseizo_Bob(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_CheckMagicAcquired(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Flags_GetSwitch(play, 0x38)) {
         play->msgCtx.ocarinaMode = OCARINA_MODE_04;
 
@@ -219,15 +220,16 @@ void BgDyYoseizo_CheckMagicAcquired(BgDyYoseizo* this, PlayState* play) {
                 return;
             }
         }
-        func_8002DF54(play, &this->actor, 1);
+        func_8002DF54(play, player, &this->actor, 1);
         this->actionFunc = BgDyYoseizo_ChooseType;
     }
 }
 
 void BgDyYoseizo_ChooseType(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 givingReward;
 
-    func_8002DF54(play, &this->actor, 1);
+    func_8002DF54(play, player, &this->actor, 1);
     // "Mode"
     osSyncPrintf(VT_FGCOL(YELLOW) "☆☆☆☆☆ もうど ☆☆☆☆☆ %d\n" VT_RST, play->msgCtx.ocarinaMode);
     givingReward = false;
@@ -320,9 +322,9 @@ void BgDyYoseizo_ChooseType(BgDyYoseizo* this, PlayState* play) {
     play->envCtx.unk_BF = 2;
 
     if (play->sceneNum == SCENE_DAIYOUSEI_IZUMI) {
-        OnePointCutscene_Init(play, 8603, -99, NULL, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 8603, -99, NULL, MAIN_CAM);
     } else {
-        OnePointCutscene_Init(play, 8604, -99, NULL, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 8604, -99, NULL, MAIN_CAM);
     };
 
     Audio_PlayActorSound2(&this->actor, NA_SE_EV_GREAT_FAIRY_APPEAR);
@@ -332,6 +334,7 @@ void BgDyYoseizo_ChooseType(BgDyYoseizo* this, PlayState* play) {
 
 // Sets animations for spingrow
 void BgDyYoseizo_SetupSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (play->sceneNum == SCENE_DAIYOUSEI_IZUMI) {
         this->frameCount = Animation_GetLastFrame(&gGreatFairySittingTransitionAnim);
         Animation_Change(&this->skelAnime, &gGreatFairySittingTransitionAnim, 1.0f, 0.0f, this->frameCount,
@@ -343,12 +346,13 @@ void BgDyYoseizo_SetupSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
     }
 
     Audio_PlayActorSound2(&this->actor, NA_SE_VO_FR_LAUGH_0);
-    func_8002DF54(play, &this->actor, 1);
+    func_8002DF54(play, player, &this->actor, 1);
     this->actionFunc = BgDyYoseizo_SpinGrow_NoReward;
 }
 
 void BgDyYoseizo_SpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 1);
     Math_ApproachF(&this->actor.world.pos.y, this->grownHeight, this->heightFraction, 100.0f);
     Math_ApproachF(&this->scale, 0.035f, this->scaleFraction, 0.005f);
     Math_ApproachF(&this->heightFraction, 0.8f, 0.1f, 0.02f);
@@ -372,9 +376,10 @@ void BgDyYoseizo_SpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_CompleteSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 curFrame = this->skelAnime.curFrame;
 
-    func_8002DF54(play, &this->actor, 1);
+    func_8002DF54(play, player, &this->actor, 1);
 
     if ((this->frameCount * 1273.0f) <= this->bobTimer) {
         this->bobTimer = 0.0f;
@@ -388,7 +393,8 @@ void BgDyYoseizo_CompleteSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_SetupGreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 1);
 
     if (play->sceneNum == SCENE_DAIYOUSEI_IZUMI) {
         this->frameCount = Animation_GetLastFrame(&gGreatFairySittingAnim);
@@ -408,7 +414,8 @@ void BgDyYoseizo_SetupGreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_GreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 1);
     this->bobTimer = this->skelAnime.curFrame * 1273.0f;
 
     if ((this->frameCount * 1273.0f) <= this->bobTimer) {
@@ -517,6 +524,8 @@ void BgDyYoseizo_HealPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_SayFarewell_NoReward(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     this->bobTimer = this->skelAnime.curFrame * 1400.0f;
 
     if (this->bobTimer >= (this->frameCount * 1400.0f)) {
@@ -529,7 +538,7 @@ void BgDyYoseizo_SayFarewell_NoReward(BgDyYoseizo* this, PlayState* play) {
         Message_CloseTextbox(play);
         this->mouthState = 0;
         this->actionFunc = BgDyYoseizo_SetupSpinShrink;
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
     }
 
     BgDyYoseizo_Bob(this, play);
@@ -573,10 +582,11 @@ void BgDyYoseizo_SpinShrink(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_Vanish(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* findOcarinaSpot;
 
     if (this->vanishTimer == 0) {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         play->envCtx.unk_BF = 0;
         findOcarinaSpot = play->actorCtx.actorLists[ACTORCAT_PROP].head;
 
@@ -595,10 +605,11 @@ void BgDyYoseizo_Vanish(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_SetupSpinGrow_Reward(BgDyYoseizo* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (play->csCtx.state != CS_STATE_IDLE) {
         if ((play->csCtx.npcActions[0] != NULL) && (play->csCtx.npcActions[0]->action == 2)) {
             this->actor.draw = BgDyYoseizo_Draw;
-            func_8002DF54(play, &this->actor, 1);
+            func_8002DF54(play, player, &this->actor, 1);
             this->finishedSpinGrow = false;
 
             if (play->sceneNum == SCENE_DAIYOUSEI_IZUMI) {

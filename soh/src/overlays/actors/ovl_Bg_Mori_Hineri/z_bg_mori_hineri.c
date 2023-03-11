@@ -177,16 +177,19 @@ void BgMoriHineri_SpawnBossKeyChest(BgMoriHineri* this, PlayState* play) {
 void func_808A3C8C(BgMoriHineri* this, PlayState* play) {
     f32 f0;
     Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     f0 = 1100.0f - (player->actor.world.pos.z - this->dyna.actor.world.pos.z);
     this->dyna.actor.shape.rot.z = CLAMP(f0, 0.0f, 1000.0f) * 16.384f;
-    Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON1);
+    Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON1);
     if (this->dyna.actor.params != 0) {
         this->dyna.actor.shape.rot.z = -this->dyna.actor.shape.rot.z;
     }
 }
 
 void func_808A3D58(BgMoriHineri* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 mainCamChildIdx;
 
     if ((Flags_GetSwitch(play, this->switchFlag) &&
@@ -196,20 +199,22 @@ void func_808A3D58(BgMoriHineri* this, PlayState* play) {
         this->dyna.actor.draw = BgMoriHineri_DrawHallAndRoom;
         this->actionFunc = func_808A3E54;
 
-        mainCamChildIdx = play->cameraPtrs[MAIN_CAM]->childCamIdx;
+        mainCamChildIdx = play->cameraPtrs[playerIndex][MAIN_CAM]->childCamIdx;
         if ((mainCamChildIdx != SUBCAM_FREE) &&
-            (play->cameraPtrs[mainCamChildIdx]->setting == CAM_SET_CS_TWISTED_HALLWAY)) {
-            OnePointCutscene_EndCutscene(play, mainCamChildIdx);
+            (play->cameraPtrs[playerIndex][mainCamChildIdx]->setting == CAM_SET_CS_TWISTED_HALLWAY)) {
+            OnePointCutscene_EndCutscene(play, player, mainCamChildIdx);
         }
-        OnePointCutscene_Init(play, 3260, 40, &this->dyna.actor, MAIN_CAM);
-        sBgMoriHineriNextCamIdx = OnePointCutscene_Init(play, 3261, 40, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3260, 40, &this->dyna.actor, MAIN_CAM);
+        sBgMoriHineriNextCamIdx = OnePointCutscene_Init(play, player, 3261, 40, &this->dyna.actor, MAIN_CAM);
     }
 }
 
 void func_808A3E54(BgMoriHineri* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s8 objBankIndex;
 
-    if (play->activeCamera == sBgMoriHineriNextCamIdx) {
+    if (play->activeCameras[playerIndex] == sBgMoriHineriNextCamIdx) {
         if (sBgMoriHineriNextCamIdx != MAIN_CAM) {
             objBankIndex = this->dyna.actor.objBankIndex;
             this->dyna.actor.objBankIndex = this->moriHineriObjIdx;
@@ -224,7 +229,7 @@ void func_808A3E54(BgMoriHineri* this, PlayState* play) {
         }
     }
     if ((sBgMoriHineriNextCamIdx >= SUBCAM_FIRST) &&
-        ((GET_ACTIVE_CAM(play)->eye.z - this->dyna.actor.world.pos.z) < 1100.0f)) {
+        ((GET_ACTIVE_CAM(playerIndex, play)->eye.z - this->dyna.actor.world.pos.z) < 1100.0f)) {
         func_8002F948(&this->dyna.actor, NA_SE_EV_FLOOR_ROLLING - SFX_FLAG);
     }
 }

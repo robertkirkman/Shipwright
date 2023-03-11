@@ -62,13 +62,15 @@ void BgBomGuard_Destroy(Actor* thisx, PlayState* play) {
 void func_8086E638(BgBomGuard* this, PlayState* play) {
     Actor* it = play->actorCtx.actorLists[ACTORCAT_NPC].head;
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->unk_168 = 0;
 
     while (it != 0) {
         if (it->id == ACTOR_EN_BOM_BOWL_MAN) {
-            if ((((EnBomBowlMan*)it)->minigamePlayStatus != 0) && (fabsf(play->views[0].eye.x) > -20.0f) &&
-                (fabsf(play->views[0].eye.y) > 110.0f)) {
+            if ((((EnBomBowlMan*)it)->minigamePlayStatus != 0) && (fabsf(play->views[playerIndex].eye.x) > -20.0f) &&
+                (fabsf(play->views[playerIndex].eye.y) > 110.0f)) {
                 this->unk_168 = 1;
             }
             break;

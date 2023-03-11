@@ -87,6 +87,7 @@ void BgHakaShip_ChildUpdatePosition(BgHakaShip* this, PlayState* play) {
 }
 
 void BgHakaShip_WaitForSong(BgHakaShip* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->switchFlag)) {
         if (this->counter) {
             this->counter--;
@@ -95,7 +96,7 @@ void BgHakaShip_WaitForSong(BgHakaShip* this, PlayState* play) {
             this->counter = 130;
             this->actionFunc = BgHakaShip_CutsceneStationary;
             osSyncPrintf("シーン 外輪船 ...  アァクション！！\n");
-            OnePointCutscene_Init(play, 3390, 999, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3390, 999, &this->dyna.actor, MAIN_CAM);
         }
     }
 }
@@ -112,6 +113,7 @@ void BgHakaShip_CutsceneStationary(BgHakaShip* this, PlayState* play) {
 }
 
 void BgHakaShip_Move(BgHakaShip* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 distanceFromHome;
     Actor* child;
 
@@ -128,7 +130,7 @@ void BgHakaShip_Move(BgHakaShip* this, PlayState* play) {
         this->dyna.actor.world.pos.x = this->dyna.actor.home.pos.x - 7650.0f;
         this->dyna.actor.speedXZ = 0.0f;
     }
-    if (distanceFromHome > 7600.0f && !Play_InCsMode(play)) {
+    if (distanceFromHome > 7600.0f && !Play_InCsMode(play, player)) {
         this->counter = 40;
         this->dyna.actor.speedXZ = 0.0f;
         Message_StartTextbox(play, 0x5071, NULL);

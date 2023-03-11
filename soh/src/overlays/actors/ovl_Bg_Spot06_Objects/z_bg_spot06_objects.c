@@ -311,6 +311,7 @@ void BgSpot06Objects_LockSpawnBubbles(BgSpot06Objects* this, PlayState* play, s3
  * This is where the fish shaped lock waits to be pulled out by the hookshot. Once it does it will spawn bubbles.
  */
 void BgSpot06Objects_LockWait(BgSpot06Objects* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 pad;
     s32 i;
     s32 pad2;
@@ -343,7 +344,7 @@ void BgSpot06Objects_LockWait(BgSpot06Objects* this, PlayState* play) {
         this->actionFunc = BgSpot06Objects_LockPullOutward;
         Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         Flags_SetSwitch(play, this->switchFlag);
-        OnePointCutscene_Init(play, 4120, 170, &this->dyna.actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4120, 170, &this->dyna.actor, MAIN_CAM);
     } else {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);
     }

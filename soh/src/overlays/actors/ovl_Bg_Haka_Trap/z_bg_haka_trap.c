@@ -232,7 +232,7 @@ static UNK_TYPE D_80881018 = 0;
 void func_808801B8(BgHakaTrap* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
-    if ((D_80880F30 == 0) && (!Player_InCsMode(play))) {
+    if ((D_80880F30 == 0) && (!Player_InCsMode(play, player))) {
         if (!Math_StepToF(&this->dyna.actor.world.pos.x, this->dyna.actor.home.pos.x, 0.5f)) {
             func_8002F974(&this->dyna.actor, NA_SE_EV_TRAP_OBJ_SLIDE - SFX_FLAG);
         } else if (this->dyna.actor.params == HAKA_TRAP_SPIKED_WALL) {

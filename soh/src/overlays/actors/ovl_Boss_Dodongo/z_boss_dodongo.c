@@ -261,7 +261,7 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
     Vec3f sp48;
 
     Player* player = Player_NearestToActor(&this->actor, play);
-    camera = Play_GetCamera(play, MAIN_CAM);
+    camera = Play_GetCamera(play, player, MAIN_CAM);
 
     if (this->unk_196 != 0) {
         this->unk_196--;
@@ -286,11 +286,11 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
             break;
         case 1:
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            Play_ClearAllSubCameras(play);
-            this->cutsceneCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, 1);
-            Play_ChangeCameraStatus(play, this->cutsceneCamera, 7);
+            func_8002DF54(play, player, &this->actor, 1);
+            Play_ClearAllSubCameras(play, player);
+            this->cutsceneCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, 1);
+            Play_ChangeCameraStatus(play, player, this->cutsceneCamera, 7);
             this->csState = 2;
             this->unk_196 = 0x3C;
             this->unk_198 = 160;
@@ -313,11 +313,11 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
             }
 
             if (this->unk_198 == 110) {
-                func_8002DF54(play, &this->actor, 9);
+                func_8002DF54(play, player, &this->actor, 9);
             }
 
             if (this->unk_198 == 5) {
-                func_8002DF54(play, &this->actor, 12);
+                func_8002DF54(play, player, &this->actor, 12);
             }
 
             if (this->unk_198 < 6) {
@@ -429,10 +429,10 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
                 camera->eye = this->cameraEye;
                 camera->eyeNext = this->cameraEye;
                 camera->at = this->cameraAt;
-                func_800C08AC(play, this->cutsceneCamera, 0);
+                func_800C08AC(play, player, this->cutsceneCamera, 0);
                 this->cutsceneCamera = 0;
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 BossDodongo_SetupWalk(this);
                 this->unk_1DA = 50;
                 this->unk_1BC = 0;
@@ -461,7 +461,7 @@ void BossDodongo_IntroCutscene(BossDodongo* this, PlayState* play) {
         sp48.y = 1.0f;
         sp48.z = this->unk_20C;
 
-        Play_CameraSetAtEyeUp(play, this->cutsceneCamera, &sp54, &sp60, &sp48);
+        Play_CameraSetAtEyeUp(play, player, this->cutsceneCamera, &sp54, &sp60, &sp48);
     }
 }
 
@@ -1326,11 +1326,11 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
         case 0:
             this->csState = 5;
             func_80064520(play, &play->csCtx);
-            func_8002DF54(play, &this->actor, 1);
-            this->cutsceneCamera = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_UNK3);
-            Play_ChangeCameraStatus(play, this->cutsceneCamera, CAM_STAT_ACTIVE);
-            camera = Play_GetCamera(play, MAIN_CAM);
+            func_8002DF54(play, player, &this->actor, 1);
+            this->cutsceneCamera = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_UNK3);
+            Play_ChangeCameraStatus(play, player, this->cutsceneCamera, CAM_STAT_ACTIVE);
+            camera = Play_GetCamera(play, player, MAIN_CAM);
             this->cameraEye.x = camera->eye.x;
             this->cameraEye.y = camera->eye.y;
             this->cameraEye.z = camera->eye.z;
@@ -1628,17 +1628,17 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
                             Math_CosS(this->actor.shape.rot.y) * -50.0f + this->actor.world.pos.z, 0, 0, 0, 0, true);
             }
             if (this->unk_1DA == 600) {
-                camera = Play_GetCamera(play, MAIN_CAM);
+                camera = Play_GetCamera(play, player, MAIN_CAM);
                 camera->eye = this->cameraEye;
                 camera->eyeNext = this->cameraEye;
                 camera->at = this->cameraAt;
-                func_800C08AC(play, this->cutsceneCamera, 0);
+                func_800C08AC(play, player, this->cutsceneCamera, 0);
                 this->unk_1BC = 0;
                 this->cutsceneCamera = MAIN_CAM;
                 this->csState = 100;
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DOOR_WARP1, -890.0f, -1523.76f,
                                    -3304.0f, 0, 0, 0, WARP_DUNGEON_CHILD);
                 this->skelAnime.playSpeed = 0.0f;
@@ -1659,7 +1659,7 @@ void BossDodongo_DeathCutscene(BossDodongo* this, PlayState* play) {
             break;
     }
     if (this->cutsceneCamera != MAIN_CAM) {
-        Play_CameraSetAtEye(play, this->cutsceneCamera, &this->cameraAt, &this->cameraEye);
+        Play_CameraSetAtEye(play, player, this->cutsceneCamera, &this->cameraAt, &this->cameraEye);
     }
 }
 

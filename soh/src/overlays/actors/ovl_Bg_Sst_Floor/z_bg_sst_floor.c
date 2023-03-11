@@ -63,9 +63,9 @@ void BgSstFloor_Update(BgSstFloor* thisx, PlayState* play) {
     colHeader->vtxList = SEGMENTED_TO_VIRTUAL(colHeader->vtxList);
 
     if (func_80043590(&this->dyna) && (this->dyna.actor.yDistToPlayer[playerIndex] < 1000.0f)) {
-        Camera_ChangeSetting(play->cameraPtrs[playerIndex], CAM_SET_BOSS_BONGO);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_BOSS_BONGO);
     } else {
-        Camera_ChangeSetting(play->cameraPtrs[playerIndex], CAM_SET_DUNGEON0);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
     }
 
     if (func_8004356C(&this->dyna) && (player->fallDistance > 1000.0f)) {

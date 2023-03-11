@@ -239,7 +239,7 @@ void BgPoEvent_BlockWait(BgPoEvent* this, PlayState* play) {
     this->dyna.actor.world.pos.y = 833.0f;
     if (sBgPoEventPuzzleState == 0x3F) {
         if (this->type == 1) {
-            OnePointCutscene_Init(play, 3150, 65, NULL, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3150, 65, NULL, MAIN_CAM);
         }
         this->timer = 45;
         this->actionFunc = BgPoEvent_BlockShake;
@@ -325,7 +325,7 @@ void BgPoEvent_BlockFall(BgPoEvent* this, PlayState* play) {
             if (firstFall == 0) {
                 firstFall = 1;
             } else {
-                func_8002DF54(play, &player->actor, 7);
+                func_8002DF54(play, player, &player->actor, 7);
             }
         }
         this->direction = 0;
@@ -345,7 +345,7 @@ void BgPoEvent_BlockIdle(BgPoEvent* this, PlayState* play) {
                             this->dyna.actor.world.pos.y - 30.0f, this->dyna.actor.world.pos.z + 30.0f, 0,
                             this->dyna.actor.shape.rot.y, 0, this->dyna.actor.params + 0x300, true);
             if (amy != NULL) {
-                OnePointCutscene_Init(play, 3170, 30, amy, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 3170, 30, amy, MAIN_CAM);
             }
             func_80078884(NA_SE_SY_CORRECT_CHIME);
             gSaveContext.timer1State = 0xA;
@@ -356,13 +356,13 @@ void BgPoEvent_BlockIdle(BgPoEvent* this, PlayState* play) {
             sBgPoEventPuzzleState = 0x10;
             sBgPoEventBlocksAtRest = 0;
         }
-        if ((sBgPoEventPuzzleState == 0x40) || ((sBgPoEventPuzzleState == 0x10) && !Player_InCsMode(play))) {
+        if ((sBgPoEventPuzzleState == 0x40) || ((sBgPoEventPuzzleState == 0x10) && !Player_InCsMode(play, player))) {
             this->dyna.actor.world.rot.z = this->dyna.actor.shape.rot.z;
             this->actionFunc = BgPoEvent_BlockReset;
             if (sBgPoEventPuzzleState == 0x10) {
                 sBgPoEventPuzzleState = 0x40;
                 Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BLOCK_RISING);
-                func_8002DF54(play, &player->actor, 8);
+                func_8002DF54(play, player, &player->actor, 8);
             }
         } else if (this->dyna.unk_150 != 0.0f) {
             if (this->direction == 0) {
@@ -542,12 +542,12 @@ void BgPoEvent_PaintingPresent(BgPoEvent* this, PlayState* play) {
             Actor_Spawn(&play->actorCtx, play, ACTOR_EN_PO_SISTERS, thisx->world.pos.x,
                         thisx->world.pos.y - 40.0f, thisx->world.pos.z, 0, thisx->shape.rot.y, 0,
                         thisx->params + ((this->type - 1) << 8), true);
-            OnePointCutscene_Init(play, 3160, 80, thisx, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3160, 80, thisx, MAIN_CAM);
             func_80078884(NA_SE_SY_CORRECT_CHIME);
 
         } else {
             Audio_PlayActorSound2(thisx, NA_SE_EN_PO_LAUGH2);
-            OnePointCutscene_Init(play, 3160, 35, thisx, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3160, 35, thisx, MAIN_CAM);
         }
         if (thisx->parent != NULL) {
             thisx->parent->child = NULL;

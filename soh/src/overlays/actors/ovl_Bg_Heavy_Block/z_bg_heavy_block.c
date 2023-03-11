@@ -203,7 +203,7 @@ void BgHeavyBlock_MovePiece(BgHeavyBlock* this, PlayState* play) {
     }
 }
 
-void BgHeavyBlock_SpawnDust(PlayState* play, f32 posX, f32 posY, f32 posZ, f32 velX, f32 velY, f32 velZ,
+void BgHeavyBlock_SpawnDust(PlayState* play, u16 playerIndex, f32 posX, f32 posY, f32 posZ, f32 velX, f32 velY, f32 velZ,
                             u8 dustParams) {
     Color_RGBA8 primColor;
     Color_RGBA8 envColor;
@@ -240,8 +240,8 @@ void BgHeavyBlock_SpawnDust(PlayState* play, f32 posX, f32 posY, f32 posZ, f32 v
     accel.x = 0.0f;
     accel.y = (dustParams & 8) ? 0.0f : 0.5f;
 
-    eye = GET_ACTIVE_CAM(play)->eye;
-    at = GET_ACTIVE_CAM(play)->at;
+    eye = GET_ACTIVE_CAM(playerIndex, play)->eye;
+    at = GET_ACTIVE_CAM(playerIndex, play)->at;
 
     scale = 1000;
     scaleStep = 160;
@@ -282,6 +282,8 @@ void BgHeavyBlock_SpawnDust(PlayState* play, f32 posX, f32 posY, f32 posZ, f32 v
 }
 
 void BgHeavyBlock_SpawnPieces(BgHeavyBlock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     Vec3f spA4[] = {
         { 0.0f, 300.0f, -20.0f }, { 50.0f, 200.0f, -20.0f }, { -50.0f, 200.0f, -20.0f },
@@ -311,11 +313,13 @@ void BgHeavyBlock_SpawnPieces(BgHeavyBlock* this, PlayState* play) {
         Actor_Spawn(&play->actorCtx, play, ACTOR_BG_HEAVY_BLOCK, pos.x, pos.y, pos.z,
                     this->dyna.actor.shape.rot.x, this->dyna.actor.shape.rot.y, 0, 3, true);
 
-        BgHeavyBlock_SpawnDust(play, pos.x, pos.y, pos.z, 0.0f, 0.0f, 0.0f, 0);
+        BgHeavyBlock_SpawnDust(play, playerIndex, pos.x, pos.y, pos.z, 0.0f, 0.0f, 0.0f, 0);
     }
 }
 
 void BgHeavyBlock_Wait(BgHeavyBlock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 quakeIndex;
 
     // if block has a parent link has lifted it, start one point cutscene and quake
@@ -325,18 +329,18 @@ void BgHeavyBlock_Wait(BgHeavyBlock* this, PlayState* play) {
         if (!CVarGetInteger("gFasterHeavyBlockLift", 0)) {
             switch (this->dyna.actor.params & 0xFF) {
                 case HEAVYBLOCK_BREAKABLE:
-                    OnePointCutscene_Init(play, 4020, 270, &this->dyna.actor, MAIN_CAM);
+                    OnePointCutscene_Init(play, player, 4020, 270, &this->dyna.actor, MAIN_CAM);
                     break;
                 case HEAVYBLOCK_UNBREAKABLE:
-                    OnePointCutscene_Init(play, 4021, 220, &this->dyna.actor, MAIN_CAM);
+                    OnePointCutscene_Init(play, player, 4021, 220, &this->dyna.actor, MAIN_CAM);
                     break;
                 case HEAVYBLOCK_UNBREAKABLE_OUTSIDE_CASTLE:
-                    OnePointCutscene_Init(play, 4022, 210, &this->dyna.actor, MAIN_CAM);
+                    OnePointCutscene_Init(play, player, 4022, 210, &this->dyna.actor, MAIN_CAM);
                     break;
             }
         }
 
-        quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
         Quake_SetSpeed(quakeIndex, 25000);
         Quake_SetQuakeValues(quakeIndex, 1, 1, 5, 0);
         Quake_SetCountdown(quakeIndex, 10);
@@ -346,6 +350,7 @@ void BgHeavyBlock_Wait(BgHeavyBlock* this, PlayState* play) {
 
 void BgHeavyBlock_LiftedUp(BgHeavyBlock* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     f32 cosYaw;
     f32 zOffset;
@@ -364,7 +369,7 @@ void BgHeavyBlock_LiftedUp(BgHeavyBlock* this, PlayState* play) {
         zOffset = Rand_CenteredFloat(110.0f);
         cosYaw = Math_CosS(this->dyna.actor.shape.rot.y);
 
-        BgHeavyBlock_SpawnDust(play, (sinYaw * -70.0f) + (this->dyna.actor.world.pos.x + xOffset),
+        BgHeavyBlock_SpawnDust(play, playerIndex, (sinYaw * -70.0f) + (this->dyna.actor.world.pos.x + xOffset),
                                this->dyna.actor.world.pos.y + 10.0f,
                                (cosYaw * -70.0f) + (this->dyna.actor.world.pos.z + zOffset), 0.0f, -1.0f, 0.0f, 0xC);
     }
@@ -372,7 +377,7 @@ void BgHeavyBlock_LiftedUp(BgHeavyBlock* this, PlayState* play) {
     this->timer++;
 
     if (!CVarGetInteger("gFasterHeavyBlockLift", 0)) {
-        func_8002DF54(play, &player->actor, 8);
+        func_8002DF54(play, player, &player->actor, 8);
     }
 
     // if parent is NULL, link threw it
@@ -383,6 +388,8 @@ void BgHeavyBlock_LiftedUp(BgHeavyBlock* this, PlayState* play) {
 }
 
 void BgHeavyBlock_Fly(BgHeavyBlock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 bgId;
     s32 quakeIndex;
     Vec3f pos;
@@ -405,14 +412,14 @@ void BgHeavyBlock_Fly(BgHeavyBlock* this, PlayState* play) {
                 Flags_SetSwitch(play, (this->dyna.actor.params >> 8) & 0x3F);
                 Actor_Kill(&this->dyna.actor);
 
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIndex, 28000);
                 Quake_SetQuakeValues(quakeIndex, 14, 2, 100, 0);
                 Quake_SetCountdown(quakeIndex, 30);
 
                 // We don't want this arbitrarily long quake with the enhancement enabled
                 if (!CVarGetInteger("gFasterHeavyBlockLift", 0)) {
-                    quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 2);
+                    quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 2);
                     Quake_SetSpeed(quakeIndex, 12000);
                     Quake_SetQuakeValues(quakeIndex, 5, 0, 0, 0);
                     Quake_SetCountdown(quakeIndex, 999);
@@ -424,7 +431,7 @@ void BgHeavyBlock_Fly(BgHeavyBlock* this, PlayState* play) {
             case HEAVYBLOCK_UNBREAKABLE_OUTSIDE_CASTLE:
                 Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
 
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIndex, 28000);
                 Quake_SetQuakeValues(quakeIndex, 16, 2, 120, 0);
                 Quake_SetCountdown(quakeIndex, 40);
@@ -435,7 +442,7 @@ void BgHeavyBlock_Fly(BgHeavyBlock* this, PlayState* play) {
             case HEAVYBLOCK_UNBREAKABLE:
                 Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_BUYOSTAND_STOP_U);
 
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIndex, 28000);
                 Quake_SetQuakeValues(quakeIndex, 14, 2, 100, 0);
                 Quake_SetCountdown(quakeIndex, 40);
@@ -443,7 +450,7 @@ void BgHeavyBlock_Fly(BgHeavyBlock* this, PlayState* play) {
                 this->actionFunc = BgHeavyBlock_Land;
                 break;
             default:
-                quakeIndex = Quake_Add(GET_ACTIVE_CAM(play), 3);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIndex, 28000);
                 Quake_SetQuakeValues(quakeIndex, 14, 2, 100, 0);
                 Quake_SetCountdown(quakeIndex, 40);
@@ -458,6 +465,8 @@ void BgHeavyBlock_DoNothing(BgHeavyBlock* this, PlayState* play) {
 }
 
 void BgHeavyBlock_Land(BgHeavyBlock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
 
     if (Math_SmoothStepToS(&this->dyna.actor.shape.rot.x, 0x8AD0, 6, 2000, 100) != 0) {
@@ -469,13 +478,13 @@ void BgHeavyBlock_Land(BgHeavyBlock* this, PlayState* play) {
         this->dyna.actor.home.pos = this->dyna.actor.world.pos;
         switch (this->dyna.actor.params & 0xFF) {
             case HEAVYBLOCK_UNBREAKABLE_OUTSIDE_CASTLE:
-                BgHeavyBlock_SpawnDust(play, Rand_CenteredFloat(30.0f) + 1678.0f, Rand_ZeroFloat(100.0f) + 1286.0f,
+                BgHeavyBlock_SpawnDust(play, playerIndex, Rand_CenteredFloat(30.0f) + 1678.0f, Rand_ZeroFloat(100.0f) + 1286.0f,
                                        Rand_CenteredFloat(30.0f) + 552.0f, 0.0f, 0.0f, 0.0f, 0);
-                BgHeavyBlock_SpawnDust(play, Rand_CenteredFloat(30.0f) + 1729.0f, Rand_ZeroFloat(80.0f) + 1269.0f,
+                BgHeavyBlock_SpawnDust(play, playerIndex, Rand_CenteredFloat(30.0f) + 1729.0f, Rand_ZeroFloat(80.0f) + 1269.0f,
                                        Rand_CenteredFloat(30.0f) + 600.0f, 0.0f, 0.0f, 0.0f, 0);
                 break;
             case HEAVYBLOCK_UNBREAKABLE:
-                BgHeavyBlock_SpawnDust(play, Rand_CenteredFloat(100.0f) + -735.0f, 29.0f,
+                BgHeavyBlock_SpawnDust(play, playerIndex, Rand_CenteredFloat(100.0f) + -735.0f, 29.0f,
                                        Rand_CenteredFloat(100.0f) + -3418.0f, 0.0f, 0.0f, 0.0f, 3);
                 break;
         }

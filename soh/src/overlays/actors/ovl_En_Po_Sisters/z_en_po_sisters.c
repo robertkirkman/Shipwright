@@ -383,6 +383,7 @@ void func_80AD98F4(EnPoSisters* this, PlayState* play) {
 }
 
 void func_80AD99D4(EnPoSisters* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->unk_19A = 0;
     this->actor.speedXZ = 0.0f;
     this->actor.world.pos.y += 42.0f;
@@ -390,7 +391,7 @@ void func_80AD99D4(EnPoSisters* this, PlayState* play) {
     this->actor.flags &= ~ACTOR_FLAG_0;
     this->unk_199 = 0;
     this->actionFunc = func_80ADAFC0;
-    OnePointCutscene_Init(play, 3190, 999, &this->actor, MAIN_CAM);
+    OnePointCutscene_Init(play, player, 3190, 999, &this->actor, MAIN_CAM);
 }
 
 void func_80AD9A54(EnPoSisters* this, PlayState* play) {
@@ -467,11 +468,12 @@ void func_80AD9D44(EnPoSisters* this) {
 }
 
 void func_80AD9DF0(EnPoSisters* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Animation_MorphToPlayOnce(&this->skelAnime, &gPoeSistersAppearDisappearAnim, -5.0f);
     this->unk_198 = 1;
     this->unk_199 &= ~0x80;
     this->actionFunc = func_80ADB4B0;
-    OnePointCutscene_Init(play, 3180, 156, &this->actor, MAIN_CAM);
+    OnePointCutscene_Init(play, player, 3180, 156, &this->actor, MAIN_CAM);
 }
 
 void func_80AD9E60(EnPoSisters* this, u16 playerIndex) {
@@ -1067,13 +1069,14 @@ void func_80ADBBF4(EnPoSisters* this, PlayState* play) {
 }
 
 void func_80ADBC88(EnPoSisters* this, PlayState* play) {
-    if (D_80ADD784 != 0 || !Player_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    if (D_80ADD784 != 0 || !Player_InCsMode(play, player)) {
         if (this->unk_19A != 0) {
             this->unk_19A--;
         }
         if (this->unk_19A == 30) {
             if (this->unk_194 == 0) {
-                OnePointCutscene_Init(play, 3140, 999, NULL, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 3140, 999, NULL, MAIN_CAM);
             }
             D_80ADD784 = 1;
         }
@@ -1376,6 +1379,8 @@ void EnPoSisters_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s
 
 void EnPoSisters_Draw(Actor* thisx, PlayState* play) {
     EnPoSisters* this = (EnPoSisters*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u8 phi_s5 = 0;
     f32 phi_f20;
     s32 i;
@@ -1442,7 +1447,7 @@ void EnPoSisters_Draw(Actor* thisx, PlayState* play) {
         gDPPipeSync(POLY_XLU_DISP++);
         gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, temp_s7->r, temp_s7->g, temp_s7->b, phi_s5);
         Matrix_Translate(this->unk_234[i].x, this->unk_234[i].y, this->unk_234[i].z, MTXMODE_NEW);
-        Matrix_RotateZYX(0, (s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x8000), 0, MTXMODE_APPLY);
+        Matrix_RotateZYX(0, (s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000), 0, MTXMODE_APPLY);
         if (this->actionFunc == func_80ADAFC0) {
             phi_f20 = (this->unk_19A - i) * 0.025f + 0.5f;
             phi_f20 = CLAMP(phi_f20, 0.5f, 0.8f) * 0.007f;

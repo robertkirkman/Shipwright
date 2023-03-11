@@ -381,7 +381,7 @@ s32 EnGoroiwa_MoveDownToNextWaypoint(EnGoroiwa* this, PlayState* play) {
     if (this->actor.velocity.y < 0.0f && this->actor.world.pos.y <= nextPointY) {
         if (this->bounceCount == 0) {
             if (this->actor.xzDistToPlayer[playerIndex] < 600.0f) {
-                quakeIdx = Quake_Add(play->cameraPtrs[playerIndex], 3);
+                quakeIdx = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 3);
                 Quake_SetSpeed(quakeIdx, -0x3CB0);
                 Quake_SetQuakeValues(quakeIdx, 3, 0, 0, 0);
                 Quake_SetCountdown(quakeIdx, 7);

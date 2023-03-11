@@ -632,15 +632,17 @@ s32 func_80AF383C(EnRu2* this, PlayState* play) {
 }
 
 void func_80AF3878(EnRu2* this, PlayState* play) {
-    if (func_80AF383C(this, play) && !Play_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    if (func_80AF383C(this, play) && !Play_InCsMode(play, player)) {
         this->action = 16;
-        this->subCamId = OnePointCutscene_Init(play, 3130, -99, &this->actor, MAIN_CAM);
+        this->subCamId = OnePointCutscene_Init(play, player, 3130, -99, &this->actor, MAIN_CAM);
     }
 }
 
 void func_80AF38D0(EnRu2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     this->action = 16;
-    this->subCamId = OnePointCutscene_Init(play, 3130, -99, &this->actor, MAIN_CAM);
+    this->subCamId = OnePointCutscene_Init(play, player, 3130, -99, &this->actor, MAIN_CAM);
 }
 
 void func_80AF390C(EnRu2* this, PlayState* play) {
@@ -676,7 +678,7 @@ void func_80AF39DC(EnRu2* this, PlayState* play) {
             if (this->unk_2C2 % 6 == 3) {
                 // "uorya-!" (screeming sound)
                 osSyncPrintf("うおりゃー！ \n");
-                func_8005B1A4(play->cameraPtrs[playerIndex]);
+                func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
                 player->actor.world.pos.x = 820.0f;
                 player->actor.world.pos.y = 0.0f;
                 player->actor.world.pos.z = 180.0f;
@@ -687,7 +689,7 @@ void func_80AF39DC(EnRu2* this, PlayState* play) {
     this->unk_2C3 = dialogState;
     if (Message_GetState(msgCtx) == TEXT_STATE_CLOSING) {
         this->action = 18;
-        func_8005B1A4(play->cameraPtrs[playerIndex]);
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
     }
 }
 
@@ -701,9 +703,10 @@ void func_80AF3ADC(EnRu2* this, PlayState* play) {
 }
 
 void func_80AF3B74(EnRu2* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->unk_2C0 > ((((u16)(kREG(3) + 0x28)) + ((u16)(kREG(2) + 0x96))) & 0xFFFF)) {
         Actor_Kill(&this->actor);
-        OnePointCutscene_EndCutscene(play, this->subCamId);
+        OnePointCutscene_EndCutscene(play, player, this->subCamId);
     }
 }
 

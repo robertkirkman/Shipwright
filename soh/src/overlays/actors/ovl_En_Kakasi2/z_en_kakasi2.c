@@ -129,7 +129,7 @@ void func_80A90264(EnKakasi2* this, PlayState* play) {
         Collider_InitCylinder(play, &this->collider);
         Collider_SetCylinder(play, &this->collider, &this->actor, &sCylinderInit);
         SkelAnime_InitFlex(play, &this->skelAnime, &object_ka_Skel_0065B0, &object_ka_Anim_000214, NULL, NULL, 0);
-        OnePointCutscene_Attention(play, &this->actor);
+        OnePointCutscene_Attention(play, player, &this->actor);
         this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_27;
 
         func_80078884(NA_SE_SY_CORRECT_CHIME);
@@ -155,7 +155,7 @@ void func_80A90264(EnKakasi2* this, PlayState* play) {
             Collider_SetCylinder(play, &this->collider, &this->actor, &sCylinderInit);
             SkelAnime_InitFlex(play, &this->skelAnime, &object_ka_Skel_0065B0, &object_ka_Anim_000214, NULL, NULL,
                                0);
-            OnePointCutscene_Attention(play, &this->actor);
+            OnePointCutscene_Attention(play, player, &this->actor);
             func_80078884(NA_SE_SY_CORRECT_CHIME);
 
             this->actor.flags |= ACTOR_FLAG_0 | ACTOR_FLAG_27;

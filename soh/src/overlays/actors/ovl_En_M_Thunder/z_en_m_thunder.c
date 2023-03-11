@@ -63,7 +63,7 @@ void func_80A9EFE0(EnMThunder* this, EnMThunderActionFunc actionFunc) {
 void EnMThunder_Init(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnMThunder* this = (EnMThunder*)thisx;
-    Player* player = GET_PLAYER(play); // init
+    Player* player = Player_NearestToActor(thisx, play);
 
     Collider_InitCylinder(play, &this->collider);
     Collider_SetCylinder(play, &this->collider, &this->actor, &D_80AA0420);
@@ -246,7 +246,7 @@ void func_80A9F408(EnMThunder* this, PlayState* play) {
         func_800F4254(&player->actor.projectedPos, 0);
     }
 
-    if (Play_InCsMode(play)) {
+    if (Play_InCsMode(play, player)) {
         Actor_Kill(&this->actor);
     }
 }
@@ -296,7 +296,7 @@ void func_80A9F9B4(EnMThunder* this, PlayState* play) {
 
     func_80A9F938(this, play);
 
-    if (Play_InCsMode(play)) {
+    if (Play_InCsMode(play, player)) {
         Actor_Kill(&this->actor);
     }
 }

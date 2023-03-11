@@ -142,9 +142,10 @@ void BgJyaBombchuiwa_SetupWaitForExplosion(BgJyaBombchuiwa* this, PlayState* pla
 }
 
 void BgJyaBombchuiwa_WaitForExplosion(BgJyaBombchuiwa* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if ((this->collider.base.acFlags & AC_HIT) || (this->timer > 0)) {
         if (this->timer == 0) {
-            OnePointCutscene_Init(play, 3410, -99, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3410, -99, &this->actor, MAIN_CAM);
         }
         this->timer++;
         if (this->timer > 10) {

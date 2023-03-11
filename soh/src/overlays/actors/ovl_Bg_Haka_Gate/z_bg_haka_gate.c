@@ -268,8 +268,9 @@ void BgHakaGate_FloorOpen(BgHakaGate* this, PlayState* play) {
 }
 
 void BgHakaGate_GateWait(BgHakaGate* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (Flags_GetSwitch(play, this->switchFlag)) {
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         this->actionFunc = BgHakaGate_GateOpen;
     }
 }
@@ -313,6 +314,8 @@ void BgHakaGate_Update(Actor* thisx, PlayState* play) {
 
 void BgHakaGate_DrawFlame(BgHakaGate* this, PlayState* play) {
     Actor* thisx = &this->dyna.actor;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 scale;
 
     if (this->vFlameScale > 0) {
@@ -326,7 +329,7 @@ void BgHakaGate_DrawFlame(BgHakaGate* this, PlayState* play) {
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
 
         Matrix_Translate(thisx->world.pos.x, thisx->world.pos.y + 15.0f, thisx->world.pos.z, MTXMODE_NEW);
-        Matrix_RotateY(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) * (M_PI / 0x8000), MTXMODE_APPLY);
+        Matrix_RotateY(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) * (M_PI / 0x8000), MTXMODE_APPLY);
         scale = this->vFlameScale * 0.00001f;
         Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
         gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),

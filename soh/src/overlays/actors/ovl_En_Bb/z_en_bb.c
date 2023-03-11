@@ -1304,6 +1304,8 @@ static Vec3f sFireIceOffsets[] = {
 void EnBb_Draw(Actor* thisx, PlayState* play) {
     s32 pad;
     EnBb* this = (EnBb*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f blureBase1 = { 0.0f, 5000.0f, 0.0f };
     Vec3f blureBase2 = { 0.0f, 2000.0f, 0.0f };
     Vec3f blureVtx1;
@@ -1358,7 +1360,7 @@ void EnBb_Draw(Actor* thisx, PlayState* play) {
                                         0x20, 0x80));
             gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, 255, 255, this->flamePrimBlue, this->flamePrimAlpha);
             gDPSetEnvColor(POLY_XLU_DISP++, this->flameEnvColor.r, this->flameEnvColor.g, this->flameEnvColor.b, 0);
-            Matrix_RotateY(((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->actor.shape.rot.y + 0x8000)) *
+            Matrix_RotateY(((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->actor.shape.rot.y + 0x8000)) *
                                (M_PI / 0x8000),
                            MTXMODE_APPLY);
             Matrix_Scale(this->flameScaleX * 0.01f, this->flameScaleY * 0.01f, 1.0f, MTXMODE_APPLY);

@@ -265,8 +265,8 @@ void EnWallmas_SetupTakePlayer(EnWallmas* this, PlayState* play) {
     this->actor.velocity.y = 0.0f;
 
     this->yTarget = this->actor.yDistToPlayer[playerIndex];
-    func_8002DF38(play, &this->actor, 0x25);
-    OnePointCutscene_Init(play, 9500, 9999, &this->actor, MAIN_CAM);
+    func_8002DF38(play, player, &this->actor, 0x25);
+    OnePointCutscene_Init(play, player, 9500, 9999, &this->actor, MAIN_CAM);
 }
 
 void EnWallmas_ProximityOrSwitchInit(EnWallmas* this) {
@@ -326,7 +326,7 @@ void EnWallmas_Drop(EnWallmas* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
     u16 playerIndex = Player_GetIndex(player, play);
 
-    if (!Player_InCsMode(play) && !(player->stateFlags2 & 0x10) && (player->invincibilityTimer >= 0) &&
+    if (!Player_InCsMode(play, player) && !(player->stateFlags2 & 0x10) && (player->invincibilityTimer >= 0) &&
         (this->actor.xzDistToPlayer[playerIndex] < 30.0f) && (this->actor.yDistToPlayer[playerIndex] < -5.0f) &&
         (-(f32)(player->cylinder.dim.height + 10) < this->actor.yDistToPlayer[playerIndex])) {
         EnWallmas_SetupTakePlayer(this, play);

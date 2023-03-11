@@ -116,11 +116,12 @@ void BgHidanSima_Destroy(Actor* thisx, PlayState* play) {
 
 void func_8088E518(BgHidanSima* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Math_StepToF(&this->dyna.actor.world.pos.y, this->dyna.actor.home.pos.y, 3.4f);
     if (func_8004356C(&this->dyna) && !(player->stateFlags1 & 0x6000)) {
         this->timer = 20;
-        this->dyna.actor.world.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) + 0x4000;
+        this->dyna.actor.world.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x4000;
         if (this->dyna.actor.home.pos.y <= this->dyna.actor.world.pos.y) {
             this->actionFunc = func_8088E5D0;
         } else {

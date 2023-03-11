@@ -259,7 +259,7 @@ void EnMb_SetupAction(EnMb* this, EnMbActionFunc actionFunc) {
 void EnMb_Init(Actor* thisx, PlayState* play) {
     EnMb* this = (EnMb*)thisx;
     s32 pad;
-    Player* player = GET_PLAYER(play); // actor init
+    Player* player = Player_NearestToActor(thisx, play);
     s16 relYawFromPlayer;
 
     Actor_ProcessInitChain(&this->actor, sInitChain);
@@ -870,7 +870,7 @@ void EnMb_ClubAttack(EnMb* this, PlayState* play) {
                     player->invincibilityTimer = 0;
                 } else {
                     player->invincibilityTimer = 0;
-                    play->damagePlayer(play, -8);
+                    play->damagePlayer(play, player, -8);
                 }
             }
 
@@ -954,7 +954,7 @@ void EnMb_SpearPatrolPrepareAndCharge(EnMb* this, PlayState* play) {
                         player->invincibilityTimer = 0;
                     } else {
                         player->invincibilityTimer = 0;
-                        play->damagePlayer(play, -8);
+                        play->damagePlayer(play, player, -8);
                     }
                 }
                 if (!(this->attackCollider.base.atFlags & AT_BOUNCED)) {
@@ -1023,7 +1023,7 @@ void EnMb_SpearPatrolImmediateCharge(EnMb* this, PlayState* play) {
                         player->invincibilityTimer = 0;
                     } else {
                         player->invincibilityTimer = 0;
-                        play->damagePlayer(play, -8);
+                        play->damagePlayer(play, player, -8);
                     }
                 }
                 if (!(this->attackCollider.base.atFlags & AT_BOUNCED)) {
@@ -1086,9 +1086,7 @@ void EnMb_ClubDamaged(EnMb* this, PlayState* play) {
             Animation_PlayOnce(&this->skelAnime, &gEnMbClubStandUpAnim);
             this->timer3 = 0;
             func_800AA000(this->actor.xzDistToPlayer[playerIndex], 0xFF, 0x14, 0x96);
-            for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                Camera_AddQuake(&play->mainCameras[0], 2, 25, 5);
-            }
+            Camera_AddQuake(&play->mainCameras[playerIndex], 2, 25, 5);
         } else {
             EnMb_SetupClubWaitPlayerNear(this);
         }

@@ -58,7 +58,7 @@ void OceffStorm_Init(Actor* thisx, PlayState* play) {
 
 void OceffStorm_Destroy(Actor* thisx, PlayState* play) {
     OceffStorm* this = (OceffStorm*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
 
     func_800876C8(play);
     if (gSaveContext.nayrusLoveTimer != 0) {
@@ -114,10 +114,11 @@ void OceffStorm_UnkAction(OceffStorm* this, PlayState* play) {
 
 void OceffStorm_Update(Actor* thisx, PlayState* play) {
     OceffStorm* this = (OceffStorm*)thisx;
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->actor.world.pos = player->actor.world.pos;
-    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(play));
+    this->actor.shape.rot.y = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play));
     this->actionFunc(this, play);
 }
 

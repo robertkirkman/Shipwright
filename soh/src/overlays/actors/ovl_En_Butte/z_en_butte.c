@@ -110,6 +110,8 @@ void EnButte_UpdateTransformationEffect(void) {
 }
 
 void EnButte_DrawTransformationEffect(EnButte* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f D_809CE3C4 = { 0.0f, 0.0f, -3.0f };
     Vec3f sp5C;
     s32 alpha;
@@ -122,7 +124,7 @@ void EnButte_DrawTransformationEffect(EnButte* this, PlayState* play) {
     alpha = Math_SinS(sTransformationEffectAlpha) * 250;
     alpha = CLAMP(alpha, 0, 255);
 
-    Camera_GetCamDir(&camDir, GET_ACTIVE_CAM(play));
+    Camera_GetCamDir(&camDir, GET_ACTIVE_CAM(playerIndex, play));
     Matrix_RotateY(camDir.y * (M_PI / 0x8000), MTXMODE_NEW);
     Matrix_RotateX(camDir.x * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateZ(camDir.z * (M_PI / 0x8000), MTXMODE_APPLY);

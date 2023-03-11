@@ -105,7 +105,7 @@ void BgJyaLift_DelayMove(BgJyaLift* this, PlayState* play) {
                                                        player->actor.world.pos.x <   139.0f &&
                                                        player->actor.world.pos.z > -1172.0f &&
                                                        player->actor.world.pos.z < -1009.0f)) {
-                OnePointCutscene_Init(play, 3430, -99, &this->dyna.actor, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 3430, -99, &this->dyna.actor, MAIN_CAM);
             }
             BgJyaLift_SetupMove(this);
         }
@@ -117,6 +117,8 @@ void BgJyaLift_SetupMove(BgJyaLift* this) {
 }
 
 void BgJyaLift_Move(BgJyaLift* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 distFromBottom;
     f32 tempVelocity;
 
@@ -124,7 +126,7 @@ void BgJyaLift_Move(BgJyaLift* this, PlayState* play) {
     tempVelocity = (this->dyna.actor.velocity.y < 0.2f) ? 0.2f : this->dyna.actor.velocity.y;
     distFromBottom = Math_SmoothStepToF(&this->dyna.actor.world.pos.y, 973.0f, 0.1f, tempVelocity, 0.2f);
     if ((this->dyna.actor.world.pos.y < 1440.0f) && (1440.0f <= this->dyna.actor.prevPos.y)) {
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
     }
     if (fabsf(distFromBottom) < 0.001f) {
         BgJyaLift_SetFinalPosY(this);
@@ -142,15 +144,17 @@ void BgJyaLift_SetFinalPosY(BgJyaLift* this) {
 void BgJyaLift_Update(Actor* thisx, PlayState* play2) {
     BgJyaLift* this = (BgJyaLift*)thisx;
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (this->actionFunc != NULL) {
         this->actionFunc(this, play);
     }
     if ((this->dyna.unk_160 & 4) && ((this->unk_16B & 4) == 0)) {
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DIRECTED_YAW);
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DIRECTED_YAW);
     } else if (((this->dyna.unk_160) & 4) == 0 && ((this->unk_16B & 4)) &&
-               (play->cameraPtrs[MAIN_CAM]->setting == CAM_SET_DIRECTED_YAW)) {
-        Camera_ChangeSetting(play->cameraPtrs[MAIN_CAM], CAM_SET_DUNGEON0);
+               (play->cameraPtrs[playerIndex][MAIN_CAM]->setting == CAM_SET_DIRECTED_YAW)) {
+        Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], CAM_SET_DUNGEON0);
     }
     this->unk_16B = this->dyna.unk_160;
 

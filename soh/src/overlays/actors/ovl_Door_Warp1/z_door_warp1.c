@@ -468,15 +468,15 @@ s32 DoorWarp1_PlayerInRange(DoorWarp1* this, PlayState* play) {
 void GivePlayerRandoReward(DoorWarp1* this, Player* player, PlayState* play, u8 ruto, u8 adult) {
     GetItemEntry getItemEntry = Randomizer_GetItemFromActor(this->actor.id, play->sceneNum, 0x00, GI_NONE);
 
-    if (this->actor.parent != NULL && this->actor.parent->id == GET_PLAYER(play)->actor.id &&
+    if (this->actor.parent != NULL && this->actor.parent->id == player->actor.id &&
         !Flags_GetTreasure(play, 0x1F)) {
         Flags_SetTreasure(play, 0x1F);
     } else if (!Flags_GetTreasure(play, 0x1F)) {
         GiveItemEntryFromActor(&this->actor, play, getItemEntry, 10000.0f, 100.0f);
-    } else if (!Player_InBlockingCsMode(play, GET_PLAYER(play))) {
+    } else if (!Player_InBlockingCsMode(play, player)) {
         if (adult) {
-            OnePointCutscene_Init(play, 0x25E8, 999, &this->actor, MAIN_CAM);
-            func_8002DF54(play, &this->actor, 10);
+            OnePointCutscene_Init(play, player, 0x25E8, 999, &this->actor, MAIN_CAM);
+            func_8002DF54(play, player, &this->actor, 10);
             player->unk_450.x = this->actor.world.pos.x;
             player->unk_450.z = this->actor.world.pos.z;
             this->unk_1B2 = 20;
@@ -484,14 +484,14 @@ void GivePlayerRandoReward(DoorWarp1* this, Player* player, PlayState* play, u8 
         } else {
             if (ruto) {
                 this->rutoWarpState = WARP_BLUE_RUTO_STATE_ENTERED;
-                func_8002DF54(play, &this->actor, 10);
+                func_8002DF54(play, player, &this->actor, 10);
                 this->unk_1B2 = 1;
                 DoorWarp1_SetupAction(this, func_80999EE0);
             } else {
                 Audio_PlaySoundGeneral(NA_SE_EV_LINK_WARP, &player->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                                        &D_801333E8);
-                OnePointCutscene_Init(play, 0x25E7, 999, &this->actor, MAIN_CAM);
-                func_8002DF54(play, &this->actor, 10);
+                OnePointCutscene_Init(play, player, 0x25E7, 999, &this->actor, MAIN_CAM);
+                func_8002DF54(play, player, &this->actor, 10);
 
                 player->unk_450.x = this->actor.world.pos.x;
                 player->unk_450.z = this->actor.world.pos.z;
@@ -518,8 +518,8 @@ void DoorWarp1_ChildWarpIdle(DoorWarp1* this, PlayState* play) {
 
         Audio_PlaySoundGeneral(NA_SE_EV_LINK_WARP, &player->actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                                &D_801333E8);
-        OnePointCutscene_Init(play, 0x25E7, 999, &this->actor, MAIN_CAM);
-        func_8002DF54(play, &this->actor, 10);
+        OnePointCutscene_Init(play, player, 0x25E7, 999, &this->actor, MAIN_CAM);
+        func_8002DF54(play, player, &this->actor, 10);
 
         player->unk_450.x = this->actor.world.pos.x;
         player->unk_450.z = this->actor.world.pos.z;
@@ -608,17 +608,18 @@ void DoorWarp1_ChildWarpOut(DoorWarp1* this, PlayState* play) {
 }
 
 void DoorWarp1_RutoWarpIdle(DoorWarp1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Audio_PlayActorSound2(&this->actor, NA_SE_EV_WARP_HOLE - SFX_FLAG);
 
     if (this->rutoWarpState != WARP_BLUE_RUTO_STATE_INITIAL && DoorWarp1_PlayerInRange(this, play)) {
 
         if (gSaveContext.n64ddFlag) {
-            GivePlayerRandoReward(this, GET_PLAYER(play), play, 1, 0);
+            GivePlayerRandoReward(this, player, play, 1, 0);
             return;
         }
 
         this->rutoWarpState = WARP_BLUE_RUTO_STATE_ENTERED;
-        func_8002DF54(play, &this->actor, 10);
+        func_8002DF54(play, player, &this->actor, 10);
         this->unk_1B2 = 1;
         DoorWarp1_SetupAction(this, func_80999EE0);
     }
@@ -632,10 +633,10 @@ void func_80999EE0(DoorWarp1* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
 
     if (this->rutoWarpState == WARP_BLUE_RUTO_STATE_3) {
-        Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-        sRutoWarpSubCamId = Play_CreateSubCamera(play);
+        Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+        sRutoWarpSubCamId = Play_CreateSubCamera(play, player);
 
-        Play_ChangeCameraStatus(play, sRutoWarpSubCamId, CAM_STAT_ACTIVE);
+        Play_ChangeCameraStatus(play, player, sRutoWarpSubCamId, CAM_STAT_ACTIVE);
         at.x = this->actor.world.pos.x;
         at.y = 49.0f;
         at.z = this->actor.world.pos.z;
@@ -643,8 +644,8 @@ void func_80999EE0(DoorWarp1* this, PlayState* play) {
         eye.y = 43.0f;
         eye.z = player->actor.world.pos.z;
 
-        Play_CameraSetAtEye(play, sRutoWarpSubCamId, &at, &eye);
-        Play_CameraSetFov(play, sRutoWarpSubCamId, 90.0f);
+        Play_CameraSetAtEye(play, player, sRutoWarpSubCamId, &at, &eye);
+        Play_CameraSetFov(play, player, sRutoWarpSubCamId, 90.0f);
         this->rutoWarpState = WARP_BLUE_RUTO_STATE_TALKING;
         if (!gSaveContext.n64ddFlag) {
             Message_StartTextbox(play, 0x4022, NULL);
@@ -654,11 +655,12 @@ void func_80999EE0(DoorWarp1* this, PlayState* play) {
 }
 
 void func_80999FE4(DoorWarp1* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_NONE) {
         Audio_PlaySoundGeneral(NA_SE_EV_LINK_WARP, &this->actor.projectedPos, 4, &D_801333E0, &D_801333E0, &D_801333E8);
-        OnePointCutscene_Init(play, 0x25E9, 999, &this->actor, MAIN_CAM);
-        Play_CopyCamera(play, -1, sRutoWarpSubCamId);
-        Play_ChangeCameraStatus(play, sRutoWarpSubCamId, CAM_STAT_WAIT);
+        OnePointCutscene_Init(play, player, 0x25E9, 999, &this->actor, MAIN_CAM);
+        Play_CopyCamera(play, player, -1, sRutoWarpSubCamId);
+        Play_ChangeCameraStatus(play, player, sRutoWarpSubCamId, CAM_STAT_WAIT);
         this->rutoWarpState = WARP_BLUE_RUTO_STATE_WARPING;
         DoorWarp1_SetupAction(this, DoorWarp1_RutoWarpOut);
     }
@@ -743,8 +745,8 @@ void DoorWarp1_AdultWarpIdle(DoorWarp1* this, PlayState* play) {
             return;
         }
 
-        OnePointCutscene_Init(play, 0x25E8, 999, &this->actor, MAIN_CAM);
-        func_8002DF54(play, &this->actor, 10);
+        OnePointCutscene_Init(play, player, 0x25E8, 999, &this->actor, MAIN_CAM);
+        func_8002DF54(play, player, &this->actor, 10);
         player->unk_450.x = this->actor.world.pos.x;
         player->unk_450.z = this->actor.world.pos.z;
         this->unk_1B2 = 20;

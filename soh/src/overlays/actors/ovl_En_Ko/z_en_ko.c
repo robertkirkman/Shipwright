@@ -949,9 +949,10 @@ s32 EnKo_AdultSaved(EnKo* this, PlayState* play) {
 }
 void func_80A9877C(EnKo* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if ((play->csCtx.state != 0) || (gDbgCamEnabled != 0)) {
-        this->interactInfo.trackPos = play->views[0].eye;
+        this->interactInfo.trackPos = play->views[playerIndex].eye;
         this->interactInfo.yOffset = 40.0f;
         if (ENKO_TYPE != ENKO_TYPE_CHILD_0) {
             Npc_TrackPoint(&this->actor, &this->interactInfo, 2, NPC_TRACKING_HEAD_AND_TORSO);
@@ -1105,7 +1106,7 @@ void func_80A98DB4(EnKo* this, PlayState* play) {
         return;
     }
     if (play->csCtx.state != 0 || gDbgCamEnabled != 0) {
-        dist = Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->views[0].eye) * 0.25f;
+        dist = Math_Vec3f_DistXYZ(&this->actor.world.pos, &play->views[playerIndex].eye) * 0.25f;
     } else {
         dist = this->actor.xzDistToPlayer[playerIndex];
     }

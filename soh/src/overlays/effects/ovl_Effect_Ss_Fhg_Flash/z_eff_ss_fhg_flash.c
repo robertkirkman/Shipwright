@@ -170,7 +170,7 @@ void EffectSsFhgFlash_UpdateLightBall(PlayState* play, u32 index, EffectSs* this
 
 void EffectSsFhgFlash_UpdateShock(PlayState* play, u32 index, EffectSs* this) {
     s16 randBodypart;
-    Player* player;
+    Player* player = Player_NearestToActor(&this->actor, play);
     BossGanondrof* phantomGanon;
     s16 rand;
 
@@ -178,7 +178,6 @@ void EffectSsFhgFlash_UpdateShock(PlayState* play, u32 index, EffectSs* this) {
     this->rXZRot = (this->rXZRot + rand) + 0x4000;
 
     if (this->rParam == FHGFLASH_SHOCK_PLAYER) {
-        player = GET_PLAYER(play);
         randBodypart = Rand_ZeroFloat(17.9f);
         this->pos.x = player->bodyPartsPos[randBodypart].x + Rand_CenteredFloat(10.0f);
         this->pos.y = player->bodyPartsPos[randBodypart].y + Rand_CenteredFloat(15.0f);

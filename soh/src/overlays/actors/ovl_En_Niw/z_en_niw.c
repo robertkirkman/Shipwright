@@ -343,6 +343,8 @@ void func_80AB5BF8(EnNiw* this, PlayState* play, s16 arg2) {
 }
 
 void EnNiw_SpawnAttackCucco(EnNiw* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     f32 viewX;
     f32 viewY;
     f32 viewZ;
@@ -350,12 +352,12 @@ void EnNiw_SpawnAttackCucco(EnNiw* this, PlayState* play) {
     Actor* attackCucco;
 
     if ((this->timer5 == 0) && (this->unk_296 < 7)) {
-        viewX = play->views[0].lookAt.x - play->views[0].eye.x;
-        viewY = play->views[0].lookAt.y - play->views[0].eye.y;
-        viewZ = play->views[0].lookAt.z - play->views[0].eye.z;
-        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->views[0].eye.x;
-        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->views[0].eye.y + 50.0f) + (viewY * 0.5f));
-        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->views[0].eye.z;
+        viewX = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        viewY = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        viewZ = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
+        attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + play->views[playerIndex].eye.x;
+        attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((play->views[playerIndex].eye.y + 50.0f) + (viewY * 0.5f));
+        attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->views[playerIndex].eye.z;
         attackCucco = Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_ATTACK_NIW,
                                          attackCuccoPos.x, attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0);
 
@@ -761,7 +763,8 @@ void func_80AB6F04(EnNiw* this, PlayState* play) {
 }
 
 void func_80AB70A0(EnNiw* this, PlayState* play) {
-    OnePointCutscene_Init(play, 2290, -99, &this->actor, MAIN_CAM);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    OnePointCutscene_Init(play, player, 2290, -99, &this->actor, MAIN_CAM);
     this->timer5 = 100;
     this->unk_2A2 = 1;
     this->actionFunc = func_80AB70F8;
@@ -986,9 +989,9 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
     }
     if (thisx->floorHeight <= BGCHECK_Y_MIN || thisx->floorHeight >= 32000.0f) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 上下？ ☆☆☆☆☆ %f\n" VT_RST, thisx->floorHeight);
-        cam.x = play->views[0].lookAt.x - play->views[0].eye.x;
-        cam.y = play->views[0].lookAt.y - play->views[0].eye.y;
-        cam.z = play->views[0].lookAt.z - play->views[0].eye.z;
+        cam.x = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        cam.y = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        cam.z = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
         camResult = cam.y / sqrtf(SQ(cam.x) + SQ(cam.y) + SQ(cam.z));
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｘ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.x);
         osSyncPrintf(VT_FGCOL(RED) "☆☆☆☆☆ 範囲外Ｙ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->world.pos.y);
@@ -998,7 +1001,7 @@ void EnNiw_Update(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ セットＺ！ ☆☆☆☆☆ %f\n" VT_RST, thisx->home.pos.z);
         thisx->world.pos.x = thisx->home.pos.x;
         thisx->world.pos.z = thisx->home.pos.z;
-        thisx->world.pos.y = ((thisx->home.pos.y + play->views[0].eye.y) + (camResult * 160.0f));
+        thisx->world.pos.y = ((thisx->home.pos.y + play->views[playerIndex].eye.y) + (camResult * 160.0f));
 
         if (thisx->world.pos.y < thisx->home.pos.y) {
             thisx->world.pos.y = thisx->home.pos.y + 300.0f;

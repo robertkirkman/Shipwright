@@ -108,6 +108,7 @@ void BgMoriIdomizu_SetupMain(BgMoriIdomizu* this) {
 }
 
 void BgMoriIdomizu_Main(BgMoriIdomizu* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s8 roomNum;
     Actor* thisx = &this->actor;
     s32 switchFlagSet;
@@ -120,10 +121,10 @@ void BgMoriIdomizu_Main(BgMoriIdomizu* this, PlayState* play) {
         this->targetWaterLevel = 184.0f;
     }
     if (switchFlagSet && !this->prevSwitchFlagSet) {
-        OnePointCutscene_Init(play, 3240, 70, thisx, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3240, 70, thisx, MAIN_CAM);
         this->drainTimer = 90;
     } else if (!switchFlagSet && this->prevSwitchFlagSet) {
-        OnePointCutscene_Init(play, 3240, 70, thisx, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 3240, 70, thisx, MAIN_CAM);
         this->drainTimer = 90;
         thisx->world.pos.y = 0.0f;
     }

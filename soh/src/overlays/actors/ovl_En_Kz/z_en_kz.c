@@ -399,26 +399,29 @@ void EnKz_PreMweepWait(EnKz* this, PlayState* play) {
 }
 
 void EnKz_SetupMweep(EnKz* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f unused = { 0.0f, 0.0f, 0.0f };
     Vec3f pos;
     Vec3f initPos;
 
-    this->cutsceneCamera = Play_CreateSubCamera(play);
-    this->gameplayCamera = play->activeCamera;
-    Play_ChangeCameraStatus(play, this->gameplayCamera, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, this->cutsceneCamera, CAM_STAT_ACTIVE);
+    this->cutsceneCamera = Play_CreateSubCamera(play, player);
+    this->gameplayCamera = play->activeCameras[playerIndex];
+    Play_ChangeCameraStatus(play, player, this->gameplayCamera, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, this->cutsceneCamera, CAM_STAT_ACTIVE);
     pos = this->actor.world.pos;
     initPos = this->actor.home.pos;
     pos.y += 60.0f;
     initPos.y += -100.0f;
     initPos.z += 260.0f;
-    Play_CameraSetAtEye(play, this->cutsceneCamera, &pos, &initPos);
-    func_8002DF54(play, &this->actor, 8);
+    Play_CameraSetAtEye(play, player, this->cutsceneCamera, &pos, &initPos);
+    func_8002DF54(play, player, &this->actor, 8);
     this->actor.speedXZ = 0.1f * CVarGetInteger("gMweepSpeed", 1);
     this->actionFunc = EnKz_Mweep;
 }
 
 void EnKz_Mweep(EnKz* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f unused = { 0.0f, 0.0f, 0.0f };
     Vec3f pos;
     Vec3f initPos;
@@ -428,7 +431,7 @@ void EnKz_Mweep(EnKz* this, PlayState* play) {
     pos.y += 60.0f;
     initPos.y += -100.0f;
     initPos.z += 260.0f;
-    Play_CameraSetAtEye(play, this->cutsceneCamera, &pos, &initPos);
+    Play_CameraSetAtEye(play, player, this->cutsceneCamera, &pos, &initPos);
     if ((EnKz_FollowPath(this, play) == 1) && (this->waypoint == 0)) {
         Animation_ChangeByInfo(&this->skelanime, sAnimationInfo, ENKZ_ANIM_1);
         Inventory_ReplaceItem(play, ITEM_LETTER_RUTO, ITEM_BOTTLE);
@@ -443,9 +446,10 @@ void EnKz_Mweep(EnKz* this, PlayState* play) {
 }
 
 void EnKz_StopMweep(EnKz* this, PlayState* play) {
-    Play_ChangeCameraStatus(play, this->gameplayCamera, CAM_STAT_ACTIVE);
-    Play_ClearCamera(play, this->cutsceneCamera);
-    func_8002DF54(play, &this->actor, 7);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    Play_ChangeCameraStatus(play, player, this->gameplayCamera, CAM_STAT_ACTIVE);
+    Play_ClearCamera(play, player, this->cutsceneCamera);
+    func_8002DF54(play, player, &this->actor, 7);
     this->actionFunc = EnKz_Wait;
 }
 

@@ -119,7 +119,7 @@ void EnBubble_DamagePlayer(EnBubble* this, PlayState* play) {
     u16 playerIndex = Player_GetIndex(player, play);
     s32 damage = -this->colliderSphere.elements[0].info.toucher.damage;
 
-    play->damagePlayer(play, damage);
+    play->damagePlayer(play, player, damage);
     func_8002F7A0(play, &this->actor, 6.0f, this->actor.yawTowardsPlayer[playerIndex], 6.0f);
 }
 

@@ -5332,10 +5332,10 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
         case 1: {
             Camera* camera;
 
-            sCameraId = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCameraId, CAM_STAT_ACTIVE);
-            camera = Play_GetCamera(play, MAIN_CAM);
+            sCameraId = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCameraId, CAM_STAT_ACTIVE);
+            camera = Play_GetCamera(play, player, MAIN_CAM);
             sCameraEye.x = camera->eye.x;
             sCameraEye.y = camera->eye.y;
             sCameraEye.z = camera->eye.z;
@@ -5443,12 +5443,12 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
             break;
 
         case 3: {
-            Camera* camera = Play_GetCamera(play, MAIN_CAM);
+            Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
 
             camera->eye = sCameraEye;
             camera->eyeNext = sCameraEye;
             camera->at = sCameraAt;
-            func_800C08AC(play, sCameraId, 0);
+            func_800C08AC(play, player, sCameraId, 0);
             func_80064534(play, &play->csCtx);
             D_80B7A6CC = 0;
             sCameraId = 0;
@@ -5463,11 +5463,11 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
             Camera* camera;
 
             func_80064520(play, &play->csCtx);
-            sCameraId = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCameraId, CAM_STAT_ACTIVE);
-            func_8002DF54(play, &this->actor, 5);
-            camera = Play_GetCamera(play, MAIN_CAM);
+            sCameraId = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCameraId, CAM_STAT_ACTIVE);
+            func_8002DF54(play, player, &this->actor, 5);
+            camera = Play_GetCamera(play, player, MAIN_CAM);
             sCameraEye.x = camera->eye.x;
             sCameraEye.y = camera->eye.y;
             sCameraEye.z = camera->eye.z;
@@ -5485,14 +5485,14 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
             player->actor.speedXZ = 0.0f;
 
             if (Message_GetState(&play->msgCtx) == TEXT_STATE_NONE) {
-                Camera* camera = Play_GetCamera(play, MAIN_CAM);
+                Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
 
                 camera->eye = sCameraEye;
                 camera->eyeNext = sCameraEye;
                 camera->at = sCameraAt;
-                func_800C08AC(play, sCameraId, 0);
+                func_800C08AC(play, player, sCameraId, 0);
                 func_80064534(play, &play->csCtx);
-                func_8002DF54(play, &this->actor, 7);
+                func_8002DF54(play, player, &this->actor, 7);
                 D_80B7A6CC = 0;
                 sCameraId = 0;
                 D_80B7A6D0 = 30;
@@ -5505,11 +5505,11 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
             Camera* camera;
 
             func_80064520(play, &play->csCtx);
-            sCameraId = Play_CreateSubCamera(play);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, sCameraId, CAM_STAT_ACTIVE);
-            func_8002DF54(play, &this->actor, 5);
-            camera = Play_GetCamera(play, MAIN_CAM);
+            sCameraId = Play_CreateSubCamera(play, player);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, sCameraId, CAM_STAT_ACTIVE);
+            func_8002DF54(play, player, &this->actor, 5);
+            camera = Play_GetCamera(play, player, MAIN_CAM);
             sCameraEye.x = camera->eye.x;
             sCameraEye.y = camera->eye.y;
             sCameraEye.z = camera->eye.z;
@@ -5527,7 +5527,7 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
             if ((D_80B7A6D0 == 0) && Message_ShouldAdvance(play)) {
                 D_80B7A6CC = 22;
                 D_80B7A6D0 = 40;
-                func_8002DF54(play, &this->actor, 0x1C);
+                func_8002DF54(play, player, &this->actor, 0x1C);
                 D_80B7FEE4 = 0.0f;
             }
             break;
@@ -5583,7 +5583,7 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
                 if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) ||
                     (Message_GetState(&play->msgCtx) == TEXT_STATE_NONE)) {
                     if (Message_ShouldAdvance(play)) {
-                        Camera* camera = Play_GetCamera(play, MAIN_CAM);
+                        Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
 
                         Message_CloseTextbox(play);
                         if (play->msgCtx.choiceIndex == 0) {
@@ -5594,9 +5594,9 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
                         camera->eye = sCameraEye;
                         camera->eyeNext = sCameraEye;
                         camera->at = sCameraAt;
-                        func_800C08AC(play, sCameraId, 0);
+                        func_800C08AC(play, player, sCameraId, 0);
                         func_80064534(play, &play->csCtx);
-                        func_8002DF54(play, &this->actor, 7);
+                        func_8002DF54(play, player, &this->actor, 7);
                         D_80B7A6CC = 0;
                         sCameraId = 0;
                         player->unk_860 = -5;
@@ -5615,7 +5615,7 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
     }
 
     if (sCameraId != 0) {
-        Play_CameraSetAtEye(play, sCameraId, &sCameraAt, &sCameraEye);
+        Play_CameraSetAtEye(play, player, sCameraId, &sCameraAt, &sCameraEye);
         Math_ApproachF(&D_80B7FECC, 1.0f, 1.0f, 0.02f);
 
         if (sCameraEye.y <= (WATER_SURFACE_Y(play) + 1.0f)) {
@@ -5741,7 +5741,7 @@ void Fishing_UpdateOwner(Actor* thisx, PlayState* play2) {
 
     if ((u8)D_80B7A650 > 0) {
         s32 pad;
-        Camera* camera = Play_GetCamera(play, MAIN_CAM);
+        Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
         s16 i;
         s32 pad1;
         Vec3f pos;

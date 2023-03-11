@@ -296,7 +296,7 @@ void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
         Message_StartTextbox(play, this->actor.textId, NULL);
 
         if (this->gameResult == 2) {
-            func_8002DF54(play, NULL, 8);
+            func_8002DF54(play, player, NULL, 8);
         }
         this->actionFunc = EnBomBowlMan_HandlePlayChoice;
     } else {
@@ -317,6 +317,7 @@ void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
 }
 
 void EnBomBowlMan_HandlePlayChoice(EnBomBowlMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
 
     if ((Message_GetState(&play->msgCtx) == this->dialogState) && Message_ShouldAdvance(play)) {
@@ -345,8 +346,8 @@ void EnBomBowlMan_HandlePlayChoice(EnBomBowlMan* this, PlayState* play) {
                         this->actor.textId = 0x1B;
                         Message_ContinueTextbox(play, this->actor.textId);
                         this->dialogState = TEXT_STATE_EVENT;
-                        OnePointCutscene_Init(play, 8010, -99, NULL, MAIN_CAM);
-                        func_8002DF54(play, NULL, 8);
+                        OnePointCutscene_Init(play, player, 8010, -99, NULL, MAIN_CAM);
+                        func_8002DF54(play, player, NULL, 8);
                         this->actionFunc = EnBomBowMan_SetupChooseShowPrize;
                     }
                 } else {
@@ -369,6 +370,7 @@ void EnBomBowlMan_HandlePlayChoice(EnBomBowlMan* this, PlayState* play) {
 }
 
 void func_809C41FC(EnBomBowlMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     SkelAnime_Update(&this->skelAnime);
     if ((Message_GetState(&play->msgCtx) == this->dialogState) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
@@ -381,12 +383,12 @@ void func_809C41FC(EnBomBowlMan* this, PlayState* play) {
             this->actor.textId = 0x1B;
             Message_ContinueTextbox(play, this->actor.textId);
             this->dialogState = TEXT_STATE_EVENT;
-            OnePointCutscene_Init(play, 8010, -99, NULL, MAIN_CAM);
-            func_8002DF54(play, NULL, 8);
+            OnePointCutscene_Init(play, player, 8010, -99, NULL, MAIN_CAM);
+            func_8002DF54(play, player, NULL, 8);
             this->actionFunc = EnBomBowMan_SetupChooseShowPrize;
         } else {
             if (this->gameResult == 2) {
-                func_8002DF54(play, NULL, 7);
+                func_8002DF54(play, player, NULL, 7);
             }
             this->actionFunc = EnBomBowMan_SetupRunGame;
         }
@@ -497,11 +499,13 @@ void EnBomBowMan_ChooseShowPrize(EnBomBowlMan* this, PlayState* play) {
 }
 
 void EnBomBowlMan_BeginPlayGame(EnBomBowlMan* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
 
     if ((Message_GetState(&play->msgCtx) == this->dialogState) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
         this->startedPlaying = true;
 
         if (BREG(2)) {
@@ -510,7 +514,7 @@ void EnBomBowlMan_BeginPlayGame(EnBomBowlMan* this, PlayState* play) {
 
         // "Wow"
         osSyncPrintf(VT_FGCOL(YELLOW) "☆ わー ☆ %d\n" VT_RST, play->bombchuBowlingStatus);
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actionFunc = EnBomBowMan_SetupRunGame;
     }
 }

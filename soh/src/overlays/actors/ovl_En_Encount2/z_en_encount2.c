@@ -95,7 +95,7 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
             break;
         case ENCOUNT2_ACTIVE_DEATH_MOUNTAIN:
             if ((this->deathMountainSpawnerTimer == 1) || (!this->isQuaking)) {
-                quakeIndex = Quake_Add(play->cameraPtrs[playerIndex], 1);
+                quakeIndex = Quake_Add(GET_ACTIVE_CAM(playerIndex, play), 1);
                 Quake_SetSpeed(quakeIndex, 0x7FFF);
                 Quake_SetQuakeValues(quakeIndex, 50, 0, 0, 0);
                 Quake_SetCountdown(quakeIndex, 300);
@@ -168,9 +168,9 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
     }
     if (spawnerState != ENCOUNT2_INACTIVE) {
         // Direction vector for the direction the camera is facing
-        tempVec1X = play->views[0].lookAt.x - play->views[0].eye.x;
-        tempVec1Y = play->views[0].lookAt.y - play->views[0].eye.y;
-        tempVec1Z = play->views[0].lookAt.z - play->views[0].eye.z;
+        tempVec1X = play->views[playerIndex].lookAt.x - play->views[playerIndex].eye.x;
+        tempVec1Y = play->views[playerIndex].lookAt.y - play->views[playerIndex].eye.y;
+        tempVec1Z = play->views[playerIndex].lookAt.z - play->views[playerIndex].eye.z;
 
         // Normalised direction vector for the direction the camera is facing
         magnitude = sqrtf(SQ(tempVec1X) + SQ(tempVec1Y) + SQ(tempVec1Z));
@@ -179,9 +179,9 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
         tempVec2Z = tempVec1Z / magnitude;
 
         // Position between 160 and 300 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
-        tempVec1X = play->views[0].eye.x + (tempVec2X * 300.0f);
-        tempVec1Y = play->views[0].eye.y + (tempVec2Y * 160.0f) + 400.0f;
-        tempVec1Z = play->views[0].eye.z + (tempVec2Z * 300.0f);
+        tempVec1X = play->views[playerIndex].eye.x + (tempVec2X * 300.0f);
+        tempVec1Y = play->views[playerIndex].eye.y + (tempVec2Y * 160.0f) + 400.0f;
+        tempVec1Z = play->views[playerIndex].eye.z + (tempVec2Z * 300.0f);
 
         // Position between 160 and 200 units ahead of camera depending on camera pitch, plus a 400 unit offset in +y
         // (plus some random variation)

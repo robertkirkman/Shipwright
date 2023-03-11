@@ -118,11 +118,11 @@ void EnDntJiji_Wait(EnDntJiji* this, PlayState* play) {
     u16 playerIndex = Player_GetIndex(player, play);
 
     SkelAnime_Update(&this->skelAnime);
-    if ((this->timer == 1) && (this->actor.xzDistToPlayer[playerIndex] < 150.0f) && !Play_InCsMode(play) &&
+    if ((this->timer == 1) && (this->actor.xzDistToPlayer[playerIndex] < 150.0f) && !Play_InCsMode(play, player) &&
         !(player->stateFlags1 & 0x800)) {
-        OnePointCutscene_Init(play, 2230, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 2230, -99, &this->actor, MAIN_CAM);
         this->timer = 0;
-        func_8002DF54(play, NULL, 8);
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = EnDntJiji_SetupUnburrow;
     }
 }
@@ -262,9 +262,9 @@ void EnDntJiji_Talk(EnDntJiji* this, PlayState* play) {
     SkelAnime_Update(&this->skelAnime);
     Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 3, 0x1388, 0);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
         Message_CloseTextbox(play);
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         this->actor.parent = NULL;
         func_8002F434(&this->actor, play, this->getItemId, 400.0f, 200.0f);
         this->actionFunc = EnDntJiji_SetupGivePrize;

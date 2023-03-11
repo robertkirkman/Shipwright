@@ -642,6 +642,8 @@ void func_80A5BB90(PlayState* play, Vec3f* vec, Vec3f* arg2, f32* arg3) {
 }
 
 s32 func_80A5BBBC(PlayState* play, EnHorse* this, Vec3f* pos) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f sp24;
     f32 sp20;
     f32 eyeDist;
@@ -650,7 +652,7 @@ s32 func_80A5BBBC(PlayState* play, EnHorse* this, Vec3f* pos) {
     if (fabsf(sp20) < 0.008f) {
         return false;
     }
-    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->views[0].eye);
+    eyeDist = Math3D_Vec3f_DistXYZ(pos, &play->views[playerIndex].eye);
     return func_800314D4(play, &this->actor, &sp24, sp20) || eyeDist < 100.0f;
 }
 
@@ -1739,6 +1741,8 @@ void EnHorse_SetFollowAnimation(EnHorse* this, PlayState* play);
 
 void EnHorse_Inactive(EnHorse* this, PlayState* play2) {
     PlayState* play = play2;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (DREG(53) != 0 && this->type == HORSE_EPONA) {
         DREG(53) = 0;
@@ -1749,9 +1753,9 @@ void EnHorse_Inactive(EnHorse* this, PlayState* play2) {
             gSaveContext.horseData.scene = play->sceneNum;
 
             // Focus the camera on Epona
-            Camera_SetParam(play->cameraPtrs[0], 8, this);
-            Camera_ChangeSetting(play->cameraPtrs[0], 0x38);
-            Camera_SetCameraData(play->cameraPtrs[0], 4, NULL, NULL, 0x51, 0, 0);
+            Camera_SetParam(play->cameraPtrs[playerIndex][MAIN_CAM], 8, this);
+            Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], 0x38);
+            Camera_SetCameraData(play->cameraPtrs[playerIndex][MAIN_CAM], 4, NULL, NULL, 0x51, 0, 0);
         }
     }
     if (!(this->stateFlags & ENHORSE_INACTIVE)) {
@@ -1812,6 +1816,8 @@ void EnHorse_StartMovingAnimation(EnHorse* this, s32 arg1, f32 arg2, f32 arg3);
 void EnHorse_Idle(EnHorse* this, PlayState* play) {
     this->actor.speedXZ = 0.0f;
     EnHorse_IdleAnimSounds(this, play);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     if (DREG(53) && this->type == HORSE_EPONA) {
         DREG(53) = 0;
@@ -1821,9 +1827,9 @@ void EnHorse_Idle(EnHorse* this, PlayState* play) {
                                        &D_801333E8);
                 this->followTimer = 0;
                 EnHorse_SetFollowAnimation(this, play);
-                Camera_SetParam(play->cameraPtrs[0], 8, this);
-                Camera_ChangeSetting(play->cameraPtrs[0], 0x38);
-                Camera_SetCameraData(play->cameraPtrs[0], 4, NULL, NULL, 0x51, 0, 0);
+                Camera_SetParam(play->cameraPtrs[playerIndex][MAIN_CAM], 8, this);
+                Camera_ChangeSetting(play->cameraPtrs[playerIndex][MAIN_CAM], 0x38);
+                Camera_SetCameraData(play->cameraPtrs[playerIndex][MAIN_CAM], 4, NULL, NULL, 0x51, 0, 0);
             }
         } else {
             Audio_PlaySoundGeneral(NA_SE_EV_HORSE_NEIGH, &this->actor.projectedPos, 4, &D_801333E0, &D_801333E0,

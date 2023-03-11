@@ -311,7 +311,7 @@ s32 EnXc_MinuetCS(EnXc* this, PlayState* play) {
         f32 z = player->actor.world.pos.z;
 
         if (z < -2225.0f) {
-            if (!Play_InCsMode(play)) {
+            if (!Play_InCsMode(play, player)) {
                 if (!gSaveContext.n64ddFlag) {
                     play->csCtx.segment = SEGMENTED_TO_VIRTUAL(&gMinuetCs);
                     gSaveContext.cutsceneTrigger = 1;
@@ -347,7 +347,7 @@ s32 EnXc_BoleroCS(EnXc* this, PlayState* play) {
         posRot = &player->actor.world;
         if ((posRot->pos.x > -784.0f) && (posRot->pos.x < -584.0f) && (posRot->pos.y > 447.0f) &&
             (posRot->pos.y < 647.0f) && (posRot->pos.z > -446.0f) && (posRot->pos.z < -246.0f) &&
-            !Play_InCsMode(play)) {
+            !Play_InCsMode(play, player)) {
             if (!gSaveContext.n64ddFlag) {
                 play->csCtx.segment = SEGMENTED_TO_VIRTUAL(&gDeathMountainCraterBoleroCs);
                 gSaveContext.cutsceneTrigger = 1;
@@ -388,7 +388,7 @@ s32 EnXc_SerenadeCS(EnXc* this, PlayState* play) {
         if (((CHECK_OWNED_EQUIP(EQUIP_BOOTS, 1) && !gSaveContext.n64ddFlag) ||
              (Flags_GetTreasure(play, 2) && gSaveContext.n64ddFlag)) &&
             !(gSaveContext.eventChkInf[5] & 4) && !(stateFlags & 0x20000000) &&
-            !Play_InCsMode(play)) {
+            !Play_InCsMode(play, player)) {
             if (!gSaveContext.n64ddFlag) {
                 Cutscene_SetSegment(play, &gIceCavernSerenadeCs);
                 gSaveContext.cutsceneTrigger = 1;
@@ -492,7 +492,7 @@ void func_80B3D118(PlayState* play) {
 static Vec3f D_80B42DA0;
 
 s32 D_80B41D90 = 0;
-void EnXc_SetColossusWindSFX(PlayState* play) {
+void EnXc_SetColossusWindSFX(PlayState* play, u16 playerIndex) {
     if (gSaveContext.sceneSetupIndex == 4) {
         static Vec3f sPos = { 0.0f, 0.0f, 0.0f };
         static f32 sMaxSpeed = 0.0f;
@@ -506,7 +506,7 @@ void EnXc_SetColossusWindSFX(PlayState* play) {
 
             if ((frameCount >= 120) && (frameCount < 164)) {
                 s32 pad;
-                Vec3f* eye = &play->views[0].eye;
+                Vec3f* eye = &play->views[playerIndex].eye;
 
                 if (D_80B41D90 != 0) {
                     f32 speed = Math3D_Vec3f_DistXYZ(&D_80B42DB0, eye) / 7.058922f;
@@ -926,25 +926,31 @@ void EnXc_SetupDisappear(EnXc* this, PlayState* play) {
 }
 
 void EnXc_ActionFunc0(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnXc_SetColossusAppearSFX(this, play);
-    EnXc_SetColossusWindSFX(play);
+    EnXc_SetColossusWindSFX(play, playerIndex);
     func_80B3D750(this, play);
 }
 
 void EnXc_ActionFunc1(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     EnXc_SetColossusAppearSFX(this, play);
-    EnXc_SetColossusWindSFX(play);
+    EnXc_SetColossusWindSFX(play, playerIndex);
     EnXc_SetupFallFromSkyAction(this, play);
 }
 
 void EnXc_GracefulFall(EnXc* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 animFinished = EnXc_AnimIsFinished(this);
 
     EnXc_BgCheck(this, play);
     EnXc_SetEyePattern(this);
     EnXc_SetLandingSFX(this, play);
     EnXc_SetColossusAppearSFX(this, play);
-    EnXc_SetColossusWindSFX(play);
+    EnXc_SetColossusWindSFX(play, playerIndex);
     func_80B3D8A4(this, play, animFinished);
 }
 

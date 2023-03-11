@@ -31,7 +31,7 @@ void DoorShutter_Destroy(Actor* thisx, PlayState* play);
 void DoorShutter_Update(Actor* thisx, PlayState* play);
 void DoorShutter_Draw(Actor* thisx, PlayState* play);
 
-void func_8099803C(PlayState* play, s16 y, s16 countdown, s16 arg3);
+void func_8099803C(PlayState* play, Player* player, s16 y, s16 countdown, s16 arg3);
 void DoorShutter_SetupType(DoorShutter* this, PlayState* play);
 void func_80996A54(DoorShutter* this, PlayState* play);
 void func_80996B00(DoorShutter* this, PlayState* play);
@@ -334,7 +334,7 @@ f32 func_80996840(PlayState* play, DoorShutter* this, f32 arg2, f32 arg3, f32 ar
 s32 func_809968D4(DoorShutter* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->dyna.actor, play);
 
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, player)) {
         ShutterInfo* temp_v1 = &sShutterInfo[this->unk_16C];
         f32 temp_f2 = func_80996840(play, this, (this->unk_16C != 3) ? 0.0f : 80.0f, temp_v1->e, temp_v1->f);
 
@@ -357,8 +357,8 @@ void func_80996A54(DoorShutter* this, PlayState* play) {
     if (Flags_GetClear(play, this->dyna.actor.room) || Flags_GetTempClear(play, this->dyna.actor.room)) {
         Flags_SetClear(play, this->dyna.actor.room);
         DoorShutter_SetupAction(this, func_80997150);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
-        OnePointCutscene_Attention(play, &player->actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &player->actor);
         this->unk_16F = -100;
     } else if (func_809968D4(this, play) != 0) {
         player->naviTextId = -0x202;
@@ -419,7 +419,7 @@ void func_80996C60(DoorShutter* this, PlayState* play) {
         DoorShutter_SetupAction(this, func_80997004);
         this->unk_16C = sp38;
         this->unk_170 = 0.0f;
-        Camera_ChangeDoorCam(play->cameraPtrs[playerIndex], &this->dyna.actor, player->doorBgCamIndex, 0.0f, 12, sp34, 10);
+        Camera_ChangeDoorCam(play->cameraPtrs[playerIndex][MAIN_CAM], &this->dyna.actor, player->doorBgCamIndex, 0.0f, 12, sp34, 10);
     }
 }
 
@@ -469,13 +469,13 @@ s32 func_80996E08(DoorShutter* this, PlayState* play, f32 arg2) {
 }
 
 void func_80996EE8(DoorShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (func_80996E08(this, play, 1.0f)) {
         if (Flags_GetSwitch(play, this->dyna.actor.params & 0x3F)) {
             DoorShutter_SetupAction(this, func_80997150);
-            OnePointCutscene_Attention(play, &this->dyna.actor);
+            OnePointCutscene_Attention(play, player, &this->dyna.actor);
             this->unk_16F = -100;
         } else if (func_809968D4(this, play)) {
-            Player* player = Player_NearestToActor(&this->dyna.actor, play);
             // Jabu navi text for switch doors is different
             player->naviTextId = (play->sceneNum == SCENE_BDAN) ? -0x20B : -0x202;
         }
@@ -559,7 +559,7 @@ void func_80997220(DoorShutter* this, PlayState* play) {
     this->dyna.actor.velocity.y = 0.0f;
     if (DoorShutter_SetupDoor(this, play) && !(player->stateFlags1 & 0x800)) {
         DoorShutter_SetupAction(this, func_80997568);
-        func_8002DF54(play, NULL, 2);
+        func_8002DF54(play, player, NULL, 2);
     }
 }
 
@@ -578,7 +578,7 @@ void func_809973E8(DoorShutter* this, PlayState* play) {
                                      10, false);
         }
         Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
-        quakeId = Quake_Add(Play_GetCamera(play, playerIndex), 3);
+        quakeId = Quake_Add(Play_GetCamera(play, player, playerIndex), 3);
         Quake_SetSpeed(quakeId, -32536);
         Quake_SetQuakeValues(quakeId, 2, 0, 0, 0);
         Quake_SetCountdown(quakeId, 10);
@@ -594,13 +594,15 @@ void func_80997528(DoorShutter* this, PlayState* play) {
 }
 
 void func_80997568(DoorShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->unk_16F++ > 30) {
-        func_8002DF54(play, NULL, 7);
+        func_8002DF54(play, player, NULL, 7);
         DoorShutter_SetupDoor(this, play);
     }
 }
 
 void func_809975C0(DoorShutter* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor_MoveForward(&this->dyna.actor);
     Actor_UpdateBgCheckInfo(play, &this->dyna.actor, 0.0f, 0.0f, 0.0f, 4);
     if (this->dyna.actor.bgCheckFlags & 1) {
@@ -610,7 +612,7 @@ void func_809975C0(DoorShutter* this, PlayState* play) {
 
             this->unk_164 = 10;
             Audio_PlayActorSound2(&this->dyna.actor, NA_SE_EV_STONE_BOUND);
-            func_8099803C(play, 2, 10, parent->subCameraId);
+            func_8099803C(play, player, 2, 10, parent->subCameraId);
             Actor_SpawnFloorDustRing(play, &this->dyna.actor, &this->dyna.actor.world.pos, 70.0f, 20, 8.0f, 500,
                                      10, true);
         }
@@ -682,10 +684,10 @@ s32 func_80997A34(DoorShutter* this, PlayState* play) {
     s32 phi_a1;
     s32 phi_a0;
 
-    if (Player_InCsMode(play)) {
+    if (Player_InCsMode(play, player)) {
         return true;
     }
-    phi_a0 = (s16)(Actor_WorldYawTowardPoint(&this->dyna.actor, &play->views[0].eye) - this->dyna.actor.shape.rot.y);
+    phi_a0 = (s16)(Actor_WorldYawTowardPoint(&this->dyna.actor, &play->views[playerIndex].eye) - this->dyna.actor.shape.rot.y);
     phi_a1 = (s16)(this->dyna.actor.yawTowardsPlayer[playerIndex] - this->dyna.actor.shape.rot.y);
     phi_a0 = ABS(phi_a0);
     phi_a1 = ABS(phi_a1);
@@ -739,7 +741,9 @@ void DoorShutter_Draw(Actor* thisx, PlayState* play) {
 
                 if (play->roomCtx.prevRoom.num >= 0 ||
                     transitionEntry->sides[0].room == transitionEntry->sides[1].room) {
-                    s32 yaw = Math_Vec3f_Yaw(&play->views[0].eye, &this->dyna.actor.world.pos);
+                    Player* player = Player_NearestToActor(thisx, play);
+                    u16 playerIndex = Player_GetIndex(player, play);
+                    s32 yaw = Math_Vec3f_Yaw(&play->views[playerIndex].eye, &this->dyna.actor.world.pos);
 
                     if (ABS((s16)(this->dyna.actor.shape.rot.y - yaw)) < 0x4000) {
                         Matrix_RotateY(M_PI, MTXMODE_APPLY);
@@ -773,8 +777,8 @@ void DoorShutter_Draw(Actor* thisx, PlayState* play) {
     }
 }
 
-void func_8099803C(PlayState* play, s16 y, s16 countdown, s16 camId) {
-    s16 quakeId = Quake_Add(Play_GetCamera(play, camId), 3);
+void func_8099803C(PlayState* play, Player* player, s16 y, s16 countdown, s16 camId) {
+    s16 quakeId = Quake_Add(Play_GetCamera(play, player, camId), 3);
 
     func_800A9F6C(0.0f, 180, 20, 100);
     Quake_SetSpeed(quakeId, 20000);

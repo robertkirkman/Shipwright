@@ -212,6 +212,8 @@ void EnJj_WaitForFish(EnJj* this, PlayState* play) {
 }
 
 void EnJj_BeginCutscene(EnJj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     DynaPolyActor* bodyCollisionActor = this->bodyCollisionActor;
 
     if (this->cutsceneCountdownTimer > 0) {
@@ -221,7 +223,7 @@ void EnJj_BeginCutscene(EnJj* this, PlayState* play) {
         play->csCtx.segment = &D_80A88164;
         gSaveContext.cutsceneTrigger = 1;
         func_8003EBF8(play, &play->colCtx.dyna, bodyCollisionActor->bgId);
-        func_8005B1A4(GET_ACTIVE_CAM(play));
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
         gSaveContext.eventChkInf[3] |= 0x400;
         func_80078884(NA_SE_SY_CORRECT_CHIME);
     }

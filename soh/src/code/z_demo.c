@@ -132,6 +132,7 @@ void Cutscene_DrawDebugInfo(PlayState* play, Gfx** dlist, CutsceneContext* csCtx
 void func_8006450C(PlayState* play, CutsceneContext* csCtx) {
     csCtx->state = CS_STATE_IDLE;
     csCtx->unk_0C = 0.0f;
+    csCtx->playerIndex = 0;
 }
 
 void func_80064520(PlayState* play, CutsceneContext* csCtx) {
@@ -152,7 +153,7 @@ void func_80064558(PlayState* play, CutsceneContext* csCtx) {
 }
 
 void func_800645A0(PlayState* play, CutsceneContext* csCtx) {
-    Input* input = &play->state.input[0];
+    Input* input = &play->state.input[csCtx->playerIndex < 4 ? csCtx->playerIndex : 0];
 
     if (CHECK_BTN_ALL(input->press.button, BTN_DLEFT) && (csCtx->state == CS_STATE_IDLE) &&
         (gSaveContext.sceneSetupIndex >= 4)) {
@@ -214,7 +215,7 @@ void func_800647C0(PlayState* play, CutsceneContext* csCtx) {
 
 // Command 3: Misc. Actions
 void func_80064824(PlayState* play, CutsceneContext* csCtx, CsCmdBase* cmd) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     f32 temp;
     u8 sp3F = 0;
 
@@ -317,12 +318,10 @@ void func_80064824(PlayState* play, CutsceneContext* csCtx, CsCmdBase* cmd) {
             break;
         case 16:
             if (sp3F != 0) {
-                for (u32 i = 0; i < PLAYER_COUNT; i++) {
-                    sQuakeIndex = Quake_Add(play->cameraPtrs[i], 6);
-                    Quake_SetSpeed(sQuakeIndex, 0x7FFF);
-                    Quake_SetQuakeValues(sQuakeIndex, 4, 0, 1000, 0);
-                    Quake_SetCountdown(sQuakeIndex, 800);
-                }
+                sQuakeIndex = Quake_Add(GET_ACTIVE_CAM(csCtx->playerIndex, play), 6);
+                Quake_SetSpeed(sQuakeIndex, 0x7FFF);
+                Quake_SetQuakeValues(sQuakeIndex, 4, 0, 1000, 0);
+                Quake_SetCountdown(sQuakeIndex, 800);
             }
             break;
         case 17:
@@ -492,7 +491,7 @@ void func_80065134(PlayState* play, CutsceneContext* csCtx, CsCmdDayTime* cmd) {
 
 // Command 0x3E8: Code Execution (& Terminates Cutscene?)
 void Cutscene_Command_Terminator(PlayState* play, CutsceneContext* csCtx, CsCmdBase* cmd) {
-    Player* player = GET_PLAYER(play);
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     s32 temp = 0;
 
     // Automatically skip certain cutscenes when in rando
@@ -1393,6 +1392,7 @@ void Cutscene_Command_TransitionFX(PlayState* play, CutsceneContext* csCtx, CsCm
 
 // Command 0x1 & 0x5: Camera Positions
 size_t Cutscene_Command_CameraPositions(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 relativeToLink) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     s32 shouldContinue = true;
     CsCmdBase* cmdBase = (CsCmdBase*)cmd;
     size_t size;
@@ -1407,12 +1407,12 @@ size_t Cutscene_Command_CameraPositions(PlayState* play, CutsceneContext* csCtx,
         if (csCtx->unk_1A != 0) {
             csCtx->unk_18 = cmdBase->startFrame;
             if (D_8015FCC8 != 0) {
-                Play_CameraChangeSetting(play, csCtx->unk_14, CAM_SET_CS_0);
-                Play_ChangeCameraStatus(play, D_8015FCC6, CAM_STAT_WAIT);
-                Play_ChangeCameraStatus(play, csCtx->unk_14, CAM_STAT_ACTIVE);
-                Camera_ResetAnim(Play_GetCamera(play, csCtx->unk_14));
-                Camera_SetCSParams(Play_GetCamera(play, csCtx->unk_14), csCtx->cameraFocus,
-                                   csCtx->cameraPosition, GET_PLAYER(play), relativeToLink);
+                Play_CameraChangeSetting(play, player, csCtx->unk_14, CAM_SET_CS_0);
+                Play_ChangeCameraStatus(play, player, D_8015FCC6, CAM_STAT_WAIT);
+                Play_ChangeCameraStatus(play, player, csCtx->unk_14, CAM_STAT_ACTIVE);
+                Camera_ResetAnim(Play_GetCamera(play, player, csCtx->unk_14));
+                Camera_SetCSParams(Play_GetCamera(play, player, csCtx->unk_14), csCtx->cameraFocus,
+                                   csCtx->cameraPosition, player, relativeToLink);
             }
         }
     }
@@ -1430,6 +1430,7 @@ size_t Cutscene_Command_CameraPositions(PlayState* play, CutsceneContext* csCtx,
 
 // Command 0x2 & 0x6: Camera Focus Points
 size_t Cutscene_Command_CameraFocus(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 relativeToLink) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     s32 shouldContinue = true;
     CsCmdBase* cmdBase = (CsCmdBase*)cmd;
     size_t size;
@@ -1444,12 +1445,12 @@ size_t Cutscene_Command_CameraFocus(PlayState* play, CutsceneContext* csCtx, u8*
         if (csCtx->unk_1B != 0) {
             D_8015FCC0 = cmdBase->startFrame;
             if (D_8015FCC8 != 0) {
-                Play_CameraChangeSetting(play, csCtx->unk_14, CAM_SET_CS_0);
-                Play_ChangeCameraStatus(play, D_8015FCC6, CAM_STAT_WAIT);
-                Play_ChangeCameraStatus(play, csCtx->unk_14, CAM_STAT_ACTIVE);
-                Camera_ResetAnim(Play_GetCamera(play, csCtx->unk_14));
-                Camera_SetCSParams(Play_GetCamera(play, csCtx->unk_14), csCtx->cameraFocus,
-                                   csCtx->cameraPosition, GET_PLAYER(play), relativeToLink);
+                Play_CameraChangeSetting(play, player, csCtx->unk_14, CAM_SET_CS_0);
+                Play_ChangeCameraStatus(play, player, D_8015FCC6, CAM_STAT_WAIT);
+                Play_ChangeCameraStatus(play, player, csCtx->unk_14, CAM_STAT_ACTIVE);
+                Camera_ResetAnim(Play_GetCamera(play, player, csCtx->unk_14));
+                Camera_SetCSParams(Play_GetCamera(play, player, csCtx->unk_14), csCtx->cameraFocus,
+                                   csCtx->cameraPosition, player, relativeToLink);
             }
         }
     }
@@ -1467,6 +1468,7 @@ size_t Cutscene_Command_CameraFocus(PlayState* play, CutsceneContext* csCtx, u8*
 
 // Command 0x7: ? (Related to camera positons)
 size_t Cutscene_Command_07(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 unused) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     CsCmdBase* cmdBase = (CsCmdBase*)cmd;
     size_t size;
     Vec3f sp3C;
@@ -1484,11 +1486,11 @@ size_t Cutscene_Command_07(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 
         if (csCtx->unk_1A != 0) {
             D_8015FCC2 = cmdBase->startFrame;
             if (D_8015FCC8 != 0) {
-                sp2C = Play_GetCamera(play, csCtx->unk_14);
-                sp2C->player = NULL;
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-                Play_ChangeCameraStatus(play, csCtx->unk_14, CAM_STAT_ACTIVE);
-                Play_CameraChangeSetting(play, csCtx->unk_14, CAM_SET_FREE0);
+                sp2C = Play_GetCamera(play, player, csCtx->unk_14);
+                sp2C->player = NULL; // why?
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+                Play_ChangeCameraStatus(play, player, csCtx->unk_14, CAM_STAT_ACTIVE);
+                Play_CameraChangeSetting(play, player, csCtx->unk_14, CAM_SET_FREE0);
                 sp28 = csCtx->cameraFocus->cameraRoll * 1.40625f;
                 Camera_SetParam(sp2C, 64, &sp28);
                 sp3C.x = csCtx->cameraFocus->pos.x;
@@ -1497,8 +1499,8 @@ size_t Cutscene_Command_07(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 
                 sp30.x = csCtx->cameraPosition->pos.x;
                 sp30.y = csCtx->cameraPosition->pos.y;
                 sp30.z = csCtx->cameraPosition->pos.z;
-                Play_CameraSetAtEye(play, csCtx->unk_14, &sp3C, &sp30);
-                Play_CameraSetFov(play, csCtx->unk_14, csCtx->cameraPosition->viewAngle);
+                Play_CameraSetAtEye(play, player, csCtx->unk_14, &sp3C, &sp30);
+                Play_CameraSetFov(play, player, csCtx->unk_14, csCtx->cameraPosition->viewAngle);
             }
         }
     }
@@ -1510,6 +1512,7 @@ size_t Cutscene_Command_07(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 
 
 // Command 0x8: ? (Related to camera focus points)
 size_t Cutscene_Command_08(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 unused) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     CsCmdBase* cmdBase = (CsCmdBase*)cmd;
     size_t size;
     Vec3f sp3C;
@@ -1527,19 +1530,19 @@ size_t Cutscene_Command_08(PlayState* play, CutsceneContext* csCtx, u8* cmd, u8 
         if (csCtx->unk_1B != 0) {
             D_8015FCC4 = cmdBase->startFrame;
             if (D_8015FCC8 != 0) {
-                sp2C = Play_GetCamera(play, csCtx->unk_14);
-                sp2C->player = NULL;
-                Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-                Play_ChangeCameraStatus(play, csCtx->unk_14, CAM_STAT_ACTIVE);
-                Play_CameraChangeSetting(play, csCtx->unk_14, CAM_SET_FREE0);
+                sp2C = Play_GetCamera(play, player, csCtx->unk_14);
+                sp2C->player = NULL; // why?
+                Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+                Play_ChangeCameraStatus(play, player, csCtx->unk_14, CAM_STAT_ACTIVE);
+                Play_CameraChangeSetting(play, player, csCtx->unk_14, CAM_SET_FREE0);
                 sp3C.x = csCtx->cameraFocus->pos.x;
                 sp3C.y = csCtx->cameraFocus->pos.y;
                 sp3C.z = csCtx->cameraFocus->pos.z;
                 sp30.x = csCtx->cameraPosition->pos.x;
                 sp30.y = csCtx->cameraPosition->pos.y;
                 sp30.z = csCtx->cameraPosition->pos.z;
-                Play_CameraSetAtEye(play, csCtx->unk_14, &sp3C, &sp30);
-                Play_CameraSetFov(play, csCtx->unk_14, csCtx->cameraPosition->viewAngle);
+                Play_CameraSetAtEye(play, player, csCtx->unk_14, &sp3C, &sp30);
+                Play_CameraSetFov(play, player, csCtx->unk_14, csCtx->cameraPosition->viewAngle);
             }
         }
     }
@@ -1974,6 +1977,7 @@ void Cutscene_ProcessCommands(PlayState* play, CutsceneContext* csCtx, u8* cutsc
     }
 }
 
+// cutscene
 void func_80068C3C(PlayState* play, CutsceneContext* csCtx) {
     Gfx* displayList;
     Gfx* prevDisplayList;
@@ -2011,6 +2015,7 @@ void func_80068D84(PlayState* play, CutsceneContext* csCtx) {
 }
 
 void func_80068DC0(PlayState* play, CutsceneContext* csCtx) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     s16 i;
 
     if (func_8006472C(play, csCtx, 0.0f)) {
@@ -2030,12 +2035,12 @@ void func_80068DC0(PlayState* play, CutsceneContext* csCtx) {
                 case 0x028E:
                 case 0x0292:
                 case 0x0476:
-                    Play_CopyCamera(play, D_8015FCC6, csCtx->unk_14);
+                    Play_CopyCamera(play, player, D_8015FCC6, csCtx->unk_14);
             }
 
-            Play_ChangeCameraStatus(play, D_8015FCC6, CAM_STAT_ACTIVE);
-            Play_ClearCamera(play, csCtx->unk_14);
-            func_8005B1A4(play->cameraPtrs[D_8015FCC6]);
+            Play_ChangeCameraStatus(play, player, D_8015FCC6, CAM_STAT_ACTIVE);
+            Play_ClearCamera(play, player, csCtx->unk_14);
+            func_8005B1A4(play->cameraPtrs[csCtx->playerIndex][D_8015FCC6], csCtx->playerIndex);
         }
 
         Audio_SetCutsceneFlag(0);
@@ -2044,9 +2049,10 @@ void func_80068DC0(PlayState* play, CutsceneContext* csCtx) {
 }
 
 void func_80068ECC(PlayState* play, CutsceneContext* csCtx) {
+    Player* player = Player_FromIndex(csCtx->playerIndex, play);
     u8 i;
 
-    if ((gSaveContext.cutsceneTrigger != 0) && (csCtx->state == CS_STATE_IDLE) && !Player_InCsMode(play)) {
+    if ((gSaveContext.cutsceneTrigger != 0) && (csCtx->state == CS_STATE_IDLE) && !Player_InCsMode(play, player)) {
         gSaveContext.cutsceneIndex = 0xFFFD;
     }
 
@@ -2074,10 +2080,10 @@ void func_80068ECC(PlayState* play, CutsceneContext* csCtx) {
             D_8015FCC4 = 0xFFFF;
             csCtx->unk_1A = 0;
             csCtx->unk_1B = 0;
-            D_8015FCC6 = play->activeCamera;
+            D_8015FCC6 = play->activeCameras[csCtx->playerIndex];
 
             if (D_8015FCC8 != 0) {
-                csCtx->unk_14 = Play_CreateSubCamera(play);
+                csCtx->unk_14 = Play_CreateSubCamera(play, player);
             }
 
             if (gSaveContext.cutsceneTrigger == 0) {

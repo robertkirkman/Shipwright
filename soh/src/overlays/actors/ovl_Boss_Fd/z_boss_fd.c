@@ -157,6 +157,7 @@ void BossFd_SetCameraSpeed(BossFd* this, f32 speedMod) {
 }
 
 void BossFd_UpdateCamera(BossFd* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (this->introCamera != SUBCAM_FREE) {
         Math_ApproachF(&this->camData.eye.x, this->camData.nextEye.x, this->camData.eyeMaxVel.x,
                        this->camData.eyeVel.x * this->camData.speedMod);
@@ -172,7 +173,7 @@ void BossFd_UpdateCamera(BossFd* this, PlayState* play) {
                        this->camData.atVel.z * this->camData.speedMod);
         Math_ApproachF(&this->camData.speedMod, 1.0f, 1.0f, this->camData.accel);
         this->camData.at.y += this->camData.yMod;
-        Play_CameraSetAtEye(play, this->introCamera, &this->camData.at, &this->camData.eye);
+        Play_CameraSetAtEye(play, player, this->introCamera, &this->camData.at, &this->camData.eye);
         Math_ApproachZeroF(&this->camData.yMod, 1.0f, 0.1f);
     }
 }
@@ -308,7 +309,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
 
     if (this->introState != BFD_CS_NONE) {
         Player* player2 = Player_NearestToActor(&this->actor, play);
-        Camera* mainCam = Play_GetCamera(play, playerIndex);
+        Camera* mainCam = Play_GetCamera(play, player2, MAIN_CAM);
 
         switch (this->introState) {
             case BFD_CS_WAIT:
@@ -323,10 +324,10 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
 
                     this->introState = BFD_CS_START;
                     func_80064520(play, &play->csCtx);
-                    func_8002DF54(play, &this->actor, 8);
-                    this->introCamera = Play_CreateSubCamera(play);
-                    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-                    Play_ChangeCameraStatus(play, this->introCamera, CAM_STAT_ACTIVE);
+                    func_8002DF54(play, player2, &this->actor, 8);
+                    this->introCamera = Play_CreateSubCamera(play, player2);
+                    Play_ChangeCameraStatus(play, player2, MAIN_CAM, CAM_STAT_WAIT);
+                    Play_ChangeCameraStatus(play, player2, this->introCamera, CAM_STAT_ACTIVE);
                     player2->actor.world.pos.x = 380.0f;
                     player2->actor.world.pos.y = 100.0f;
                     player2->actor.world.pos.z = 0.0f;
@@ -399,7 +400,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
                     Math_ApproachF(&this->camData.shake, 2.0f, 1.0f, 0.8 * 0.01f);
                 }
                 if (this->timers[0] == 40) {
-                    func_8002DF54(play, &this->actor, 0x13);
+                    func_8002DF54(play, player2, &this->actor, 0x13);
                 }
                 if (this->timers[0] == 0) {
                     this->introState = BFD_CS_LOOK_GROUND;
@@ -428,7 +429,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
                     this->timers[0] = 170;
                     this->camData.speedMod = 0.0f;
                     this->camData.accel = 0.0f;
-                    func_8002DF54(play, &this->actor, 0x14);
+                    func_8002DF54(play, player2, &this->actor, 0x14);
                 }
                 break;
             case BFD_CS_COLLAPSE:
@@ -478,7 +479,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
                 if (this->timers[3] == 190) {
                     this->camData.atMaxVel.x = this->camData.atMaxVel.y = this->camData.atMaxVel.z = 0.05f;
                     this->platformSignal = VBSIMA_KILL;
-                    func_8002DF54(play, &this->actor, 1);
+                    func_8002DF54(play, player2, &this->actor, 1);
                 }
                 if (this->actor.world.pos.y > 120.0f) {
                     this->camData.nextAt = this->actor.world.pos;
@@ -543,10 +544,10 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
                     mainCam->eye = this->camData.eye;
                     mainCam->eyeNext = this->camData.eye;
                     mainCam->at = this->camData.at;
-                    func_800C08AC(play, this->introCamera, 0);
+                    func_800C08AC(play, player, this->introCamera, 0);
                     this->introState = this->introFlyState = this->introCamera = BFD_CS_NONE;
                     func_80064534(play, &play->csCtx);
-                    func_8002DF54(play, &this->actor, 7);
+                    func_8002DF54(play, player, &this->actor, 7);
                     this->actionFunc = BossFd_Wait;
                     this->handoffSignal = FD2_SIGNAL_GROUND;
                     gSaveContext.eventChkInf[7] |= 8;
@@ -854,7 +855,7 @@ void BossFd_Fly(BossFd* this, PlayState* play) {
                         this->work[BFD_CAM_SHAKE_TIMER] = 20;
                         Audio_PlaySoundGeneral(NA_SE_EN_VALVAISA_LAND2, &this->actor.projectedPos, 4, &D_801333E0,
                                                &D_801333E0, &D_801333E8);
-                        func_8002DF54(play, &this->actor, 5);
+                        func_8002DF54(play, player, &this->actor, 5);
                         for (i1 = 0; i1 < 15; i1++) {
                             Vec3f sp144 = { 0.0f, 0.0f, 0.0f };
                             Vec3f sp138 = { 0.0f, 0.0f, 0.0f };

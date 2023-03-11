@@ -140,6 +140,7 @@ void ObjLightswitch_InitCollider(ObjLightswitch* this, PlayState* play) {
 }
 
 void ObjLightswitch_SetSwitchFlag(ObjLightswitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Actor* thisx = &this->actor; // required
     s32 type;
 
@@ -149,21 +150,22 @@ void ObjLightswitch_SetSwitchFlag(ObjLightswitch* this, PlayState* play) {
         Flags_SetSwitch(play, this->actor.params >> 8 & 0x3F);
 
         if (type == OBJLIGHTSWITCH_TYPE_1) {
-            OnePointCutscene_AttentionSetSfx(play, thisx, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, thisx, NA_SE_SY_TRE_BOX_APPEAR);
         } else if (type == OBJLIGHTSWITCH_TYPE_BURN) {
-            OnePointCutscene_AttentionSetSfx(play, thisx, NA_SE_SY_ERROR);
+            OnePointCutscene_AttentionSetSfx(play, player, thisx, NA_SE_SY_ERROR);
         } else {
-            OnePointCutscene_AttentionSetSfx(play, thisx, NA_SE_SY_CORRECT_CHIME);
+            OnePointCutscene_AttentionSetSfx(play, player, thisx, NA_SE_SY_CORRECT_CHIME);
         }
     }
 }
 
 void ObjLightswitch_ClearSwitchFlag(ObjLightswitch* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Flags_GetSwitch(play, this->actor.params >> 8 & 0x3F)) {
         Flags_UnsetSwitch(play, this->actor.params >> 8 & 0x3F);
 
         if ((this->actor.params >> 4 & 3) == OBJLIGHTSWITCH_TYPE_1) {
-            OnePointCutscene_AttentionSetSfx(play, &this->actor, NA_SE_SY_TRE_BOX_APPEAR);
+            OnePointCutscene_AttentionSetSfx(play, player, &this->actor, NA_SE_SY_TRE_BOX_APPEAR);
         }
     }
 }

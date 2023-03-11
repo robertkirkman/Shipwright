@@ -325,12 +325,12 @@ void func_8002BE64(TargetContext* targetCtx, s32 index, f32 arg2, f32 arg3, f32 
     targetCtx->arr_50[index].unk_0C = targetCtx->unk_44;
 }
 
-void func_8002BE98(TargetContext* targetCtx, s32 actorCategory, PlayState* play) {
+void func_8002BE98(TargetContext* targetCtx, s32 actorCategory, PlayState* play, u16 playerIndex) {
     TargetContextEntry* entry;
     NaviColor* naviColor;
     s32 i;
 
-    Math_Vec3f_Copy(&targetCtx->targetCenterPos, &play->views[0].eye);
+    Math_Vec3f_Copy(&targetCtx->targetCenterPos, &play->views[playerIndex].eye);
     targetCtx->unk_44 = 500.0f;
     targetCtx->unk_48 = 0x100;
 
@@ -409,7 +409,7 @@ void func_8002BF60(TargetContext* targetCtx, Actor* actor, s32 actorCategory, Pl
     targetCtx->naviOuter.a = naviColor->outer.a;
 }
 
-void func_8002C0C0(TargetContext* targetCtx, Actor* actor, PlayState* play) {
+void func_8002C0C0(TargetContext* targetCtx, Actor* actor, PlayState* play, u16 playerIndex) {
     targetCtx->arrowPointedActor = NULL;
     targetCtx->targetedActor = NULL;
     targetCtx->unk_40 = 0.0f;
@@ -418,17 +418,17 @@ void func_8002C0C0(TargetContext* targetCtx, Actor* actor, PlayState* play) {
     targetCtx->unk_4B = 0;
     targetCtx->unk_4C = 0;
     func_8002BF60(targetCtx, actor, actor->category, play);
-    func_8002BE98(targetCtx, actor->category, play);
+    func_8002BE98(targetCtx, actor->category, play, playerIndex);
 }
 
-void func_8002C124(TargetContext* targetCtx, PlayState* play) {
+void func_8002C124(TargetContext* targetCtx, u16 playerIndex, PlayState* play) {
     Actor* actor = targetCtx->targetedActor;
 
     OPEN_DISPS(play->state.gfxCtx);
 
     if (targetCtx->unk_48 != 0) {
         TargetContextEntry* entry;
-        Player* player;
+        Player* player = Player_FromIndex(playerIndex, play);
         s16 spCE;
         f32 temp1;
         Vec3f spBC;
@@ -441,7 +441,6 @@ void func_8002C124(TargetContext* targetCtx, PlayState* play) {
         s32 i;
 
         FrameInterpolation_RecordOpenChild(actor, 0);
-        player = GET_PLAYER(play);
 
         spCE = 0xFF;
         var1 = 1.0f;
@@ -555,6 +554,7 @@ void func_8002C7BC(TargetContext* targetCtx, Player* player, Actor* actorArg, Pl
     f32 temp5;
     f32 temp6;
     s32 lockOnSfxId;
+    u16 playerIndex = Player_GetIndex(player, play);
 
     unkActor = NULL;
 
@@ -609,7 +609,7 @@ void func_8002C7BC(TargetContext* targetCtx, Player* player, Actor* actorArg, Pl
 
     if (actorArg != NULL) {
         if (actorArg != targetCtx->targetedActor) {
-            func_8002BE98(targetCtx, actorArg->category, play);
+            func_8002BE98(targetCtx, actorArg->category, play, playerIndex);
             targetCtx->targetedActor = actorArg;
 
             if (actorArg->id == ACTOR_EN_BOOM) {
@@ -1414,7 +1414,7 @@ void func_8002DE04(PlayState* play, Actor* actorA, Actor* actorB) {
 
 void func_8002DE74(PlayState* play, Player* player) {
     if ((play->roomCtx.curRoom.behaviorType1 != ROOM_BEHAVIOR_TYPE1_4) && func_800C0CB8(play)) {
-        Camera_ChangeSetting(Play_GetCameraFromPlayer(play, player), CAM_SET_HORSE);
+        Camera_ChangeSetting(Play_GetCamera(play, player, MAIN_CAM), CAM_SET_HORSE);
     }
 }
 
@@ -1432,9 +1432,9 @@ void func_8002DF18(PlayState* play, Player* player) {
     func_8006DC68(play, player);
 }
 
-s32 func_8002DF38(PlayState* play, Actor* actor, u8 csMode) {
-    Player* player = GET_PLAYER(play); // related to func_8002DF38
-
+// set csmode player and player cutscene actor
+s32 func_8002DF38(PlayState* play, Player* player, Actor* actor, u8 csMode) {
+    play->csCtx.playerIndex = Player_GetIndex(player, play); // store index of most recent cutscene player in csCtx
     player->csMode = csMode;
     player->unk_448 = actor;
     player->doorBgCamIndex = 0;
@@ -1442,10 +1442,9 @@ s32 func_8002DF38(PlayState* play, Actor* actor, u8 csMode) {
     return true;
 }
 
-s32 func_8002DF54(PlayState* play, Actor* actor, u8 csMode) {
-    Player* player = GET_PLAYER(play); // crashed when changed
-
-    func_8002DF38(play, actor, csMode);
+// actor cutscene set csmode player
+s32 func_8002DF54(PlayState* play, Player* player, Actor* actor, u8 csMode) {
+    func_8002DF38(play, player, actor, csMode);
     player->doorBgCamIndex = 1;
 
     return true;
@@ -1761,7 +1760,7 @@ Hilite* func_8002EB44(Vec3f* object, Vec3f* eye, Vec3f* lightDir, GraphicsContex
 }
 
 void func_8002EBCC(Actor* actor, PlayState* play, s32 flag) {
-    Hilite* hilite;
+    Hilite* hilite[PLAYER_COUNT];
     Vec3f lightDir;
     Gfx* displayListHead;
     Gfx* displayList;
@@ -1772,10 +1771,12 @@ void func_8002EBCC(Actor* actor, PlayState* play, s32 flag) {
 
     if (HREG(80) == 6) {
         osSyncPrintf("z_actor.c 3637 game_play->views[0].eye=[%f(%f) %f %f]\n", play->views[0].eye.x,
-                     play->views[0].eye.y, play->views[0].eye.z);
+                     play->views[0].eye.y, play->views[0].eye.z); // printf player 1
     }
 
-    hilite = func_8002EABC(&actor->world.pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        hilite[i] = func_8002EABC(&actor->world.pos, &play->views[i].eye, &lightDir, play->state.gfxCtx);
+    }
 
     if (flag != 0) {
         displayList = Graph_Alloc(play->state.gfxCtx, 2 * sizeof(Gfx));
@@ -1783,16 +1784,18 @@ void func_8002EBCC(Actor* actor, PlayState* play, s32 flag) {
 
         OPEN_DISPS(play->state.gfxCtx);
 
-        gDPSetHilite1Tile(displayListHead++, 1, hilite, 0x10, 0x10);
-        gSPEndDisplayList(displayListHead);
-        gSPSegment(POLY_OPA_DISP++, 0x07, displayList);
+        for (u16 i = 0; i < PLAYER_COUNT; i++) {
+            gDPSetHilite1Tile(displayListHead++, 1, hilite[i], 0x10, 0x10);
+            gSPEndDisplayList(displayListHead);
+            gSPSegment(POLY_OPA_DISP++, 0x07, displayList);
+        }
 
         CLOSE_DISPS(play->state.gfxCtx);
     }
 }
 
 void func_8002ED80(Actor* actor, PlayState* play, s32 flag) {
-    Hilite* hilite;
+    Hilite* hilite[PLAYER_COUNT];
     Vec3f lightDir;
     Gfx* displayListHead;
     Gfx* displayList;
@@ -1801,7 +1804,9 @@ void func_8002ED80(Actor* actor, PlayState* play, s32 flag) {
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    hilite = func_8002EB44(&actor->world.pos, &play->views[0].eye, &lightDir, play->state.gfxCtx);
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
+        hilite[i] = func_8002EB44(&actor->world.pos, &play->views[i].eye, &lightDir, play->state.gfxCtx);
+    }
 
     if (flag != 0) {
         displayList = Graph_Alloc(play->state.gfxCtx, 2 * sizeof(Gfx));
@@ -1809,9 +1814,11 @@ void func_8002ED80(Actor* actor, PlayState* play, s32 flag) {
 
         OPEN_DISPS(play->state.gfxCtx);
 
-        gDPSetHilite1Tile(displayListHead++, 1, hilite, 0x10, 0x10);
-        gSPEndDisplayList(displayListHead);
-        gSPSegment(POLY_XLU_DISP++, 0x07, displayList);
+        for (u16 i = 0; i < PLAYER_COUNT; i++) {
+            gDPSetHilite1Tile(displayListHead++, 1, hilite[i], 0x10, 0x10);
+            gSPEndDisplayList(displayListHead);
+            gSPSegment(POLY_OPA_DISP++, 0x07, displayList);
+        }
 
         CLOSE_DISPS(play->state.gfxCtx);
     }
@@ -1916,7 +1923,7 @@ s32 func_8002F1C4(Actor* actor, PlayState* play, f32 arg2, f32 arg3, u32 exchang
     u16 playerIndex = Player_GetIndex(player, play);
 
     // This is convoluted but it seems like it must be a single if statement to match
-    if ((player->actor.flags & ACTOR_FLAG_8) || ((exchangeItemId != EXCH_ITEM_NONE) && Player_InCsMode(play)) ||
+    if ((player->actor.flags & ACTOR_FLAG_8) || ((exchangeItemId != EXCH_ITEM_NONE) && Player_InCsMode(play, player)) ||
         (!actor->isTargeted &&
          ((arg3 < fabsf(actor->yDistToPlayer[playerIndex])) || (player->targetActorDistance < actor->xzDistToPlayer[playerIndex]) ||
           (arg2 < actor->xzDistToPlayer[playerIndex])))) {
@@ -2292,7 +2299,7 @@ void func_8002FA60(PlayState* play) {
     D_8015BC18 = 0.0f;
 }
 
-void Actor_DrawFaroresWindPointer(PlayState* play) {
+void Actor_DrawFaroresWindPointer(PlayState* play, u16 playerIndex) {
     s32 lightRadius = -1;
     s32 params;
 
@@ -2370,9 +2377,9 @@ void Actor_DrawFaroresWindPointer(PlayState* play) {
             f32 diff;
 
             if (nextRatio > 0.0f) {
-                eye.x = play->views[0].eye.x;
-                eye.y = play->views[0].eye.y - yOffset;
-                eye.z = play->views[0].eye.z;
+                eye.x = play->views[playerIndex].eye.x;
+                eye.y = play->views[playerIndex].eye.y - yOffset;
+                eye.z = play->views[playerIndex].eye.z;
                 diff = Math_Vec3f_DistXYZAndStoreDiff(&eye, curPos, &dist);
                 diff = (diff * (nextRatio / curRatio)) / diff;
                 curPos->x = eye.x + (dist.x * diff);
@@ -2477,10 +2484,12 @@ void func_800304DC(PlayState* play, ActorContext* actorCtx, ActorEntry* actorEnt
 
     actorCtx->absoluteSpace = NULL;
 
-    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+    // magi multiplayer: this spawns players and initializes their target contexts
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
         Actor_SpawnEntry(actorCtx, actorEntry, play);
+        func_8002C0C0(&actorCtx->targetCtxs[i], &Player_FromIndex(i, play)->actor, play, i);
     }
-    func_8002C0C0(&actorCtx->targetCtx, actorCtx->actorLists[ACTORCAT_PLAYER].head, play);
+
     func_8002FA60(play);
 }
 
@@ -2652,6 +2661,7 @@ void Actor_UpdateAll(PlayState* play, ActorContext* actorCtx) {
     }
 
     playerActor = &playerOne->actor;
+    playerIndex = 0;
     while (playerActor != NULL) {
         Player* player = (Player*)playerActor;
         actor = player->unk_664;
@@ -2663,14 +2673,15 @@ void Actor_UpdateAll(PlayState* play, ActorContext* actorCtx) {
 
         if ((actor == NULL) || (player->unk_66C < 5)) {
             actor = NULL;
-            if (actorCtx->targetCtx.unk_4B != 0) {
-                actorCtx->targetCtx.unk_4B = 0;
+            if (actorCtx->targetCtxs[playerIndex].unk_4B != 0) {
+                actorCtx->targetCtxs[playerIndex].unk_4B = 0;
                 func_80078884(NA_SE_SY_LOCK_OFF);
             }
         }
 
-        func_8002C7BC(&actorCtx->targetCtx, player, actor, play);
+        func_8002C7BC(&actorCtx->targetCtxs[playerIndex], player, actor, play);
         playerActor = playerActor->next;
+        playerIndex++;
     }
     TitleCard_Update(play, &actorCtx->titleCtx);
     DynaPoly_UpdateBgActorTransforms(play, &play->colCtx.dyna);
@@ -2698,7 +2709,7 @@ void Actor_FaultPrint(Actor* actor, char* command) {
     FaultDrawer_Printf("ACTOR NAME %08x:%s", actor, name);
 }
 
-void Actor_Draw(PlayState* play, Actor* actor) {
+void Actor_Draw(PlayState* play, u16 playerIndex, Actor* actor) {
     FaultClient faultClient;
     Lights* lights;
 
@@ -2715,9 +2726,9 @@ void Actor_Draw(PlayState* play, Actor* actor) {
     FrameInterpolation_RecordActorPosRotMatrix();
     if (actor->flags & ACTOR_FLAG_12) {
         Matrix_SetTranslateRotateYXZ(
-            actor->world.pos.x + play->mainCameras[0].skyboxOffset.x,
-            actor->world.pos.y + (f32)((actor->shape.yOffset * actor->scale.y) + play->mainCameras[0].skyboxOffset.y),
-            actor->world.pos.z + play->mainCameras[0].skyboxOffset.z, &actor->shape.rot);
+            actor->world.pos.x + play->mainCameras[playerIndex].skyboxOffset.x,
+            actor->world.pos.y + (f32)((actor->shape.yOffset * actor->scale.y) + play->mainCameras[playerIndex].skyboxOffset.y),
+            actor->world.pos.z + play->mainCameras[playerIndex].skyboxOffset.z, &actor->shape.rot);
     } else {
         Matrix_SetTranslateRotateYXZ(actor->world.pos.x, actor->world.pos.y + (actor->shape.yOffset * actor->scale.y),
                                      actor->world.pos.z, &actor->shape.rot);
@@ -2809,7 +2820,7 @@ void Actor_DrawLensOverlay(GraphicsContext* gfxCtx) {
     CLOSE_DISPS(gfxCtx);
 }
 
-void Actor_DrawLensActors(PlayState* play, s32 numInvisibleActors, Actor** invisibleActors) {
+void Actor_DrawLensActors(PlayState* play, u16 playerIndex, s32 numInvisibleActors, Actor** invisibleActors) {
     Actor** invisibleActor;
     GraphicsContext* gfxCtx;
     s32 i;
@@ -2865,7 +2876,7 @@ void Actor_DrawLensActors(PlayState* play, s32 numInvisibleActors, Actor** invis
     for (i = 0; i < numInvisibleActors; i++) {
         // "Magic lens invisible Actor display"
         gDPNoOpString(POLY_OPA_DISP++, "魔法のメガネ 見えないＡcｔｏｒ表示", i);
-        Actor_Draw(play, *(invisibleActor++));
+        Actor_Draw(play, playerIndex, *(invisibleActor++));
     }
 
     // "Magic lens invisible Actor display END"
@@ -2922,7 +2933,8 @@ s32 func_800314D4(PlayState* play, Actor* actor, Vec3f* arg2, f32 arg3) {
     return false;
 }
 
-void func_800315AC(PlayState* play, ActorContext* actorCtx) {
+// draw actors and effects
+void func_800315AC(PlayState* play, u16 playerIndex, ActorContext* actorCtx) {
     s32 invisibleActorCounter;
     Actor* invisibleActors[INVISIBLE_ACTOR_MAX];
     ActorListEntry* actorListEntry;
@@ -2978,7 +2990,7 @@ void func_800315AC(PlayState* play, ActorContext* actorCtx) {
                         invisibleActorCounter++;
                     } else {
                         if ((HREG(64) != 1) || ((HREG(65) != -1) && (HREG(65) != HREG(66))) || (HREG(72) == 0)) {
-                            Actor_Draw(play, actor);
+                            Actor_Draw(play, playerIndex, actor);
                             actor->isDrawn = true;
                         }
                     }
@@ -2999,14 +3011,14 @@ void func_800315AC(PlayState* play, ActorContext* actorCtx) {
 
     if ((HREG(64) != 1) || (HREG(72) != 0)) {
         if (play->actorCtx.lensActive) {
-            Actor_DrawLensActors(play, invisibleActorCounter, invisibleActors);
-            if ((play->csCtx.state != CS_STATE_IDLE) || Player_InCsMode(play)) {
+            Actor_DrawLensActors(play, playerIndex, invisibleActorCounter, invisibleActors);
+            if ((play->csCtx.state != CS_STATE_IDLE) || Player_InCsMode(play, Player_FromIndex(playerIndex, play))) {
                 Actor_DisableLens(play);
             }
         }
     }
 
-    Actor_DrawFaroresWindPointer(play);
+    Actor_DrawFaroresWindPointer(play, playerIndex);
 
     if (IREG(32) == 0) {
         Lights_DrawGlow(play);
@@ -3443,24 +3455,24 @@ Actor* Actor_Delete(ActorContext* actorCtx, Actor* actor, PlayState* play) {
     }
 
 
-    for (u32 i = 0; i < PLAYER_COUNT; i++) {
+    for (u16 i = 0; i < PLAYER_COUNT; i++) {
         player = Player_FromIndex(i, play);
         if ((player != NULL) && (actor == player->unk_664)) {
             func_8008EDF0(player);
-            Camera_ChangeMode(Play_GetCameraFromPlayer(play, player), 0);
+            Camera_ChangeMode(Play_GetCamera(play, player, MAIN_CAM), CAM_MODE_NORMAL);
         }
-    }
+    
+        if (actor == actorCtx->targetCtxs[i].arrowPointedActor) {
+            actorCtx->targetCtxs[i].arrowPointedActor = NULL;
+        }
 
-    if (actor == actorCtx->targetCtx.arrowPointedActor) {
-        actorCtx->targetCtx.arrowPointedActor = NULL;
-    }
+        if (actor == actorCtx->targetCtxs[i].unk_8C) {
+            actorCtx->targetCtxs[i].unk_8C = NULL;
+        }
 
-    if (actor == actorCtx->targetCtx.unk_8C) {
-        actorCtx->targetCtx.unk_8C = NULL;
-    }
-
-    if (actor == actorCtx->targetCtx.bgmEnemy) {
-        actorCtx->targetCtx.bgmEnemy = NULL;
+        if (actor == actorCtx->targetCtxs[i].bgmEnemy) {
+            actorCtx->targetCtxs[i].bgmEnemy = NULL;
+        }
     }
 
     Audio_StopSfxByPos(&actor->projectedPos);
@@ -3519,7 +3531,7 @@ void func_800328D4(PlayState* play, ActorContext* actorCtx, Player* player, u32 
             // used while playing enemy bgm music
             if ((actorCategory == ACTORCAT_ENEMY) && CHECK_FLAG_ALL(actor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_2) &&
                 (actor->xyzDistToPlayerSq[playerIndex] < SQ(500.0f)) && (actor->xyzDistToPlayerSq[playerIndex] < sbgmEnemyDistSq)) {
-                actorCtx->targetCtx.bgmEnemy = actor;
+                actorCtx->targetCtxs[playerIndex].bgmEnemy = actor;
                 sbgmEnemyDistSq = actor->xyzDistToPlayerSq[playerIndex];
             }
 
@@ -3552,6 +3564,7 @@ u8 D_801160A0[] = {
 };
 
 Actor* func_80032AF0(PlayState* play, ActorContext* actorCtx, Actor** actorPtr, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     u8* entry;
 
@@ -3559,10 +3572,10 @@ Actor* func_80032AF0(PlayState* play, ActorContext* actorCtx, Actor** actorPtr, 
     D_8015BBF0 = sbgmEnemyDistSq = FLT_MAX;
     D_8015BBF8 = 0x7FFFFFFF;
 
-    if (!Player_InCsMode(play)) {
+    if (!Player_InCsMode(play, player)) {
         entry = &D_801160A0[0];
 
-        actorCtx->targetCtx.bgmEnemy = NULL;
+        actorCtx->targetCtxs[playerIndex].bgmEnemy = NULL;
         D_8015BBFC = player->actor.shape.rot.y;
 
         for (i = 0; i < 3; i++) {
@@ -4204,24 +4217,24 @@ void Actor_SetColorFilter(Actor* actor, s16 colorFlag, s16 colorIntensityMax, s1
     actor->colorFilterTimer = duration;
 }
 
-Hilite* func_800342EC(Vec3f* object, PlayState* play) {
+void func_800342EC(Vec3f* object, u16 playerIndex, PlayState* play) {
     Vec3f lightDir;
 
     lightDir.x = play->envCtx.dirLight1.params.dir.x;
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    return func_8002EABC(object, &play->views[0].eye, &lightDir, play->state.gfxCtx);
+    func_8002EABC(object, &play->views[playerIndex].eye, &lightDir, play->state.gfxCtx);
 }
 
-Hilite* func_8003435C(Vec3f* object, PlayState* play) {
+void func_8003435C(Vec3f* object, u16 playerIndex, PlayState* play) {
     Vec3f lightDir;
 
     lightDir.x = play->envCtx.dirLight1.params.dir.x;
     lightDir.y = play->envCtx.dirLight1.params.dir.y;
     lightDir.z = play->envCtx.dirLight1.params.dir.z;
 
-    return func_8002EB44(object, &play->views[0].eye, &lightDir, play->state.gfxCtx);
+    func_8002EB44(object, &play->views[playerIndex].eye, &lightDir, play->state.gfxCtx);
 }
 
 /**
@@ -6229,7 +6242,7 @@ s32 func_80038154(PlayState* play, Actor* actor, Vec3s* arg2, Vec3s* arg3, f32 a
     }
 
     if (((play->csCtx.state != CS_STATE_IDLE) || (gDbgCamEnabled)) && (gSaveContext.entranceIndex == 0x00EE)) {
-        sp2C = play->views[0].eye;
+        sp2C = play->views[playerIndex].eye;
     } else {
         sp2C = player->actor.focus.pos;
     }
@@ -6259,7 +6272,7 @@ s32 func_80038290(PlayState* play, Actor* actor, Vec3s* arg2, Vec3s* arg3, Vec3f
     }
 
     if (((play->csCtx.state != CS_STATE_IDLE) || (gDbgCamEnabled)) && (gSaveContext.entranceIndex == 0x00EE)) {
-        sp24 = play->views[0].eye;
+        sp24 = play->views[playerIndex].eye;
     } else {
         sp24 = player->actor.focus.pos;
     }

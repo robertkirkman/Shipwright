@@ -169,9 +169,10 @@ void BgMoriElevator_MoveIntoGround(BgMoriElevator* this, PlayState* play) {
 }
 
 void func_808A1CF4(BgMoriElevator* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     this->actionFunc = BgMoriElevator_MoveAboveGround;
-    OnePointCutscene_Init(play, 3230, 70, &this->dyna.actor, MAIN_CAM);
-    OnePointCutscene_Init(play, 1020, 15, &this->dyna.actor, MAIN_CAM);
+    OnePointCutscene_Init(play, player, 3230, 70, &this->dyna.actor, MAIN_CAM);
+    OnePointCutscene_Init(play, player, 1020, 15, &this->dyna.actor, MAIN_CAM);
 }
 
 void BgMoriElevator_MoveAboveGround(BgMoriElevator* this, PlayState* play) {

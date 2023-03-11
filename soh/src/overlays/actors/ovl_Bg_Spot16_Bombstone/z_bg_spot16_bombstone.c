@@ -411,7 +411,7 @@ void func_808B57E0(BgSpot16Bombstone* this, PlayState* play) {
             currentBomb = sPlayerBomb;
             if (currentBomb->timer > 0) {
                 sTimer = currentBomb->timer + 20;
-                OnePointCutscene_Init(play, 4180, sTimer, NULL, MAIN_CAM);
+                OnePointCutscene_Init(play, player, 4180, sTimer, NULL, MAIN_CAM);
             }
         }
     } else if (player->stateFlags1 & 0x800) {
@@ -429,6 +429,7 @@ void func_808B5934(BgSpot16Bombstone* this) {
 }
 
 void func_808B5950(BgSpot16Bombstone* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 pad;
 
     func_808B56BC(this, play);
@@ -441,7 +442,7 @@ void func_808B5950(BgSpot16Bombstone* this, PlayState* play) {
 
         func_808B561C(this, play);
 
-        OnePointCutscene_Init(play, 4180, 50, NULL, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4180, 50, NULL, MAIN_CAM);
 
         Flags_SetSwitch(play, this->switchFlag);
         gSaveContext.eventChkInf[2] |= 8;

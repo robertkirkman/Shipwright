@@ -734,6 +734,8 @@ void EnBili_PulseLimb4(EnBili* this, f32 frame, Vec3f* arg2) {
 s32 EnBili_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx,
                             Gfx** gfx) {
     EnBili* this = (EnBili*)thisx;
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     Vec3f limbScale = { 1.0f, 1.0f, 1.0f };
     f32 curFrame = this->skelAnime.curFrame;
 
@@ -743,7 +745,7 @@ s32 EnBili_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* 
         EnBili_PulseLimb2(this, curFrame, &limbScale);
     } else if (limbIndex == EN_BILI_LIMB_TENTACLES) {
         EnBili_PulseLimb4(this, curFrame, &limbScale);
-        rot->y = (Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->actor.shape.rot.y) + 0x8000;
+        rot->y = (Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->actor.shape.rot.y) + 0x8000;
     }
 
     Matrix_Scale(limbScale.x, limbScale.y, limbScale.z, MTXMODE_APPLY);

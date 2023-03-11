@@ -311,7 +311,7 @@ s32 func_80078E84(PlayState* play) {
         interfaceCtx->unk_226 -= 0x10;
         if (interfaceCtx->unk_226 <= 0) {
             interfaceCtx->unk_226 = 0;
-            play->damagePlayer(play, -(gSaveContext.health + 1));
+            play->damagePlayer(play, Player_FromIndex(0, play), -(gSaveContext.health + 1)); // unused
             return 1;
         }
     }
@@ -635,8 +635,8 @@ void HealthMeter_HandleCriticalAlarm(PlayState* play) {
         if (interfaceCtx->unk_22A <= 0) {
             interfaceCtx->unk_22A = 0;
             interfaceCtx->unk_22C = 0;
-            if (CVarGetInteger("gLowHpAlarm", 0) == 0 && !Player_InCsMode(play) && (play->pauseCtx.state == 0) &&
-            (play->pauseCtx.debugState == 0) && HealthMeter_IsCritical() && !Play_InCsMode(play)) {
+            if (CVarGetInteger("gLowHpAlarm", 0) == 0 && !Player_InCsMode(play, Player_FromIndex(0, play)) && (play->pauseCtx.state == 0) &&
+            (play->pauseCtx.debugState == 0) && HealthMeter_IsCritical() && !Play_InCsMode(play, Player_FromIndex(0, play))) {
                 func_80078884(NA_SE_SY_HITPOINT_ALARM);
             }
         }

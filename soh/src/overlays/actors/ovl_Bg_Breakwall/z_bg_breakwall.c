@@ -260,6 +260,7 @@ void BgBreakwall_WaitForObject(BgBreakwall* this, PlayState* play) {
  * despawn itself.
  */
 void BgBreakwall_Wait(BgBreakwall* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     bool blueFireArrowHit = false;
     // If "Blue Fire Arrows" enabled, check this collider for a hit
     if (blueFireArrowsEnabledOnMudwallLoad) {
@@ -302,7 +303,7 @@ void BgBreakwall_Wait(BgBreakwall* this, PlayState* play) {
             Cutscene_SetSegment(play, gDcOpeningCs);
             gSaveContext.cutsceneTrigger = 1;
             Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
-            func_8002DF54(play, NULL, 0x31);
+            func_8002DF54(play, player, NULL, 0x31);
         }
 
         if (this->dyna.actor.params < 0) {

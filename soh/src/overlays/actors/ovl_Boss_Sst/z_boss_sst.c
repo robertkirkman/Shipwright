@@ -379,16 +379,16 @@ void BossSst_HeadSetupIntro(BossSst* this, PlayState* play) {
     player->stateFlags1 |= 0x20;
 
     func_80064520(play, &play->csCtx);
-    func_8002DF54(play, &this->actor, 8);
-    sCutsceneCamera = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, sCutsceneCamera, CAM_STAT_ACTIVE);
+    func_8002DF54(play, player, &this->actor, 8);
+    sCutsceneCamera = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, sCutsceneCamera, CAM_STAT_ACTIVE);
     Math_Vec3f_Copy(&sCameraAt, &player->actor.world.pos);
     if (gSaveContext.eventChkInf[7] & 0x80) {
         sCameraEye.z = ROOM_CENTER_Z - 100.0f;
     }
 
-    Play_CameraSetAtEye(play, sCutsceneCamera, &sCameraAt, &sCameraEye);
+    Play_CameraSetAtEye(play, player, sCutsceneCamera, &sCameraAt, &sCameraEye);
     Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_BGM_MAIN << 24 | 0x100FF);
     this->actionFunc = BossSst_HeadIntro;
 }
@@ -413,14 +413,14 @@ void BossSst_HeadIntro(BossSst* this, PlayState* play) {
         sHands[LEFT]->actor.flags |= ACTOR_FLAG_0;
         player->stateFlags1 &= ~0x20;
         func_80064534(play, &play->csCtx);
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         sCameraAt.y += 30.0f;
         sCameraAt.z += 300.0f;
-        Play_CameraSetAtEye(play, sCutsceneCamera, &sCameraAt, &sCameraEye);
-        Play_CopyCamera(play, MAIN_CAM, sCutsceneCamera);
-        Play_ChangeCameraStatus(play, sCutsceneCamera, CAM_STAT_WAIT);
-        Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-        Play_ClearCamera(play, sCutsceneCamera);
+        Play_CameraSetAtEye(play, player, sCutsceneCamera, &sCameraAt, &sCameraEye);
+        Play_CopyCamera(play, player, MAIN_CAM, sCutsceneCamera);
+        Play_ChangeCameraStatus(play, player, sCutsceneCamera, CAM_STAT_WAIT);
+        Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+        Play_ClearCamera(play, player, sCutsceneCamera);
         gSaveContext.eventChkInf[7] |= 0x80;
         BossSst_HeadSetupNeutral(this);
         this->colliderJntSph.base.ocFlags1 |= OC1_ON;
@@ -619,7 +619,7 @@ void BossSst_HeadIntro(BossSst* this, PlayState* play) {
     }
 
     if (this->actionFunc != BossSst_HeadNeutral) {
-        Play_CameraSetAtEye(play, sCutsceneCamera, &sCameraAt, &sCameraEye);
+        Play_CameraSetAtEye(play, player, sCutsceneCamera, &sCameraAt, &sCameraEye);
     }
 }
 
@@ -985,6 +985,7 @@ void BossSst_SetCameraTargets(f32 cameraSpeedMod, s32 targetIndex) {
 }
 
 void BossSst_UpdateDeathCamera(BossSst* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f cameraAt;
     Vec3f cameraEye;
     f32 sn;
@@ -1005,11 +1006,12 @@ void BossSst_UpdateDeathCamera(BossSst* this, PlayState* play) {
     cameraEye.x = this->actor.world.pos.x + (sCameraEye.z * sn) + (sCameraEye.x * cs);
     cameraEye.y = this->actor.home.pos.y - 140.0f + sCameraEye.y;
     cameraEye.z = this->actor.world.pos.z + (sCameraEye.z * cs) - (sCameraEye.x * sn);
-    Play_CameraSetAtEye(play, sCutsceneCamera, &cameraAt, &cameraEye);
+    Play_CameraSetAtEye(play, player, sCutsceneCamera, &cameraAt, &cameraEye);
 }
 
 void BossSst_HeadSetupDeath(BossSst* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     Animation_MorphToLoop(&this->skelAnime, &gBongoHeadEyeOpenIdleAnim, -5.0f);
     BossSst_HeadSfx(this, NA_SE_EN_SHADEST_DEAD);
@@ -1022,17 +1024,19 @@ void BossSst_HeadSetupDeath(BossSst* this, PlayState* play) {
     sHands[LEFT]->colliderJntSph.base.ocFlags1 &= ~OC1_ON;
     sHands[RIGHT]->colliderJntSph.base.ocFlags1 &= ~OC1_ON;
     Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_BGM_MAIN << 24 | 0x100FF);
-    sCutsceneCamera = Play_CreateSubCamera(play);
-    Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_WAIT);
-    Play_ChangeCameraStatus(play, sCutsceneCamera, CAM_STAT_ACTIVE);
-    Play_CopyCamera(play, sCutsceneCamera, MAIN_CAM);
-    func_8002DF54(play, &player->actor, 8);
+    sCutsceneCamera = Play_CreateSubCamera(play, player);
+    Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_WAIT);
+    Play_ChangeCameraStatus(play, player, sCutsceneCamera, CAM_STAT_ACTIVE);
+    Play_CopyCamera(play, player, sCutsceneCamera, MAIN_CAM);
+    func_8002DF54(play, player, &player->actor, 8);
     func_80064520(play, &play->csCtx);
-    Math_Vec3f_Copy(&sCameraEye, &GET_ACTIVE_CAM(play)->eye);
+    Math_Vec3f_Copy(&sCameraEye, &GET_ACTIVE_CAM(playerIndex, play)->eye);
     this->actionFunc = BossSst_HeadDeath;
 }
 
 void BossSst_HeadDeath(BossSst* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if (this->timer != 0) {
         this->timer--;
@@ -1044,18 +1048,16 @@ void BossSst_HeadDeath(BossSst* this, PlayState* play) {
         BossSst_HandSetupThrash(sHands[RIGHT]);
         BossSst_HeadSetupThrash(this);
     } else if (this->timer > 48) {
-        Play_CameraSetAtEye(play, sCutsceneCamera, &this->actor.focus.pos, &sCameraEye);
+        Play_CameraSetAtEye(play, player, sCutsceneCamera, &this->actor.focus.pos, &sCameraEye);
         Math_StepToF(&this->radius, -350.0f, 10.0f);
     } else if (this->timer == 48) {
-        Player* player = Player_NearestToActor(&this->actor, play);
-
         player->actor.world.pos.x = sRoomCenter.x + (400.0f * Math_SinS(this->actor.shape.rot.y)) +
                                     (Math_CosS(this->actor.shape.rot.y) * -120.0f);
         player->actor.world.pos.z = sRoomCenter.z + (400.0f * Math_CosS(this->actor.shape.rot.y)) -
                                     (Math_SinS(this->actor.shape.rot.y) * -120.0f);
         player->actor.shape.rot.y = Actor_WorldYawTowardPoint(&player->actor, &sRoomCenter);
-        func_8002DBD0(&this->actor, &sCameraEye, &GET_ACTIVE_CAM(play)->eye);
-        func_8002DBD0(&this->actor, &sCameraAt, &GET_ACTIVE_CAM(play)->at);
+        func_8002DBD0(&this->actor, &sCameraEye, &GET_ACTIVE_CAM(playerIndex, play)->eye);
+        func_8002DBD0(&this->actor, &sCameraAt, &GET_ACTIVE_CAM(playerIndex, play)->at);
         this->radius = -350.0f;
         this->actor.world.pos.x = sRoomCenter.x - (Math_SinS(this->actor.shape.rot.y) * 350.0f);
         this->actor.world.pos.z = sRoomCenter.z - (Math_CosS(this->actor.shape.rot.y) * 350.0f);
@@ -1185,11 +1187,11 @@ void BossSst_HeadFinish(BossSst* this, PlayState* play) {
         if (this->timer < -170) {
             Player* player = Player_NearestToActor(&this->actor, play);
             BossSst_UpdateDeathCamera(this, play);
-            Play_CopyCamera(play, MAIN_CAM, sCutsceneCamera);
-            Play_ChangeCameraStatus(play, sCutsceneCamera, CAM_STAT_WAIT);
-            Play_ChangeCameraStatus(play, MAIN_CAM, CAM_STAT_ACTIVE);
-            Play_ClearCamera(play, sCutsceneCamera);
-            func_8002DF54(play, &player->actor, 7);
+            Play_CopyCamera(play, player, MAIN_CAM, sCutsceneCamera);
+            Play_ChangeCameraStatus(play, player, sCutsceneCamera, CAM_STAT_WAIT);
+            Play_ChangeCameraStatus(play, player, MAIN_CAM, CAM_STAT_ACTIVE);
+            Play_ClearCamera(play, player, sCutsceneCamera);
+            func_8002DF54(play, player, &player->actor, 7);
             func_80064534(play, &play->csCtx);
             Actor_Kill(&this->actor);
             Actor_Kill(&sHands[LEFT]->actor);
@@ -1891,7 +1893,7 @@ void BossSst_HandCrush(BossSst* this, PlayState* play) {
                 func_8002F7DC(&player->actor, NA_SE_VO_LI_DAMAGE_S);
             }
 
-            play->damagePlayer(play, -8);
+            play->damagePlayer(play, player, -8);
         }
         if (Animation_OnFrame(&this->skelAnime, 0.0f)) {
             Audio_PlayActorSound2(&this->actor, NA_SE_EN_SHADEST_CATCH);
@@ -3186,6 +3188,8 @@ void BossSst_UpdateEffect(Actor* thisx, PlayState* play) {
 void BossSst_DrawEffect(Actor* thisx, PlayState* play) {
     s32 pad;
     BossSst* this = (BossSst*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 i;
     BossSstEffect* effect;
 
@@ -3205,7 +3209,7 @@ void BossSst_DrawEffect(Actor* thisx, PlayState* play) {
                 FrameInterpolation_RecordOpenChild(effect, effect->epoch);
 
                 if (effect->move) {
-                    func_8003435C(&effect->pos, play);
+                    func_8003435C(&effect->pos, playerIndex, play);
                     if (this->effects[0].status != 0) {
                         Matrix_Translate(effect->pos.x, effect->pos.y, effect->pos.z, MTXMODE_NEW);
                     } else {

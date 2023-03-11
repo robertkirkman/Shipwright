@@ -84,7 +84,7 @@ void EnFhgFire_SetUpdate(EnFhgFire* this, EnFhgFireUpdateFunc updateFunc) {
 void EnFhgFire_Init(Actor* thisx, PlayState* play) {
     s32 pad;
     EnFhgFire* this = (EnFhgFire*)thisx;
-    Player* player = GET_PLAYER(play); // init
+    Player* player = Player_NearestToActor(thisx, play);
 
     ActorShape_Init(&this->actor.shape, 0.0f, NULL, 0.0f);
     if ((this->actor.params == FHGFIRE_LIGHTNING_SHOCK) || (this->actor.params == FHGFIRE_LIGHTNING_BURST) ||
@@ -180,7 +180,7 @@ void EnFhgFire_Destroy(Actor* thisx, PlayState* play) {
 void EnFhgFire_LightningStrike(EnFhgFire* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
     u16 playerIndex = Player_GetIndex(player, play);
-    Camera* camera = Play_GetCamera(play, playerIndex);
+    Camera* camera = Play_GetCamera(play, player, MAIN_CAM);
     s16 i;
 
     switch (this->work[FHGFIRE_FIRE_MODE]) {

@@ -236,7 +236,7 @@ void EnDh_Wait(EnDh* this, PlayState* play) {
         Math_SmoothStepToS(&this->actor.shape.rot.y, this->actor.yawTowardsPlayer[playerIndex], 1, 0x7D0, 0);
         SkelAnime_Update(&this->skelAnime);
         if (this->actor.params != ENDH_START_ATTACK_BOMB) {
-            func_8008EEAC(play, &this->actor);
+            func_8008EEAC(play, player, &this->actor);
         }
     }
 }

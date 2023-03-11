@@ -213,6 +213,7 @@ void ObjTimeblock_SetupNormal(ObjTimeblock* this) {
 }
 
 void ObjTimeblock_Normal(ObjTimeblock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     u32 newIsVisible;
 
     if (this->songObserverFunc(this, play) && this->demoEffectTimer <= 0) {
@@ -220,7 +221,7 @@ void ObjTimeblock_Normal(ObjTimeblock* this, PlayState* play) {
         this->demoEffectTimer = 160;
 
         // Possibly points the camera to this actor
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         // "◯◯◯◯ Time Block Attention Camera (frame counter  %d)\n"
         osSyncPrintf("◯◯◯◯ Time Block 注目カメラ (frame counter  %d)\n", play->state.frames);
 
@@ -274,11 +275,12 @@ void ObjTimeblock_SetupAltBehaviorVisible(ObjTimeblock* this) {
 }
 
 void ObjTimeblock_AltBehaviorVisible(ObjTimeblock* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     if (this->songObserverFunc(this, play) && this->demoEffectTimer <= 0) {
         this->demoEffectFirstPartTimer = 12;
         ObjTimeblock_SpawnDemoEffect(this, play);
         this->demoEffectTimer = 160;
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         // "Time Block Attention Camera (frame counter)"
         osSyncPrintf("◯◯◯◯ Time Block 注目カメラ (frame counter  %d)\n", play->state.frames);
         ObjTimeblock_ToggleSwitchFlag(play, this->dyna.actor.params & 0x3F);

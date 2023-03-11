@@ -1053,7 +1053,9 @@ void func_80B559C4(EnZl3* this) {
 }
 
 void func_80B55A58(EnZl3* this, PlayState* play) {
-    if (play->activeCamera == MAIN_CAM) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (play->activeCameras[playerIndex] == MAIN_CAM) {
         func_80B537E8(this, play);
     }
 }
@@ -1789,13 +1791,15 @@ s32 func_80B575F0(EnZl3* this, PlayState* play) {
 }
 
 void func_80B5764C(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s16 sceneNum = play->sceneNum;
 
     if ((sceneNum == SCENE_GANON_SONOGO) && (func_80B54DB4(this) == 0x26)) {
         s32 unk_314 = this->unk_314 + 1;
 
-        if ((unk_314 == 1) && !Play_InCsMode(play)) {
-            OnePointCutscene_Init(play, 1000, 40, &this->actor, MAIN_CAM);
+        if ((unk_314 == 1) && !Play_InCsMode(play, player)) {
+            OnePointCutscene_Init(play, player, 1000, 40, &this->actor, MAIN_CAM);
         }
     }
 }
@@ -2027,7 +2031,9 @@ void func_80B57F1C(EnZl3* this, PlayState* play) {
 }
 
 s32 func_80B57F84(EnZl3* this, PlayState* play) {
-    if (func_80B575D0(this, play) && func_80B57C7C(this, play) && !Play_InCsMode(play)) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
+    if (func_80B575D0(this, play) && func_80B57C7C(this, play) && !Play_InCsMode(play, player)) {
         func_80B54E14(this, &gZelda2Anime2Anim_009FBC, 0, -8.0f, 0);
         this->action = 36;
         this->unk_2EC = 0.0f;
@@ -2047,14 +2053,14 @@ void func_80B58014(EnZl3* this, PlayState* play) {
         this->action = 29;
         func_80B538B0(this, play);
     } else if (func_80B57C8C(this) && func_80B57F84(this, play)) {
-        OnePointCutscene_Init(play, 4000, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4000, -99, &this->actor, MAIN_CAM);
         this->unk_3D0 = 0;
-    } else if (func_80B576C8(this, play) && func_80B575B0(this, play) && !Play_InCsMode(play)) {
+    } else if (func_80B576C8(this, play) && func_80B575B0(this, play) && !Play_InCsMode(play, player)) {
         this->action = 0x1F;
         this->unk_3CC = 0.0f;
         func_80B537E8(this, play);
         this->unk_3D8 = 1;
-        OnePointCutscene_Init(play, 4010, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4010, -99, &this->actor, MAIN_CAM);
     } else if (!func_80B57C8C(this) && !func_80B576C8(this, play) && func_80B57564(this, play)) {
         func_80B54E14(this, &gZelda2Anime2Anim_009BE4, 0, -8.0f, 0);
         func_80B5764C(this, play);
@@ -2109,7 +2115,7 @@ void func_80B582C8(EnZl3* this, PlayState* play) {
         *unk_3CC += 1.0f;
         func_80B57858(play, player);
     } else if (*unk_3CC == kREG(17) + 40.0f) {
-        func_8005B1A4(play->cameraPtrs[playerIndex]);
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
         *unk_3CC += 1.0f;
     } else if (*unk_3CC >= ((kREG(17) + 40.0f) + 1.0f)) {
         this->action = 32;
@@ -2126,20 +2132,20 @@ void func_80B584B4(EnZl3* this, PlayState* play) {
     Actor* nearbyEnTest = Actor_FindNearby(play, &this->actor, -1, ACTORCAT_ENEMY, 8000.0f);
 
     if (D_80B5A4BC == 0) {
-        if ((nearbyEnTest == NULL) && (!Play_InCsMode(play))) {
+        if ((nearbyEnTest == NULL) && (!Play_InCsMode(play, player))) {
             this->action = 33;
-            OnePointCutscene_Init(play, 4011, -99, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4011, -99, &this->actor, MAIN_CAM);
         } else if (invincibilityTimer > 0) {
             func_80B54E14(this, &gZelda2Anime2Anim_003FF8, 0, -12.0f, 0);
             D_80B5A4BC = 1;
             func_80B56DC8(this);
         }
     } else {
-        if ((nearbyEnTest == NULL) && (!Play_InCsMode(play))) {
+        if ((nearbyEnTest == NULL) && (!Play_InCsMode(play, player))) {
             func_80B54E14(this, &gZelda2Anime2Anim_007664, 0, -12.0f, 0);
             D_80B5A4BC = 0;
             this->action = 33;
-            OnePointCutscene_Init(play, 4011, -99, &this->actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 4011, -99, &this->actor, MAIN_CAM);
         } else if (invincibilityTimer <= 0) {
             func_80B54E14(this, &gZelda2Anime2Anim_007664, 0, -12.0f, 0);
             D_80B5A4BC = 0;
@@ -2148,6 +2154,8 @@ void func_80B584B4(EnZl3* this, PlayState* play) {
 }
 
 void func_80B58624(EnZl3* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad[4];
     f32* unk_3CC = &this->unk_3CC;
 
@@ -2172,7 +2180,7 @@ void func_80B58624(EnZl3* this, PlayState* play) {
     } else {
         if (*unk_3CC >= kREG(20) + 30.0f) {
             this->action = 28;
-            func_8005B1A4(GET_ACTIVE_CAM(play));
+            func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
             func_80B54E14(this, &gZelda2Anime2Anim_009FBC, 0, -12.0f, 0);
             *unk_3CC = 0.0f;
         } else {

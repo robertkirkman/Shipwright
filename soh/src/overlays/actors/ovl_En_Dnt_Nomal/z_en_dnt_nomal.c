@@ -118,6 +118,8 @@ static Color_RGBA8 sLeafColors[] = {
 void EnDntNomal_Init(Actor* thisx, PlayState* play) {
     s32 pad;
     EnDntNomal* this = (EnDntNomal*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
 
     this->type = this->actor.params;
     if (this->type < ENDNTNOMAL_TARGET) {
@@ -132,7 +134,7 @@ void EnDntNomal_Init(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ デグナッツ的当て ☆☆☆☆☆ \n" VT_RST);
         Collider_InitQuad(play, &this->targetQuad);
         Collider_SetQuad(play, &this->targetQuad, &this->actor, &sTargetQuadInit);
-        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[0]; //init
+        this->actor.world.rot.y = this->actor.shape.rot.y = this->actor.yawTowardsPlayer[playerIndex];
         this->objId = OBJECT_HINTNUTS;
     } else {
         osSyncPrintf("\n\n");
@@ -208,6 +210,7 @@ void EnDntNomal_SetupTargetWait(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetWait(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     Vec3f scorePos;
     f32 targetX = 1340.0f;
     f32 targetY = 50.0f;
@@ -253,8 +256,8 @@ void EnDntNomal_TargetWait(EnDntNomal* this, PlayState* play) {
                     if(gSaveContext.n64ddFlag) {
                         this->actionFunc = EnDntNomal_TargetGivePrize;
                     } else {
-                        OnePointCutscene_Init(play, 4140, -99, &this->actor, MAIN_CAM);
-                        func_8002DF54(play, &this->actor, 1);
+                        OnePointCutscene_Init(play, player, 4140, -99, &this->actor, MAIN_CAM);
+                        func_8002DF54(play, player, &this->actor, 1);
                         this->timer4 = 50;
                         this->actionFunc = EnDntNomal_SetupTargetUnburrow;
                     }
@@ -341,12 +344,14 @@ void EnDntNomal_SetupTargetTalk(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetTalk(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     SkelAnime_Update(&this->skelAnime);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
-        func_8005B1A4(GET_ACTIVE_CAM(play));
-        GET_ACTIVE_CAM(play)->csId = 0;
-        func_8002DF54(play, NULL, 8);
+        func_8005B1A4(GET_ACTIVE_CAM(playerIndex, play), playerIndex);
+        GET_ACTIVE_CAM(playerIndex, play)->csId = 0;
+        func_8002DF54(play, player, NULL, 8);
         this->actionFunc = EnDntNomal_SetupTargetGivePrize;
     }
 }
@@ -358,6 +363,7 @@ void EnDntNomal_SetupTargetGivePrize(EnDntNomal* this, PlayState* play) {
 }
 
 void EnDntNomal_TargetGivePrize(EnDntNomal* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     f32 frame = this->skelAnime.curFrame;
 
     SkelAnime_Update(&this->skelAnime);
@@ -368,7 +374,7 @@ void EnDntNomal_TargetGivePrize(EnDntNomal* this, PlayState* play) {
 
         if (Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM, itemX, itemY, itemZ, 0,
                                0, 0, EXITEM_BULLET_BAG) == NULL) {
-            func_8002DF54(play, NULL, 7);
+            func_8002DF54(play, player, NULL, 7);
             Actor_Kill(&this->actor);
         }
         this->spawnedItem = true;

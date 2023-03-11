@@ -1482,14 +1482,14 @@ void func_8009BEEC(PlayState* play) {
     s32 var;
 
     if (play->gameplayFrames % 128 == 13) {
-        var = Quake_Add(GET_ACTIVE_CAM(play), 2);
+        var = Quake_Add(GET_ACTIVE_CAM(0, play), 2); // todo
         Quake_SetSpeed(var, 10000);
         Quake_SetQuakeValues(var, 4, 0, 0, 0);
         Quake_SetCountdown(var, 127);
     }
 
     if ((play->gameplayFrames % 64 == 0) && (Rand_ZeroOne() > 0.6f)) {
-        var = Quake_Add(GET_ACTIVE_CAM(play), 3);
+        var = Quake_Add(GET_ACTIVE_CAM(0, play), 3); // todo
         Quake_SetSpeed(var, 32000.0f + (Rand_ZeroOne() * 3000.0f));
         Quake_SetQuakeValues(var, 10.0f - (Rand_ZeroOne() * 9.0f), 0, 0, 0);
         Quake_SetCountdown(var, 48.0f - (Rand_ZeroOne() * 15.0f));

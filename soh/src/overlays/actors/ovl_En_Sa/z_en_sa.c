@@ -632,7 +632,7 @@ void GivePlayerRandoRewardSaria(EnSa* saria, PlayState* play, RandomizerCheck ch
 void func_80AF683C(EnSa* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
 
-    if (!(player->actor.world.pos.z >= -2220.0f) && !Play_InCsMode(play)) {
+    if (!(player->actor.world.pos.z >= -2220.0f) && !Play_InCsMode(play, player)) {
         if (gSaveContext.n64ddFlag) {
             GivePlayerRandoRewardSaria(this, play, RC_SONG_FROM_SARIA);
             return;

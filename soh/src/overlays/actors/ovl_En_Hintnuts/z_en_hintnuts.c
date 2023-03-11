@@ -427,11 +427,11 @@ void EnHintnuts_Leave(EnHintnuts* this, PlayState* play) {
     } else {
         Player* player = Player_NearestToActor(&this->actor, play);
         u16 playerIndex = Player_GetIndex(player, play);
-        temp_a1 = this->actor.yawTowardsPlayer[playerIndex] - Camera_GetCamDirYaw(play->cameraPtrs[playerIndex]) - 0x8000;
+        temp_a1 = this->actor.yawTowardsPlayer[playerIndex] - Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - 0x8000;
         if (ABS(temp_a1) >= 0x4001) {
-            temp_a1 = Camera_GetCamDirYaw(play->cameraPtrs[playerIndex]) + 0x8000;
+            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) + 0x8000;
         } else {
-            temp_a1 = Camera_GetCamDirYaw(play->cameraPtrs[playerIndex]) - (temp_a1 >> 1) + 0x8000;
+            temp_a1 = Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - (temp_a1 >> 1) + 0x8000;
         }
     }
     Math_ScaledStepToS(&this->actor.shape.rot.y, temp_a1, 0x800);

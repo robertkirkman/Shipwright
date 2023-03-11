@@ -447,7 +447,7 @@ void EnSkj_Init(Actor* thisx, PlayState* play2) {
             this->actor.gravity = -1.0f;
             EnSkj_CalculateCenter(this);
 
-            player = GET_PLAYER(play); // unused
+            player = GET_PLAYER(play); // printf player 1
             osSyncPrintf("Player_X : %f\n", player->actor.world.pos.x);
             osSyncPrintf("Player_Z : %f\n", player->actor.world.pos.z);
             osSyncPrintf("World_X  : %f\n", this->actor.world.pos.x);
@@ -1088,9 +1088,10 @@ void EnSkj_SetupMaskTrade(EnSkj* this) {
 }
 
 void EnSkj_StartMaskTrade(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     u8 sp1F = Message_GetState(&play->msgCtx);
 
-    func_8002DF54(play, &this->actor, 1);
+    func_8002DF54(play, player, &this->actor, 1);
     if ((sp1F == TEXT_STATE_DONE) && Message_ShouldAdvance(play)) {
         EnSkj_JumpFromStump(this);
     }
@@ -1189,8 +1190,9 @@ void EnSkj_SetupWaitForMaskTextClear(EnSkj* this) {
 }
 
 void EnSkj_WaitForMaskTextClear(EnSkj* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_DONE) && Message_ShouldAdvance(play)) {
-        func_8002DF54(play, &this->actor, 7);
+        func_8002DF54(play, player, &this->actor, 7);
         this->backflipFlag = 1;
         EnSkj_Backflip(this);
     }

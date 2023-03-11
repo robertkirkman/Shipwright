@@ -161,7 +161,7 @@ void ObjSyokudai_Update(Actor* thisx, PlayState* play2) {
                 if (this->litTimer == 0) {
                     this->litTimer = -1;
                     if (torchType == 0) {
-                        OnePointCutscene_Attention(play, &this->actor);
+                        OnePointCutscene_Attention(play, player, &this->actor);
                     }
                 } else if (this->litTimer > 0) {
                     this->litTimer = -1;
@@ -212,13 +212,13 @@ void ObjSyokudai_Update(Actor* thisx, PlayState* play2) {
                     this->litTimer = -1;
                     if (torchType != 2) {
                         Flags_SetSwitch(play, switchFlag);
-                        OnePointCutscene_Attention(play, &this->actor);
+                        OnePointCutscene_Attention(play, player, &this->actor);
                     }
                 } else {
                     sLitTorchCount++;
                     if (sLitTorchCount >= torchCount) {
                         Flags_SetSwitch(play, switchFlag);
-                        OnePointCutscene_Attention(play, &this->actor);
+                        OnePointCutscene_Attention(play, player, &this->actor);
                         this->litTimer = -1;
                     } else {
                         this->litTimer = (litTimeScale * 50) + 110;
@@ -260,6 +260,8 @@ void ObjSyokudai_Draw(Actor* thisx, PlayState* play) {
     static Gfx* displayLists[] = { gGoldenTorchDL, gTimedTorchDL, gWoodenTorchDL };
     s32 pad;
     ObjSyokudai* this = (ObjSyokudai*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 timerMax;
 
     timerMax = (((this->actor.params >> 6) & 0xF) * 50) + 100;
@@ -293,7 +295,7 @@ void ObjSyokudai_Draw(Actor* thisx, PlayState* play) {
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
 
         Matrix_Translate(0.0f, 52.0f, 0.0f, MTXMODE_APPLY);
-        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->actor.shape.rot.y + 0x8000) *
+        Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->actor.shape.rot.y + 0x8000) *
                            (M_PI / 0x8000),
                        MTXMODE_APPLY);
         Matrix_Scale(flameScale, flameScale, flameScale, MTXMODE_APPLY);

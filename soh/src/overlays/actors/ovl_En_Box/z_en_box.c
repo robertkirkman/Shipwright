@@ -245,6 +245,7 @@ void EnBox_SpawnDust(EnBox* this, PlayState* play) {
  * Used while the chest is falling (FALL types)
  */
 void EnBox_Fall(EnBox* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     f32 yDiff;
 
     this->alpha = 255;
@@ -265,7 +266,7 @@ void EnBox_Fall(EnBox* this, PlayState* play) {
             this->dyna.actor.shape.rot.z = 0;
             this->dyna.actor.world.pos.y = this->dyna.actor.floorHeight;
             EnBox_SetupAction(this, EnBox_WaitOpen);
-            OnePointCutscene_EndCutscene(play, this->unk_1AC);
+            OnePointCutscene_EndCutscene(play, player, this->unk_1AC);
         }
         Audio_PlaySoundGeneral(NA_SE_EV_COFFIN_CAP_BOUND, &this->dyna.actor.projectedPos, 4, &D_801333E0, &D_801333E0,
                                &D_801333E8);
@@ -280,6 +281,7 @@ void EnBox_Fall(EnBox* this, PlayState* play) {
 }
 
 void EnBox_FallOnSwitchFlag(EnBox* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 treasureFlag = this->dyna.actor.params & 0x1F;
 
     if (treasureFlag >= ENBOX_TREASURE_FLAG_UNK_MIN && treasureFlag < ENBOX_TREASURE_FLAG_UNK_MAX) {
@@ -288,7 +290,7 @@ void EnBox_FallOnSwitchFlag(EnBox* this, PlayState* play) {
 
     if (this->unk_1A8 >= 0) {
         EnBox_SetupAction(this, EnBox_Fall);
-        this->unk_1AC = OnePointCutscene_Init(play, 4500, 9999, &this->dyna.actor, MAIN_CAM);
+        this->unk_1AC = OnePointCutscene_Init(play, player, 4500, 9999, &this->dyna.actor, MAIN_CAM);
         func_8003EC50(play, &play->colCtx.dyna, this->dyna.bgId);
     } else if (this->unk_1A8 >= -11) {
         this->unk_1A8++;
@@ -325,7 +327,7 @@ void func_809C9700(EnBox* this, PlayState* play) {
                 (play->msgCtx.lastPlayedSong == OCARINA_SONG_SUNS && this->type == ENBOX_TYPE_10)) {
                 this->dyna.actor.flags &= ~ACTOR_FLAG_25;
                 EnBox_SetupAction(this, EnBox_AppearInit);
-                OnePointCutscene_Attention(play, &this->dyna.actor);
+                OnePointCutscene_Attention(play, player, &this->dyna.actor);
                 this->unk_1A8 = 0;
                 this->unk_1FB = ENBOX_STATE_0;
             } else {
@@ -336,6 +338,7 @@ void func_809C9700(EnBox* this, PlayState* play) {
 }
 
 void EnBox_AppearOnSwitchFlag(EnBox* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 treasureFlag = this->dyna.actor.params & 0x1F;
 
     if (treasureFlag >= ENBOX_TREASURE_FLAG_UNK_MIN && treasureFlag < ENBOX_TREASURE_FLAG_UNK_MAX) {
@@ -343,24 +346,25 @@ void EnBox_AppearOnSwitchFlag(EnBox* this, PlayState* play) {
     }
 
     if (Flags_GetSwitch(play, this->switchFlag)) {
-        OnePointCutscene_Attention(play, &this->dyna.actor);
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
         EnBox_SetupAction(this, EnBox_AppearInit);
         this->unk_1A8 = -30;
     }
 }
 
 void EnBox_AppearOnRoomClear(EnBox* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     s32 treasureFlag = this->dyna.actor.params & 0x1F;
 
     if (treasureFlag >= ENBOX_TREASURE_FLAG_UNK_MIN && treasureFlag < ENBOX_TREASURE_FLAG_UNK_MAX) {
         func_8002F5F0(&this->dyna.actor, play);
     }
 
-    if (Flags_GetTempClear(play, this->dyna.actor.room) && !Player_InCsMode(play)) {
+    if (Flags_GetTempClear(play, this->dyna.actor.room) && !Player_InCsMode(play, player)) {
         Flags_SetClear(play, this->dyna.actor.room);
         EnBox_SetupAction(this, EnBox_AppearInit);
-        OnePointCutscene_Attention(play, &this->dyna.actor);
-        if (OnePointCutscene_CheckForCategory(play, this->dyna.actor.category)) {
+        OnePointCutscene_Attention(play, player, &this->dyna.actor);
+        if (OnePointCutscene_CheckForCategory(play, player, this->dyna.actor.category)) {
             this->unk_1A8 = 0;
         } else {
             this->unk_1A8 = -30;

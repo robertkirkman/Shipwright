@@ -376,6 +376,8 @@ void EnIceHono_Update(Actor* thisx, PlayState* play) {
 
 void EnIceHono_Draw(Actor* thisx, PlayState* play) {
     EnIceHono* this = (EnIceHono*)thisx;
+    Player* player = Player_NearestToActor(thisx, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     u32 pad;
 
     OPEN_DISPS(play->state.gfxCtx);
@@ -389,7 +391,7 @@ void EnIceHono_Draw(Actor* thisx, PlayState* play) {
 
     gDPSetEnvColor(POLY_XLU_DISP++, 0, 150, 255, 0);
 
-    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(play)) - this->actor.shape.rot.y + 0x8000) *
+    Matrix_RotateY((s16)(Camera_GetCamDirYaw(GET_ACTIVE_CAM(playerIndex, play)) - this->actor.shape.rot.y + 0x8000) *
                        (M_PI / 0x8000),
                    MTXMODE_APPLY);
 

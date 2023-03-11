@@ -148,6 +148,7 @@ void BgDodoago_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void BgDodoago_WaitExplosives(BgDodoago* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->dyna.actor, play);
     Actor* explosive = Actor_GetCollidedExplosive(play, &this->colliderMain.base);
 
     if (explosive != NULL) {
@@ -162,13 +163,13 @@ void BgDodoago_WaitExplosives(BgDodoago* this, PlayState* play) {
             this->state = 0;
             Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
             BgDodoago_SetupAction(this, BgDodoago_OpenJaw);
-            OnePointCutscene_Init(play, 3380, 160, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3380, 160, &this->dyna.actor, MAIN_CAM);
         } else if (play->roomCtx.unk_74[this->state] == 0) {
-            OnePointCutscene_Init(play, 3065, 40, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3065, 40, &this->dyna.actor, MAIN_CAM);
             BgDodoago_SetupAction(this, BgDodoago_LightOneEye);
             Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         } else {
-            OnePointCutscene_Init(play, 3065, 20, &this->dyna.actor, MAIN_CAM);
+            OnePointCutscene_Init(play, player, 3065, 20, &this->dyna.actor, MAIN_CAM);
             Audio_PlaySoundGeneral(NA_SE_SY_ERROR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
             sBgDodoagoTimer += 30;
             return;

@@ -114,7 +114,7 @@ void BgTokiSwd_Destroy(Actor* thisx, PlayState* play) {
 void func_808BAF40(BgTokiSwd* this, PlayState* play) {
     Player* player = Player_NearestToActor(&this->actor, play);
     if (((gSaveContext.eventChkInf[4] & 0x8000) == 0) && (gSaveContext.sceneSetupIndex < 4) &&
-        Actor_IsFacingAndNearPlayer(&this->actor, 800.0f, 0x7530, player, play) && !Play_InCsMode(play)) {
+        Actor_IsFacingAndNearPlayer(&this->actor, 800.0f, 0x7530, player, play) && !Play_InCsMode(play, player)) {
         gSaveContext.eventChkInf[4] |= 0x8000;
         play->csCtx.segment = D_808BBD90;
         gSaveContext.cutsceneTrigger = 1;

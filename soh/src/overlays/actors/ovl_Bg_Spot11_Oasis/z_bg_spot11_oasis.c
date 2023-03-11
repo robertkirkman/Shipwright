@@ -95,8 +95,9 @@ void func_808B2970(BgSpot11Oasis* this) {
 }
 
 void func_808B2980(BgSpot11Oasis* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     if (Flags_GetEnv(play, 5) && func_808B280C(this, play)) {
-        OnePointCutscene_Init(play, 4150, -99, &this->actor, MAIN_CAM);
+        OnePointCutscene_Init(play, player, 4150, -99, &this->actor, MAIN_CAM);
         func_808B29E0(this);
     }
 }

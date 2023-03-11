@@ -118,6 +118,8 @@ void EffectSsLightning_Draw(PlayState* play, u32 index, EffectSs* this) {
 }
 
 void EffectSsLightning_Update(PlayState* play, u32 index, EffectSs* this) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     Vec3f pos;
     s16 yaw;
@@ -131,8 +133,8 @@ void EffectSsLightning_Update(PlayState* play, u32 index, EffectSs* this) {
         pos.y = this->pos.y + (Math_SinS(this->rYaw - 0x4000) * scale);
 
         scale = Math_CosS(this->rYaw - 0x4000) * scale;
-        pos.x = this->pos.x - (Math_CosS(Camera_GetInputDirYaw(GET_ACTIVE_CAM(play))) * scale);
-        pos.z = this->pos.z + (Math_SinS(Camera_GetInputDirYaw(GET_ACTIVE_CAM(play))) * scale);
+        pos.x = this->pos.x - (Math_CosS(Camera_GetInputDirYaw(GET_ACTIVE_CAM(playerIndex, play))) * scale);
+        pos.z = this->pos.z + (Math_SinS(Camera_GetInputDirYaw(GET_ACTIVE_CAM(playerIndex, play))) * scale);
 
         EffectSsLightning_NewLightning(play, &pos, yaw, this);
 

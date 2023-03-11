@@ -129,6 +129,7 @@ typedef struct {
 } struct_8011F9B8;
 
 void func_8006D684(PlayState* play, Player* player) {
+    u16 playerIndex = Player_GetIndex(player, play);
     s32 pad;
     s32 i;
     Vec3s spawnPos;
@@ -224,7 +225,7 @@ void func_8006D684(PlayState* play, Player* player) {
                     sp54.y = player->actor.world.pos.y + 100.0f;
                     sp54.z = player->actor.world.pos.z;
 
-                    Play_CameraSetAtEye(play, play->activeCamera, &player->actor.world.pos, &sp54);
+                    Play_CameraSetAtEye(play, player, play->activeCameras[playerIndex], &player->actor.world.pos, &sp54);
                 } else {
                     Actor_Spawn(&play->actorCtx, play, ACTOR_EN_HORSE, D_8011F9B8[i].pos.x,
                                 D_8011F9B8[i].pos.y, D_8011F9B8[i].pos.z, 0, D_8011F9B8[i].angle, 0,

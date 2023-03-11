@@ -258,6 +258,7 @@ void EnOwl_LookAtLink(EnOwl* this, PlayState* play) {
  * the distance, and the camera has been initalized.
  */
 s32 EnOwl_CheckInitTalk(EnOwl* this, PlayState* play, u16 textId, f32 targetDist, u16 flags) {
+    Player* player = Player_NearestToActor(&this->actor, play);
     s32 timer;
     f32 distCheck;
 
@@ -274,7 +275,7 @@ s32 EnOwl_CheckInitTalk(EnOwl* this, PlayState* play, u16 textId, f32 targetDist
                 this->actionFlags &= ~0x40;
             }
         }
-        this->cameraIdx = OnePointCutscene_Init(play, 8700, timer, &this->actor, MAIN_CAM);
+        this->cameraIdx = OnePointCutscene_Init(play, player, 8700, timer, &this->actor, MAIN_CAM);
         return true;
     } else {
         Player* player = Player_NearestToActor(&this->actor, play);
@@ -345,7 +346,8 @@ void func_80ACA71C(EnOwl* this) {
 }
 
 void func_80ACA76C(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -355,7 +357,8 @@ void func_80ACA76C(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACA7E0(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -565,7 +568,8 @@ void EnOwl_WaitLakeHylia(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACB03C(EnOwl* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 8);
+    Player* player = Player_NearestToActor(&this->actor, play);
+    func_8002DF54(play, player, &this->actor, 8);
 
     if (Actor_TextboxIsClosing(&this->actor, play)) {
         Audio_QueueSeqCmd(0x1 << 28 | SEQ_PLAYER_FANFARE << 24 | 0xFF);
@@ -749,15 +753,17 @@ void EnOwl_WaitLWPostSaria(EnOwl* this, PlayState* play) {
 }
 
 void func_80ACB748(EnOwl* this, PlayState* play) {
+    Player* player = Player_NearestToActor(&this->actor, play);
+    u16 playerIndex = Player_GetIndex(player, play);
     static Vec3f D_80ACD62C = { 0.0f, 0.0f, 0.0f };
     f32 dist;
     f32 weight;
     s32 owlType = (this->actor.params & 0xFC0) >> 6;
 
-    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->views[0].eye) / 45.0f;
-    this->eye.x = play->views[0].eye.x;
-    this->eye.y = play->views[0].eye.y;
-    this->eye.z = play->views[0].eye.z;
+    dist = Math3D_Vec3f_DistXYZ(&this->eye, &play->views[playerIndex].eye) / 45.0f;
+    this->eye.x = play->views[playerIndex].eye.x;
+    this->eye.y = play->views[playerIndex].eye.y;
+    this->eye.z = play->views[playerIndex].eye.z;
 
     weight = dist;
     if (weight > 1.0f) {
@@ -955,7 +961,7 @@ void func_80ACC00C(EnOwl* this, PlayState* play) {
     this->actor.shape.rot.y = this->actor.world.rot.y;
 
     if (this->actor.xzDistToPlayer[playerIndex] < 50.0f) {
-        if (!Play_InCsMode(play)) {
+        if (!Play_InCsMode(play, player)) {
             owlType = (this->actor.params & 0xFC0) >> 6;
             osSyncPrintf(VT_FGCOL(CYAN));
             osSyncPrintf("%dのフクロウ\n", owlType); // "%d owl"
